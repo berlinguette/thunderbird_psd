@@ -1,6 +1,6 @@
 # Thunderbird PSD
 
-This repository includes code for processing, analysing, and visualising data from the Thunderbird scintillation detector. The primary purpose is for neutron and gamma-ray differentiation.
+This repository includes code for processing, analysing, and visualising data from the Thunderbird scintillation detector. The primary purpose is for neutron and gamma-ray differentiation using pulse-shape discrimination (PSD).
 
 <details>
     <summary>Installation</summary>
