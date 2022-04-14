@@ -2,7 +2,8 @@
 
 This repository includes code for processing, analysing, and visualising data from the Thunderbird scintillation detector. The primary purpose is for neutron and gamma-ray differentiation.
 
-## Installation
+<details>
+<summary>Installation</summary>
 
 Clone the repository into a new directory on your computer
 
@@ -34,3 +35,4 @@ Install the packages in `requirements.txt`
 ```
 pip install -r requirements.txt
 ```
+</details>
