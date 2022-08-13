@@ -42,6 +42,7 @@ def parquetize_folder(directory: Path, dest: str) -> pd.DataFrame:
 
     df = pd.DataFrame(labelled_data[0], index=labelled_data[1])
     df.columns = df.columns.astype(str)
+    print(df.head())
     df.to_parquet(dest + end_folder_name + ".parquet")
 
 
