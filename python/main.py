@@ -2,12 +2,12 @@ import os
 import re
 import time
 from multiprocessing.pool import Pool
+from concurrent.futures import ThreadPoolExecutor
+from itertools import repeat
 from pathlib import Path
 
 import pandas as pd
 from scipy.io import loadmat
-
-from parquetize import parquetize_folder
 
 
 def get_data_tuple(file_path, label):
@@ -23,6 +23,9 @@ def elapsed_time(t1):
 def parquetize_folder(directory: Path, dest: str) -> pd.DataFrame:
     file_paths = [f for f in directory.iterdir()]
     end_folder_name = os.path.basename(directory)
+
+    print(f"Converting {end_folder_name}...")
+
     batch_number = "b" + end_folder_name.split("-")[1]
     file_names = map(lambda x: os.path.basename(x), file_paths)
 
@@ -33,30 +36,30 @@ def parquetize_folder(directory: Path, dest: str) -> pd.DataFrame:
 
     labels = map(get_label, file_names)
 
-    t1 = time.perf_counter()
-    with Pool(5) as pool:
+    with Pool(4) as pool:
         result = pool.starmap(get_data_tuple, zip(file_paths, labels))
-    print(f"Processing time: {elapsed_time(t1)}s")
 
     labelled_data = list(zip(*result))
 
     df = pd.DataFrame(labelled_data[0], index=labelled_data[1])
     df.columns = df.columns.astype(str)
-    print(df.head())
+
     df.to_parquet(dest + end_folder_name + ".parquet")
+    print(f"File {end_folder_name} Completed")
 
 
-def runny():
-    directory = Path(
-        "C:/Users/Alvin/Desktop/Thunderbird/thunderbird_psd/sample_dataset/raw_data/mat/20220730-0001/"
-    )
+def parquetize_directory(directory, destination, num_folders=10):
+    folder_paths = [f for f in directory.iterdir()]
+    folder_paths = folder_paths[0:num_folders]
 
-    eject_dir = "C:/Users/Alvin/Desktop/Thunderbird/thunderbird_psd/sample_dataset/processed_data/parquets/"
-
-    parquetize_folder(directory, eject_dir)
+    with ThreadPoolExecutor(4) as executor:
+        executor.map(parquetize_folder, folder_paths, repeat(destination))
 
 
 if __name__ == "__main__":
+    directory = Path("sample_dataset/raw_data/mat/")
+    out_directory = "sample_dataset/processed_data/parquets/"
+
     t1 = time.perf_counter()
-    runny()
+    parquetize_directory(directory, out_directory)
     print(f"Elapsed Time: {time.perf_counter() - t1} s")
