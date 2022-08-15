@@ -1,7 +1,6 @@
 import os
 import re
 import time
-from multiprocessing.pool import Pool
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 from itertools import repeat
 from pathlib import Path
