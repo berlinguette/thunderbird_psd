@@ -51,6 +51,7 @@ def parquetize_folder(directory: Path, dest: str) -> pd.DataFrame:
 def parquetize_directory(directory, destination, num_folders=10):
     folder_paths = [f for f in directory.iterdir()]
     folder_paths = folder_paths[0:num_folders]
+    os.makedirs(destination)
 
     with ThreadPoolExecutor(4) as executor:
         executor.map(parquetize_folder, folder_paths, repeat(destination))
