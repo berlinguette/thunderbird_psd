@@ -70,6 +70,7 @@ __pypackages__/
 
 # Environments
 .venv
+venv/
 
 # Cython debug symbols
 cython_debug/
