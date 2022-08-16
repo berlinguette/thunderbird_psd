@@ -25,12 +25,12 @@ def parquetize_folder(directory: Path, destination: Path) -> pd.DataFrame:
 
     print(f"Converting {end_folder_name}...")
 
-    batch_number = "b" + end_folder_name.split("-")[1]
+    batch_number = f"b{end_folder_name.split('-')[1]}"
     file_names = map(lambda x: x.name, file_paths)
 
     def get_label(file_name: str, batch_number: str = batch_number):
         serial_number = re.search("\_(\d\d\d\d)(.mat)", file_name)
-        return batch_number + "s" + serial_number.group(1)
+        return f"{batch_number}s{serial_number.group(1)}"
 
     labels = map(get_label, file_names)
 
