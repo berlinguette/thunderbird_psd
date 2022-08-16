@@ -19,7 +19,7 @@ def elapsed_time(t1):
     return time.perf_counter() - t1
 
 
-def parquetize_folder(directory: Path, destination: str) -> pd.DataFrame:
+def parquetize_folder(directory: Path, destination: Path) -> pd.DataFrame:
     file_paths = [f for f in directory.iterdir()]
     end_folder_name = directory.name
 
@@ -42,7 +42,7 @@ def parquetize_folder(directory: Path, destination: str) -> pd.DataFrame:
     df = pd.DataFrame(labelled_data[0], index=labelled_data[1])
     df.columns = df.columns.astype(str)
 
-    df.to_parquet(destination + end_folder_name + ".parquet")
+    df.to_parquet(str(destination / f"{end_folder_name}.parquet"))
     print(f"File {end_folder_name} Completed")
 
 
@@ -51,12 +51,12 @@ def parquetize_directory(directory: Path, destination: Path, num_folders=10):
     folder_paths = folder_paths[0:num_folders]
 
     with ThreadPoolExecutor(4) as executor:
-        executor.map(parquetize_folder, folder_paths, repeat(str(destination)))
+        executor.map(parquetize_folder, folder_paths, repeat(destination))
 
 
 if __name__ == "__main__":
     directory = Path("sample_dataset/raw_data/mat/")
-    out_directory = "sample_dataset/processed_data/parquets/"
+    out_directory = Path("sample_dataset/processed_data/parquets/")
 
     t1 = time.perf_counter()
     parquetize_directory(directory, out_directory)
