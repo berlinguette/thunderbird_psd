@@ -48,12 +48,12 @@ def parquetize_folder(directory: Path, dest: str) -> pd.DataFrame:
     print(f"File {end_folder_name} Completed")
 
 
-def parquetize_directory(directory, destination, num_folders=10):
+def parquetize_directory(directory: Path, destination: Path, num_folders=10):
     folder_paths = [f for f in directory.iterdir()]
     folder_paths = folder_paths[0:num_folders]
 
     with ThreadPoolExecutor(4) as executor:
-        executor.map(parquetize_folder, folder_paths, repeat(destination))
+        executor.map(parquetize_folder, folder_paths, repeat(str(destination)))
 
 
 if __name__ == "__main__":
