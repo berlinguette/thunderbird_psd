@@ -1,13 +1,17 @@
 import os
 import re
 import time
-from multiprocessing.pool import Pool
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 from itertools import repeat
 from pathlib import Path
 
 import pandas as pd
 from scipy.io import loadmat
+
+
+# Settings
+MAX_PROCESSES = 4
+MAX_THREADS_PER_PROCESS = 4
 
 
 def get_data_tuple(file_path, label):
@@ -36,8 +40,8 @@ def parquetize_folder(directory: Path, dest: str) -> pd.DataFrame:
 
     labels = map(get_label, file_names)
 
-    with Pool(4) as pool:
-        result = pool.starmap(get_data_tuple, zip(file_paths, labels))
+    with ThreadPoolExecutor(max_workers=MAX_THREADS_PER_PROCESS) as thread_executor:
+        result = thread_executor.map(get_data_tuple, file_paths, labels)
 
     labelled_data = list(zip(*result))
 
@@ -54,8 +58,8 @@ def parquetize_directory(directory, destination, num_folders=10):
     if not os.path.exists(destination):
         os.makedirs(destination)
 
-    with ThreadPoolExecutor(4) as executor:
-        executor.map(parquetize_folder, folder_paths, repeat(destination))
+    with ProcessPoolExecutor(max_workers=MAX_PROCESSES) as process_executor:
+        process_executor.map(parquetize_folder, folder_paths, repeat(destination))
 
 
 if __name__ == "__main__":
