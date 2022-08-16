@@ -1,4 +1,3 @@
-import os
 import re
 import time
 from multiprocessing.pool import Pool
@@ -22,15 +21,14 @@ def elapsed_time(t1):
 
 def parquetize_folder(directory: Path, destination: str) -> pd.DataFrame:
     file_paths = [f for f in directory.iterdir()]
-    end_folder_name = os.path.basename(directory)
+    end_folder_name = directory.name
 
     print(f"Converting {end_folder_name}...")
 
     batch_number = "b" + end_folder_name.split("-")[1]
-    file_names = map(lambda x: os.path.basename(x), file_paths)
+    file_names = map(lambda x: x.name, file_paths)
 
     def get_label(file_name: str, batch_number: str = batch_number):
-        serial_number = os.path.basename(file_name)
         serial_number = re.search("\_(\d\d\d\d)(.mat)", file_name)
         return batch_number + "s" + serial_number.group(1)
 
