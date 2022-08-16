@@ -5,6 +5,7 @@ from itertools import islice
 from math import ceil
 import timeit
 import sys
+import subprocess
 
 MAX_CONCURRENT_TASKS = 5
 FORMAT = 'mat'
@@ -76,12 +77,32 @@ async def process_files_async(folder_path: Path, destination: Path, num_files = 
     exec_time = stop - start
     print(f"Method executed in {exec_time:.4f} seconds")
 
+def process_files_popen(folder_path: Path, destination: Path, num_files=FILES_LIMIT):
+    start = timeit.default_timer()
+
+    file_paths = [file_path for file_path in get_limited_files(folder_path, num_files)]
+    if MAX_CONCURRENT_TASKS == 0:
+        chunks = [file_paths]
+        num_chunks = len(chunks)
+    else:
+        chunks = make_chunks(file_paths, MAX_CONCURRENT_TASKS)
+        num_chunks = get_number_of_chunks(len(file_paths), MAX_CONCURRENT_TASKS)
+
+    for chunk_index, chunk in enumerate(chunks):
+        print(f'Beginning work on chunk {chunk_index+1}/{num_chunks}')
+        procs = [(file_path, subprocess.Popen(generate_shell_command(file_path, destination))) for file_path in chunk]
+        for file_path, proc in procs:
+            returncode = proc.wait()
+            subprocess_results_printer(f'Converting {file_path.name}', returncode, None, None)
+        print(f'Completed work on chunk {chunk_index+1}/{num_chunks}')
+
     stop = timeit.default_timer()
     exec_time = stop - start
     print(f"Method executed in {exec_time:.4f} seconds")
 
 def convert_psdata_directory(folder_path: Path, destination: Path, num_files=FILES_LIMIT):
     asyncio.run(process_files_async(folder_path, destination))
+    # process_files_popen(folder_path, destination, num_files)
 
 if __name__ == "__main__":
     if 'win32' in sys.platform:
