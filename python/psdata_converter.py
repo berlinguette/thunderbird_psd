@@ -4,9 +4,9 @@ import subprocess
 import sys
 import timeit
 from itertools import islice
+from math import ceil
 from pathlib import Path
-from typing import Optional
-
+from typing import Iterable, List, Optional, Tuple, TypeVar
 
 MAX_CONCURRENT_TASKS = 5
 FORMAT = 'mat'
@@ -53,6 +53,17 @@ def make_chunks(list_to_chunk: List[T], chunk_size: int) -> Iterable[List[T]]:
 def get_number_of_chunks(list_length: int, chunk_size: int) -> int:
     return ceil(list_length / chunk_size)
 
+
+def chunkify(list_to_chunk: List[T], chunk_size: int) -> Tuple[Iterable[List[T]], int]:
+    if chunk_size == 0:
+        chunks = [list_to_chunk]
+        chunk_count = len(chunks)
+    else:
+        chunks = make_chunks(list_to_chunk, chunk_size)
+        chunk_count = get_number_of_chunks(len(list_to_chunk), chunk_size)
+    return (chunks, chunk_count)
+
+
 async def process_file_async(file_path: Path, destination: Path):
     proc = await asyncio.create_subprocess_exec(*generate_shell_command(file_path, destination))
     await proc.communicate()
@@ -68,12 +79,7 @@ async def process_files_async(folder_path: Path, destination: Path, num_files = 
     
     cors = [process_file_async(file_path, destination) for file_path in get_limited_files(folder_path, num_files)]
     # Chunking code from https://fredrikaverpil.github.io/2017/06/20/async-and-await-with-subprocesses/
-    if MAX_CONCURRENT_TASKS == 0:
-        chunks = [cors]
-        num_chunks = len(chunks)
-    else:
-        chunks = make_chunks(cors, MAX_CONCURRENT_TASKS)
-        num_chunks = get_number_of_chunks(len(cors), MAX_CONCURRENT_TASKS)
+    chunks, chunks_count = chunkify(cors, chunk_size)
     for chunk_index, chunk in enumerate(chunks):
         logger.info(f'Beginning work on chunk {chunk_index+1}/{chunks_count}')
         await asyncio.gather(*chunk)
@@ -86,13 +92,9 @@ async def process_files_async(folder_path: Path, destination: Path, num_files = 
 def process_files_popen(folder_path: Path, destination: Path, num_files=FILES_LIMIT):
     start = timeit.default_timer()
 
-    file_paths = [file_path for file_path in get_limited_files(folder_path, num_files)]
-    if MAX_CONCURRENT_TASKS == 0:
-        chunks = [file_paths]
-        num_chunks = len(chunks)
-    else:
-        chunks = make_chunks(file_paths, MAX_CONCURRENT_TASKS)
-        num_chunks = get_number_of_chunks(len(file_paths), MAX_CONCURRENT_TASKS)
+    file_paths = [file_path for file_path in get_limited_files(
+        folder_path, num_files)]
+    chunks, chunks_count = chunkify(file_paths, chunk_size)
 
     for chunk_index, chunk in enumerate(chunks):
         logger.info(f'Beginning work on chunk {chunk_index+1}/{chunks_count}')
