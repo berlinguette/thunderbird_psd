@@ -1,3 +1,4 @@
+import logging
 import re
 import time
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
@@ -6,6 +7,8 @@ from pathlib import Path
 
 import pandas as pd
 from scipy.io import loadmat
+
+logger = logging.getLogger('main')
 
 
 # Settings
@@ -27,7 +30,7 @@ def parquetize_folder(directory: Path, destination: Path) -> pd.DataFrame:
     file_paths = [f for f in directory.iterdir()]
     end_folder_name = directory.name
 
-    print(f"Converting {end_folder_name}...")
+    logger.info(f"Converting {end_folder_name}...")
 
     batch_number = f"b{end_folder_name.split('-')[1]}"
     file_names = map(lambda x: x.name, file_paths)
@@ -47,7 +50,7 @@ def parquetize_folder(directory: Path, destination: Path) -> pd.DataFrame:
     df.columns = df.columns.astype(str)
 
     df.to_parquet(str(destination / f"{end_folder_name}.parquet"))
-    print(f"File {end_folder_name} Completed")
+    logger.info(f"File {end_folder_name} Completed")
 
 
 def parquetize_directory(directory: Path, destination: Path, num_folders=10):
@@ -64,4 +67,4 @@ if __name__ == "__main__":
 
     t1 = time.perf_counter()
     parquetize_directory(directory, out_directory)
-    print(f"Elapsed Time: {time.perf_counter() - t1} s")
+    logger.debug(f"Elapsed Time: {time.perf_counter() - t1} s")

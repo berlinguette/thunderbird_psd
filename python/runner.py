@@ -1,12 +1,16 @@
 from pathlib import Path
-import PySimpleGUI as sg
-from typing import Optional
-from psdata_converter import convert_psdata_directory
-from main import parquetize_directory
 from shutil import rmtree
+from typing import Optional
+import logging
+
+import PySimpleGUI as sg
+
+from main import parquetize_directory
+from psdata_converter import MAX_CONCURRENT_TASKS, convert_psdata_directory
 
 WINDOW_TITLE = 'Select Raw Data Folder'
 
+logger = logging.getLogger('main')
 def prepare_destination(destination_path: Path):
     if destination_path.is_dir():
         rmtree(destination_path)
@@ -38,7 +42,9 @@ if __name__ == "__main__":
     parquet_directory = psdata_folder_path.parent.parent / 'processed_data' / 'parquets'
     prepare_destination(matlab_directory)
     prepare_destination(parquet_directory)
+    logger.info("Converting PSData to Matlab")
     convert_psdata_directory(psdata_folder_path, matlab_directory)
+    logger.info("Converting Matlab to Parquet")
     parquetize_directory(matlab_directory, parquet_directory)
 
     

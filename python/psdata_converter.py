@@ -1,23 +1,32 @@
-from pathlib import Path
 import asyncio
-from typing import Optional, TypeVar, List, Iterable
-from itertools import islice
-from math import ceil
-import timeit
-import sys
+import logging
 import subprocess
+import sys
+import timeit
+from itertools import islice
+from pathlib import Path
+from typing import Optional
+
 
 MAX_CONCURRENT_TASKS = 5
 FORMAT = 'mat'
 FILES_LIMIT = 10
 
-def subprocess_results_printer(command_text: str, returncode: int, stdout: Optional[str], stderr: Optional[str]):
-    print(f'[{command_text} exited with {returncode}]')
+logger = logging.getLogger('main')
+
+
+def subprocess_results_printer(
+    command_text: str,
+    returncode: int,
+    stdout: Optional[str],
+    stderr: Optional[str]
+):
+    logger.info(f'[{command_text} exited with {returncode}]')
     if stdout:
-        print(f'[stdout]\n{stdout}')
+        logger.debug(f'[stdout]\n{stdout}')
     if stderr:
-        print(f'[stderr]\n{stderr}')
-        
+        logger.debug(f'[stderr]\n{stderr}')
+
 def generate_shell_command(file_path: Path, destination: Path):
     return [
         'picoscope', 
@@ -66,16 +75,13 @@ async def process_files_async(folder_path: Path, destination: Path, num_files = 
         chunks = make_chunks(cors, MAX_CONCURRENT_TASKS)
         num_chunks = get_number_of_chunks(len(cors), MAX_CONCURRENT_TASKS)
     for chunk_index, chunk in enumerate(chunks):
-        print(f'Beginning work on chunk {chunk_index+1}/{num_chunks}')
+        logger.info(f'Beginning work on chunk {chunk_index+1}/{chunks_count}')
         await asyncio.gather(*chunk)
-        print(f'Completed work on chunk {chunk_index+1}/{num_chunks}')
-    
-    # files_cors = [movefile(str(x), destination) for x in folder_path.iterdir() if x.is_dir()]
-    # await asyncio.gather(*files_cors)
+        logger.info(f'Completed work on chunk {chunk_index+1}/{chunks_count}')
 
     stop = timeit.default_timer()
     exec_time = stop - start
-    print(f"Method executed in {exec_time:.4f} seconds")
+    logger.debug(f"Method executed in {exec_time:.4f} seconds")
 
 def process_files_popen(folder_path: Path, destination: Path, num_files=FILES_LIMIT):
     start = timeit.default_timer()
@@ -89,16 +95,18 @@ def process_files_popen(folder_path: Path, destination: Path, num_files=FILES_LI
         num_chunks = get_number_of_chunks(len(file_paths), MAX_CONCURRENT_TASKS)
 
     for chunk_index, chunk in enumerate(chunks):
-        print(f'Beginning work on chunk {chunk_index+1}/{num_chunks}')
-        procs = [(file_path, subprocess.Popen(generate_shell_command(file_path, destination))) for file_path in chunk]
+        logger.info(f'Beginning work on chunk {chunk_index+1}/{chunks_count}')
+        procs = [(file_path, subprocess.Popen(generate_shell_command(
+            file_path, destination))) for file_path in chunk]
         for file_path, proc in procs:
             returncode = proc.wait()
-            subprocess_results_printer(f'Converting {file_path.name}', returncode, None, None)
-        print(f'Completed work on chunk {chunk_index+1}/{num_chunks}')
+            subprocess_results_printer(
+                f'Converting {file_path.name}', returncode, None, None)
+        logger.info(f'Completed work on chunk {chunk_index+1}/{chunks_count}')
 
     stop = timeit.default_timer()
     exec_time = stop - start
-    print(f"Method executed in {exec_time:.4f} seconds")
+    logger.debug(f"Method executed in {exec_time:.4f} seconds")
 
 def convert_psdata_directory(folder_path: Path, destination: Path, num_files=FILES_LIMIT):
     asyncio.run(process_files_async(folder_path, destination))
