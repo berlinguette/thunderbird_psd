@@ -16,8 +16,8 @@ logger = setup_logger('main')
 def prepare_destination(destination_path: Path):
     if destination_path.is_dir():
         rmtree(destination_path)
-    else:
-        destination_path.mkdir()
+    # destinations must exist for converters to work properly
+    destination_path.mkdir()
 
 
 def select_folder() -> Optional[Path]:
@@ -46,6 +46,7 @@ def main():
 
     matlab_directory = psdata_folder_path.parent / 'mat'
     parquet_directory = psdata_folder_path.parent.parent / 'processed_data' / 'parquets'
+    logger.info('Preparing destination folders')
     prepare_destination(matlab_directory)
     prepare_destination(parquet_directory)
 
