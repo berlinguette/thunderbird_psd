@@ -39,7 +39,7 @@ def select_folder() -> Optional[Path]:
     return Path(folder)
 
 
-def main():
+def main(keep_mat_files=True):
     psdata_folder_path = None
     while psdata_folder_path is None:
         psdata_folder_path = select_folder()
@@ -54,6 +54,10 @@ def main():
     convert_psdata_directory(psdata_folder_path, matlab_directory)
     logger.info("Converting Matlab to Parquet")
     parquetize_directory(matlab_directory, parquet_directory)
+
+    if not keep_mat_files:
+        logger.info("Removing Matlab files")
+        rmtree(matlab_directory)
 
 
 if __name__ == "__main__":
