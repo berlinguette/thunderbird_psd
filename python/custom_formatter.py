@@ -1,5 +1,5 @@
-from doctest import debug_script
 import logging
+
 
 class CustomFormatter(logging.Formatter):
     """Logging Formatter to add colors and count warning / errors"""

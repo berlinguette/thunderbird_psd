@@ -1,5 +1,7 @@
 import logging
+
 from custom_formatter import CustomFormatter
+
 
 def setup_logger(logger_name: str) -> logging.Logger:
     logger = logging.getLogger(logger_name)

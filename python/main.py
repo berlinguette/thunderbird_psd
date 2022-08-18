@@ -1,6 +1,6 @@
 import re
 import time
-from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from itertools import repeat
 from pathlib import Path
 
@@ -58,7 +58,8 @@ def parquetize_directory(directory: Path, destination: Path, num_folders=10):
     folder_paths = folder_paths[0:num_folders]
 
     with ProcessPoolExecutor(max_workers=MAX_PROCESSES) as process_executor:
-        process_executor.map(parquetize_folder, folder_paths, repeat(destination))
+        process_executor.map(
+            parquetize_folder, folder_paths, repeat(destination))
 
 
 if __name__ == "__main__":

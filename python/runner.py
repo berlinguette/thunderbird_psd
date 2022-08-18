@@ -13,6 +13,7 @@ WINDOW_TITLE = 'Select Raw Data Folder'
 
 logger = setup_logger('main')
 
+
 def prepare_destination(destination_path: Path):
     if destination_path.is_dir():
         rmtree(destination_path)

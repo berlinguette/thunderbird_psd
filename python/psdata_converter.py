@@ -1,5 +1,4 @@
 import asyncio
-import logging
 import subprocess
 import sys
 import timeit
@@ -50,8 +49,6 @@ def get_limited_files(folder_path: Path, limit: Optional[int]):
 
 
 T = TypeVar('T')
-
-
 def make_chunks(list_to_chunk: List[T], chunk_size: int) -> Iterable[List[T]]:
     # Taken from https://stackoverflow.com/a/312464
     for i in range(0, len(list_to_chunk), chunk_size):
