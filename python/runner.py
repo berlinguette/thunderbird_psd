@@ -1,18 +1,17 @@
 from pathlib import Path
 from shutil import rmtree
 from typing import Optional
-import logging
 
 import PySimpleGUI as sg
 
 from main import parquetize_directory
 from psdata_converter import MAX_CONCURRENT_TASKS, convert_psdata_directory
+from setup_logger import setup_logger
 
 MAX_CONCURRENT_TASKS = 5
 WINDOW_TITLE = 'Select Raw Data Folder'
 
-logger = logging.getLogger('main')
-
+logger = setup_logger('main')
 
 def prepare_destination(destination_path: Path):
     if destination_path.is_dir():

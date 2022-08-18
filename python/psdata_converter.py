@@ -8,11 +8,13 @@ from math import ceil
 from pathlib import Path
 from typing import Iterable, List, Optional, Tuple, TypeVar
 
+from setup_logger import setup_logger
+
 MAX_CONCURRENT_TASKS = 5
 FORMAT = 'mat'
 FILES_LIMIT = 10
 
-logger = logging.getLogger('main')
+logger = setup_logger('psdata_converter')
 
 
 def subprocess_results_printer(

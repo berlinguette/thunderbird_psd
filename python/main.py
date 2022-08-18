@@ -1,4 +1,3 @@
-import logging
 import re
 import time
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
@@ -8,8 +7,9 @@ from pathlib import Path
 import pandas as pd
 from scipy.io import loadmat
 
-logger = logging.getLogger('main')
+from setup_logger import setup_logger
 
+logger = setup_logger('parquetizer')
 
 # Settings
 MAX_PROCESSES = 4
