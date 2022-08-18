@@ -4,7 +4,7 @@ from typing import Optional
 
 import PySimpleGUI as sg
 
-from main import parquetize_directory
+from python.parquetizer import parquetize_directory
 from psdata_converter import MAX_CONCURRENT_TASKS, convert_psdata_directory
 from setup_logger import setup_logger
 
