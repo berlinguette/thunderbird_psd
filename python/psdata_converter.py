@@ -2,19 +2,16 @@ import asyncio
 import subprocess
 import sys
 import timeit
-from itertools import islice
 from math import ceil
 from pathlib import Path
-from typing import Iterable, List, Optional, Tuple, TypeVar
+from typing import Dict, Iterable, List, Optional, Tuple, TypeVar
 
 from get_limited_files import get_limited_files
 from setup_logger import setup_logger
 
-MAX_CONCURRENT_TASKS = 5
 FORMAT = 'mat'
-FILES_LIMIT = 10
-
 logger = setup_logger('psdata_converter')
+T = TypeVar('T')
 
 
 def subprocess_results_printer(
@@ -41,15 +38,6 @@ def generate_shell_command(file_path: Path, destination: Path):
     ]
 
 
-def get_limited_files(folder_path: Path, limit: Optional[int]):
-    if limit is None:
-        files = folder_path.iterdir()
-    else:
-        files = islice(folder_path.iterdir(), limit)
-    return files
-
-
-T = TypeVar('T')
 def make_chunks(list_to_chunk: List[T], chunk_size: int) -> Iterable[List[T]]:
     # Taken from https://stackoverflow.com/a/312464
     for i in range(0, len(list_to_chunk), chunk_size):
@@ -85,8 +73,8 @@ async def process_file_async(file_path: Path, destination: Path):
 async def process_files_async(
     folder_path: Path,
     destination: Path,
-    num_files=FILES_LIMIT,
-    chunk_size=MAX_CONCURRENT_TASKS
+    num_files: Optional[int],
+    chunk_size: int
 ):
     start = timeit.default_timer()
 
@@ -107,8 +95,8 @@ async def process_files_async(
 def process_files_popen(
     folder_path: Path,
     destination: Path,
-    num_files=FILES_LIMIT,
-    chunk_size=MAX_CONCURRENT_TASKS
+    num_files: Optional[int],
+    chunk_size: int
 ):
     start = timeit.default_timer()
 
@@ -134,16 +122,17 @@ def process_files_popen(
 def convert_psdata_directory(
     folder_path: Path,
     destination: Path,
-    num_files=FILES_LIMIT,
-    chunk_size=MAX_CONCURRENT_TASKS
+    config: Dict
 ):
-    # asyncio.run(process_files_async(folder_path, destination, num_files, chunk_size))
+    num_files = config.get('files_limit')
+    chunk_size = config.get('psdata_tasks', 0)
     process_files_popen(folder_path, destination, num_files, chunk_size)
+    # asyncio.run(process_files_async(folder_path, destination, num_files, chunk_size))
 
 
 if __name__ == "__main__":
-    if 'win32' in sys.platform:
-        asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
+    # if 'win32' in sys.platform:
+    #     asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
     psdata_directory = Path("sample_dataset/raw_data/psdata")
     destination = psdata_directory.parent / 'mat'
     convert_psdata_directory(psdata_directory, destination)

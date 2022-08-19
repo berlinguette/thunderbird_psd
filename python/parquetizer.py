@@ -3,6 +3,7 @@ import time
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from itertools import repeat
 from pathlib import Path
+from typing import Dict
 
 import pandas as pd
 from scipy.io import loadmat
@@ -10,11 +11,8 @@ from scipy.io import loadmat
 from setup_logger import setup_logger
 
 from get_limited_files import get_limited_files
-logger = setup_logger('parquetizer')
 
-# Settings
-MAX_PROCESSES = 4
-MAX_THREADS_PER_PROCESS = 4
+logger = setup_logger('parquetizer')
 
 
 def get_data_tuple(file_path, label):
@@ -27,7 +25,7 @@ def elapsed_time(t1):
     return time.perf_counter() - t1
 
 
-def parquetize_folder(directory: Path, destination: Path) -> pd.DataFrame:
+def parquetize_folder(directory: Path, destination: Path, max_workers: int) -> pd.DataFrame:
     file_paths = [f for f in directory.iterdir()]
     end_folder_name = directory.name
 
@@ -42,7 +40,7 @@ def parquetize_folder(directory: Path, destination: Path) -> pd.DataFrame:
 
     labels = map(get_label, file_names)
 
-    with ThreadPoolExecutor(max_workers=MAX_THREADS_PER_PROCESS) as thread_executor:
+    with ThreadPoolExecutor(max_workers=max_workers) as thread_executor:
         result = thread_executor.map(get_data_tuple, file_paths, labels)
 
     labelled_data = list(zip(*result))
@@ -54,13 +52,20 @@ def parquetize_folder(directory: Path, destination: Path) -> pd.DataFrame:
     logger.info(f"File {end_folder_name} Completed")
 
 
-def parquetize_directory(directory: Path, destination: Path, num_folders=10):
-    folder_paths = [f for f in directory.iterdir()]
-    folder_paths = folder_paths[0:num_folders]
+def parquetize_directory(directory: Path, destination: Path, config: Dict):
+    # folder_paths = [f for f in directory.iterdir()]
+    # folder_paths = folder_paths[0:num_folders]
+    num_folders = config.get('files_limit')
+    parquet_tasks = config.get('parquet_tasks', 0)
+    parquet_files = config.get('parquet_files', 0)
+    folder_paths = [f for f in get_limited_files(directory, num_folders)]
 
-    with ProcessPoolExecutor(max_workers=MAX_PROCESSES) as process_executor:
+    with ProcessPoolExecutor(max_workers=parquet_tasks) as process_executor:
         process_executor.map(
-            parquetize_folder, folder_paths, repeat(destination))
+            parquetize_folder,
+            folder_paths,
+            repeat(destination),
+            repeat(parquet_files))
 
 
 if __name__ == "__main__":

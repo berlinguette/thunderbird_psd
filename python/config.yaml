@@ -1,0 +1,8 @@
+delete_matlab: false  # delete Matlab files once done
+files_limit: null  # limit number of PSData files processed, null = no limit
+psdata_tasks: 5  # max concurrent PSData -> Matlab conversions
+# WARNING! Each PSData conversion spawns a separate PicoScope software instance!
+# This can easily eat up available memory.
+parquet_tasks: 4  # max concurrent Matlab -> Parquet conversions
+parquet_files: 4  # max concurrent Matlab file load threads per conversion
+# WARNING! The total threads is the PRODUCT of these two settings!
