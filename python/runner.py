@@ -8,11 +8,12 @@ import PySimpleGUI as sg
 from configuration import get_configuration
 from psdata_converter import convert_psdata_directory
 from parquetizer import parquetize_directory
-from setup_logger import setup_logger
+from setup_logger import (
+    cleanup_logger,
+    setup_logger
+)
 
 WINDOW_TITLE = 'Select Raw Data Folder'
-
-logger = setup_logger('main')
 
 
 def prepare_destination(destination_path: Path):
@@ -49,6 +50,7 @@ def main(config: Dict, psdata_folder_path: Path = None):
         psdata_folder_path = select_folder()
 
     if psdata_folder_path is not None:
+        logger = setup_logger('main', psdata_folder_path.parent.parent)
         matlab_directory = psdata_folder_path.parent / 'mat'
         parquet_directory = psdata_folder_path.parent.parent / 'processed_data' / 'parquets'
         logger.info('Preparing destination folders')
@@ -119,6 +121,5 @@ if __name__ == "__main__":
     config_path = args_dict.pop('config', None)
     # get config
     config = get_configuration(args_dict, config_path)
-    logger.debug(f'Final configuration: {config}')
 
     main(config, psdata_folder_path=source_path)

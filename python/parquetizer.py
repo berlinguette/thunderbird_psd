@@ -12,7 +12,9 @@ from setup_logger import setup_logger
 
 from get_limited_files import get_limited_files
 
-logger = setup_logger('parquetizer')
+from setup_logger import (
+    cleanup_logger,
+    setup_logger
 
 
 def get_data_tuple(file_path, label):
@@ -25,7 +27,12 @@ def elapsed_time(t1):
     return time.perf_counter() - t1
 
 
-def parquetize_folder(directory: Path, destination: Path, max_workers: int) -> pd.DataFrame:
+def parquetize_folder(
+    directory: Path,
+    destination: Path,
+    max_workers: int,
+    logger: Logger
+) -> pd.DataFrame:
     file_paths = [f for f in directory.iterdir()]
     end_folder_name = directory.name
 
@@ -55,6 +62,8 @@ def parquetize_folder(directory: Path, destination: Path, max_workers: int) -> p
 def parquetize_directory(directory: Path, destination: Path, config: Dict):
     # folder_paths = [f for f in directory.iterdir()]
     # folder_paths = folder_paths[0:num_folders]
+    logger = setup_logger('parquetizer', directory.parent.parent)
+    t1 = time.perf_counter()
     num_folders = config.get('files_limit')
     parquet_tasks = config.get('parquet_tasks', 0)
     parquet_files = config.get('parquet_files', 0)
@@ -66,12 +75,11 @@ def parquetize_directory(directory: Path, destination: Path, config: Dict):
             folder_paths,
             repeat(destination),
             repeat(parquet_files))
+    cleanup_logger(logger)
 
 
 if __name__ == "__main__":
     directory = Path("sample_dataset/raw_data/mat/")
     out_directory = Path("sample_dataset/processed_data/parquets/")
 
-    t1 = time.perf_counter()
     parquetize_directory(directory, out_directory)
-    logger.debug(f"Elapsed Time: {time.perf_counter() - t1} s")
