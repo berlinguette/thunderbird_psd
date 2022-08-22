@@ -1,20 +1,22 @@
 import re
 import time
-from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor
 from itertools import repeat
+from logging import Logger
 from pathlib import Path
 from typing import Dict
 
 import pandas as pd
 from scipy.io import loadmat
-
-from setup_logger import setup_logger
+from tqdm.contrib.concurrent import process_map
 
 from get_limited_files import get_limited_files
-
 from setup_logger import (
     cleanup_logger,
-    setup_logger
+    setup_logger,
+    tqdm_log_debug,
+    tqdm_log_info
+)
 
 
 def get_data_tuple(file_path, label):
@@ -36,7 +38,8 @@ def parquetize_folder(
     file_paths = [f for f in directory.iterdir()]
     end_folder_name = directory.name
 
-    logger.info(f"Converting {end_folder_name}...")
+    # TODO allow on-screen when tqdm team fixes process pool issues
+    tqdm_log_info(f"Converting {end_folder_name}...", logger, on_screen=False)
 
     batch_number = f"b{end_folder_name.split('-')[1]}"
     file_names = map(lambda x: x.name, file_paths)
@@ -56,7 +59,8 @@ def parquetize_folder(
     df.columns = df.columns.astype(str)
 
     df.to_parquet(str(destination / f"{end_folder_name}.parquet"))
-    logger.info(f"File {end_folder_name} Completed")
+    tqdm_log_info(f"Folder {end_folder_name} Completed",
+                  logger, on_screen=False)
 
 
 def parquetize_directory(directory: Path, destination: Path, config: Dict):
@@ -64,17 +68,25 @@ def parquetize_directory(directory: Path, destination: Path, config: Dict):
     # folder_paths = folder_paths[0:num_folders]
     logger = setup_logger('parquetizer', directory.parent.parent)
     t1 = time.perf_counter()
+
     num_folders = config.get('files_limit')
     parquet_tasks = config.get('parquet_tasks', 0)
     parquet_files = config.get('parquet_files', 0)
     folder_paths = [f for f in get_limited_files(directory, num_folders)]
 
-    with ProcessPoolExecutor(max_workers=parquet_tasks) as process_executor:
-        process_executor.map(
-            parquetize_folder,
-            folder_paths,
-            repeat(destination),
-            repeat(parquet_files))
+    process_map(
+        parquetize_folder,
+        folder_paths,
+        repeat(destination),
+        repeat(parquet_files),
+        repeat(logger),
+        max_workers=parquet_tasks,
+        desc='Matlab Folders', unit='folder', total=len(folder_paths)
+    )
+
+    # TODO use elapsed_time
+    tqdm_log_debug(
+        f"Elapsed Time: {time.perf_counter() - t1} s", logger, on_screen=False)
     cleanup_logger(logger)
 
 

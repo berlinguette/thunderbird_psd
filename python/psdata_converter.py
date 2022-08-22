@@ -2,18 +2,22 @@ import asyncio
 import subprocess
 import sys
 import timeit
+from logging import Logger
 from math import ceil
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Tuple, TypeVar
 
+from tqdm import tqdm
+
 from get_limited_files import get_limited_files
 from setup_logger import (
     cleanup_logger,
-    setup_logger
+    setup_logger,
+    tqdm_log_debug,
+    tqdm_log_info
 )
 
 FORMAT = 'mat'
-logger = setup_logger('psdata_converter')
 T = TypeVar('T')
 
 
@@ -23,13 +27,14 @@ def subprocess_results_printer(
     stdout: Optional[str],
     stderr: Optional[str],
     logger: Logger,
-    stderr: Optional[str]
+    on_screen: bool = True
 ):
-    logger.info(f'[{command_text} exited with {returncode}]')
+    tqdm_log_info(f'[{command_text} exited with {returncode}]',
+                  logger, on_screen=on_screen)
     if stdout:
-        logger.debug(f'[stdout]\n{stdout}')
+        tqdm_log_debug(f'[stdout]\n{stdout}', logger, on_screen=on_screen)
     if stderr:
-        logger.debug(f'[stderr]\n{stderr}')
+        tqdm_log_debug(f'[stderr]\n{stderr}', logger, on_screen=on_screen)
 
 
 def generate_shell_command(file_path: Path, destination: Path):
@@ -74,6 +79,7 @@ async def process_file_async(file_path: Path, destination: Path, logger: Logger)
     subprocess_results_printer(
         f'Converting {file_path.name}', returncode, None, None,
         logger,
+        on_screen=False
     )
 
 
@@ -91,13 +97,18 @@ async def process_files_async(
     # Chunking code from https://fredrikaverpil.github.io/2017/06/20/async-and-await-with-subprocesses/
     chunks, chunks_count = chunkify(cors, chunk_size)
     for chunk_index, chunk in enumerate(chunks):
-        logger.info(f'Beginning work on chunk {chunk_index+1}/{chunks_count}')
+        tqdm_log_info(
+            f'Beginning work on chunk {chunk_index+1}/{chunks_count}',
+            logger, on_screen=False)
         await asyncio.gather(*chunk)
-        logger.info(f'Completed work on chunk {chunk_index+1}/{chunks_count}')
+        tqdm_log_info(
+            f'Completed work on chunk {chunk_index+1}/{chunks_count}',
+            logger, on_screen=False)
 
     stop = timeit.default_timer()
     exec_time = stop - start
-    logger.debug(f"Method executed in {exec_time:.4f} seconds")
+    tqdm_log_debug(f"Method executed in {exec_time:.4f} seconds",
+                   logger, on_screen=False)
 
 
 def process_files_popen(
@@ -113,19 +124,28 @@ def process_files_popen(
         folder_path, num_files)]
     chunks, chunks_count = chunkify(file_paths, chunk_size)
 
-    for chunk_index, chunk in enumerate(chunks):
-        logger.info(f'Beginning work on chunk {chunk_index+1}/{chunks_count}')
-        procs = [(file_path, subprocess.Popen(generate_shell_command(
-            file_path, destination))) for file_path in chunk]
-        for file_path, proc in procs:
-            returncode = proc.wait()
-            subprocess_results_printer(
-                f'Converting {file_path.name}', returncode, None, None)
-        logger.info(f'Completed work on chunk {chunk_index+1}/{chunks_count}')
+    with tqdm(desc='PSData Files', unit='file', total=len(file_paths)) as progress_bar:
+        for chunk_index, chunk in enumerate(chunks):
+            tqdm_log_info(
+                f'Beginning work on chunk {chunk_index+1}/{chunks_count}',
+                logger, on_screen=False)
+            procs = [(file_path, subprocess.Popen(generate_shell_command(
+                file_path, destination))) for file_path in chunk]
+            for proc_data in procs:
+                file_path, proc = proc_data
+                returncode = proc.wait()
+                progress_bar.update()
+                subprocess_results_printer(
+                    f'Converting {file_path.name}', returncode, None, None,
+                    logger, on_screen=False)
+            tqdm_log_info(
+                f'Completed work on chunk {chunk_index+1}/{chunks_count}',
+                logger, on_screen=False)
 
     stop = timeit.default_timer()
     exec_time = stop - start
-    logger.debug(f"Method executed in {exec_time:.4f} seconds")
+    tqdm_log_debug(f"Method executed in {exec_time:.4f} seconds",
+                   logger, on_screen=False)
 
 
 def convert_psdata_directory(

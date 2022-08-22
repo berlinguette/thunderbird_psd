@@ -10,7 +10,9 @@ from psdata_converter import convert_psdata_directory
 from parquetizer import parquetize_directory
 from setup_logger import (
     cleanup_logger,
-    setup_logger
+    setup_logger,
+    tqdm_log_info,
+    tqdm_log_debug
 )
 
 WINDOW_TITLE = 'Select Raw Data Folder'
@@ -51,22 +53,29 @@ def main(config: Dict, psdata_folder_path: Path = None):
 
     if psdata_folder_path is not None:
         logger = setup_logger('main', psdata_folder_path.parent.parent)
+        tqdm_log_info(f'Converting files at {psdata_folder_path}', logger)
+        tqdm_log_debug(
+            f'Final configuration: {config}', logger, on_screen=False)
+
         matlab_directory = psdata_folder_path.parent / 'mat'
         parquet_directory = psdata_folder_path.parent.parent / 'processed_data' / 'parquets'
-        logger.info('Preparing destination folders')
+        tqdm_log_info('Preparing destination folders', logger)
         prepare_destination(matlab_directory)
+        tqdm_log_debug('Matlab destination done', logger)
         prepare_destination(parquet_directory)
+        tqdm_log_debug('Parquet destination done', logger)
 
-        logger.info("Converting PSData to Matlab")
+        tqdm_log_info("Converting PSData to Matlab", logger)
         convert_psdata_directory(psdata_folder_path, matlab_directory, config)
-        logger.info("Converting Matlab to Parquet")
+        tqdm_log_info("Converting Matlab to Parquet", logger)
         parquetize_directory(matlab_directory, parquet_directory, config)
 
         if config.get('delete_matlab'):
-            logger.info("Removing Matlab files")
+            tqdm_log_info("Removing Matlab files", logger)
             rmtree(matlab_directory)
+        cleanup_logger(logger)
     else:
-        logger.info('Closing...')
+        print('Closing...')
 
 
 def setup_parser() -> ArgumentParser:
@@ -116,10 +125,9 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     args_dict = vars(args)
-    # source and config are only needed here, so strip them out
+    # source and config are only needed here, not in config
     source_path = args_dict.pop('source', None)
     config_path = args_dict.pop('config', None)
-    # get config
     config = get_configuration(args_dict, config_path)
 
     main(config, psdata_folder_path=source_path)
