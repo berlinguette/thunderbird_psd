@@ -4,8 +4,10 @@ import logging
 class CustomFormatter(logging.Formatter):
     """Logging Formatter to add colors and count warning / errors"""
 
-    basic_format = "%(asctime)s - %(levelname)s/%(name)s - %(message)s"
-    detailed_format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s (%(filename)s:%(lineno)d)"
+    basic_format = ("%(asctime)s - %(levelname)s/%(name)s - %(message)s",
+                    "%Y-%m-%d %H:%M:%S")
+    detailed_format = ("%(asctime)s - %(name)s - %(levelname)s - %(message)s (%(filename)s:%(lineno)d)",
+                       None)
 
     FORMATS = {
         logging.DEBUG: basic_format,
@@ -17,5 +19,5 @@ class CustomFormatter(logging.Formatter):
 
     def format(self, record):
         log_fmt = self.FORMATS.get(record.levelno)
-        formatter = logging.Formatter(log_fmt)
+        formatter = logging.Formatter(*log_fmt)
         return formatter.format(record)
