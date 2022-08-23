@@ -85,10 +85,9 @@ def parquetize_directory(directory: Path, destination: Path, config: Dict):
         desc='Matlab Folders', unit='folder', total=len(folder_paths)
     )
 
-    # TODO use elapsed_time
     tqdm_log_info(f'Processed {len(list(results))} folders', logger)
     tqdm_log_debug(
-        f"Elapsed Time: {time.perf_counter() - t1} s", logger, on_screen=False)
+        f"Elapsed Time: {elapsed_time(t1):.4f} s", logger, on_screen=False)
     cleanup_logger(logger)
 
 
