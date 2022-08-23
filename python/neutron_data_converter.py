@@ -7,7 +7,7 @@ from typing import Dict, Optional
 import PySimpleGUI as sg
 
 from configuration import get_configuration
-from psdata_converter import convert_psdata_directory
+from python.psdata_to_matlab import convert_psdata_directory
 from parquetizer import parquetize_directory
 from setup_logger import (
     cleanup_logger,
