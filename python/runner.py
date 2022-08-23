@@ -1,3 +1,4 @@
+import logging
 from argparse import ArgumentParser
 from pathlib import Path
 from shutil import rmtree
@@ -14,6 +15,8 @@ from setup_logger import (
     tqdm_log_info,
     tqdm_log_debug
 )
+
+logger = logging.getLogger('main')
 
 WINDOW_TITLE = 'Select Raw Data Folder'
 
@@ -52,7 +55,7 @@ def main(config: Dict, psdata_folder_path: Path = None):
         psdata_folder_path = select_folder()
 
     if psdata_folder_path is not None:
-        logger = setup_logger('main', psdata_folder_path.parent.parent)
+        setup_logger(logger, psdata_folder_path.parent.parent)
         tqdm_log_info(f'Converting files at {psdata_folder_path}', logger)
         tqdm_log_debug(
             f'Final configuration: {config}', logger, on_screen=False)

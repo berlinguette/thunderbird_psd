@@ -1,8 +1,8 @@
 import asyncio
+import logging
 import subprocess
 import sys
 import timeit
-from logging import Logger
 from math import ceil
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Tuple, TypeVar
@@ -10,15 +10,12 @@ from typing import Dict, Iterable, List, Optional, Tuple, TypeVar
 from tqdm import tqdm
 
 from get_limited_files import get_limited_files
-from setup_logger import (
-    cleanup_logger,
-    setup_logger,
-    tqdm_log_debug,
-    tqdm_log_info
-)
+from setup_logger import (cleanup_logger, setup_logger, tqdm_log_debug,
+                          tqdm_log_info)
 
 FORMAT = 'mat'
 T = TypeVar('T')
+logger = logging.getLogger('psdata_converter')
 
 
 def subprocess_results_printer(
@@ -26,10 +23,9 @@ def subprocess_results_printer(
     returncode: int,
     stdout: Optional[str],
     stderr: Optional[str],
-    logger: Logger,
     on_screen: bool = True
 ):
-    tqdm_log_info(f'[{command_text} exited with {returncode}]',
+    tqdm_log_debug(f'[{command_text} exited with {returncode}]',
                   logger, on_screen=on_screen)
     if stdout:
         tqdm_log_debug(f'[stdout]\n{stdout}', logger, on_screen=on_screen)
@@ -68,7 +64,7 @@ def chunkify(list_to_chunk: List[T], chunk_size: int) -> Tuple[Iterable[List[T]]
     return (chunks, chunk_count)
 
 
-async def process_file_async(file_path: Path, destination: Path, logger: Logger):
+async def process_file_async(file_path: Path, destination: Path):
     proc = await asyncio.create_subprocess_exec(
         *generate_shell_command(file_path, destination))
     await proc.communicate()
@@ -78,7 +74,6 @@ async def process_file_async(file_path: Path, destination: Path, logger: Logger)
         returncode = 420  # computer must be high
     subprocess_results_printer(
         f'Converting {file_path.name}', returncode, None, None,
-        logger,
         on_screen=False
     )
 
@@ -87,8 +82,7 @@ async def process_files_async(
     folder_path: Path,
     destination: Path,
     num_files: Optional[int],
-    chunk_size: int,
-    logger: Logger
+    chunk_size: int
 ):
     start = timeit.default_timer()
 
@@ -97,11 +91,11 @@ async def process_files_async(
     # Chunking code from https://fredrikaverpil.github.io/2017/06/20/async-and-await-with-subprocesses/
     chunks, chunks_count = chunkify(cors, chunk_size)
     for chunk_index, chunk in enumerate(chunks):
-        tqdm_log_info(
+        tqdm_log_debug(
             f'Beginning work on chunk {chunk_index+1}/{chunks_count}',
             logger, on_screen=False)
         await asyncio.gather(*chunk)
-        tqdm_log_info(
+        tqdm_log_debug(
             f'Completed work on chunk {chunk_index+1}/{chunks_count}',
             logger, on_screen=False)
 
@@ -115,8 +109,7 @@ def process_files_popen(
     folder_path: Path,
     destination: Path,
     num_files: Optional[int],
-    chunk_size: int,
-    logger: Logger
+    chunk_size: int
 ):
     start = timeit.default_timer()
 
@@ -126,7 +119,7 @@ def process_files_popen(
 
     with tqdm(desc='PSData Files', unit='file', total=len(file_paths)) as progress_bar:
         for chunk_index, chunk in enumerate(chunks):
-            tqdm_log_info(
+            tqdm_log_debug(
                 f'Beginning work on chunk {chunk_index+1}/{chunks_count}',
                 logger, on_screen=False)
             procs = [(file_path, subprocess.Popen(generate_shell_command(
@@ -137,8 +130,8 @@ def process_files_popen(
                 progress_bar.update()
                 subprocess_results_printer(
                     f'Converting {file_path.name}', returncode, None, None,
-                    logger, on_screen=False)
-            tqdm_log_info(
+                    on_screen=False)
+            tqdm_log_debug(
                 f'Completed work on chunk {chunk_index+1}/{chunks_count}',
                 logger, on_screen=False)
 
@@ -154,14 +147,14 @@ def convert_psdata_directory(
     config: Dict
 ):
     logging_folder = folder_path.parent.parent
-    logger = setup_logger('psdata_converter', logging_folder)
+    setup_logger(logger, logging_folder)
     num_files = config.get('files_limit')
     chunk_size = config.get('psdata_tasks', 0)
     process_files_popen(folder_path, destination,
-                        num_files, chunk_size, logger)
+                        num_files, chunk_size)
     # asyncio.run(
     #     process_files_async(
-    #         folder_path, destination, num_files, chunk_size, logger
+    #         folder_path, destination, num_files, chunk_size
     #     )
     # )
     cleanup_logger(logger)
