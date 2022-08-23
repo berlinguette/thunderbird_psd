@@ -21,11 +21,18 @@ logger = logging.getLogger('main')
 WINDOW_TITLE = 'Select Raw Data Folder'
 
 
-def prepare_destination(destination_path: Path):
-    if destination_path.is_dir():
+def prepare_destination(destination_path: Path, fresh_destination: bool):
+    if fresh_destination and destination_path.is_dir():
+        tqdm_log_debug(
+            f'Deleting destination {destination_path}', 
+            logger, on_screen=True)
         rmtree(destination_path)
     # destinations must exist for converters to work properly
-    destination_path.mkdir()
+    if not destination_path.exists():
+        tqdm_log_debug(
+            f'Making destination {destination_path}', 
+            logger, on_screen=True)
+        destination_path.mkdir()
 
 
 def select_folder() -> Optional[Path]:
@@ -62,10 +69,11 @@ def main(config: Dict, psdata_folder_path: Path = None):
 
         matlab_directory = psdata_folder_path.parent / 'mat'
         parquet_directory = psdata_folder_path.parent.parent / 'processed_data' / 'parquets'
+        fresh_destination = config.get('fresh_destination', False)
         tqdm_log_info('Preparing destination folders', logger)
-        prepare_destination(matlab_directory)
+        prepare_destination(matlab_directory, fresh_destination)
         tqdm_log_debug('Matlab destination done', logger)
-        prepare_destination(parquet_directory)
+        prepare_destination(parquet_directory, fresh_destination)
         tqdm_log_debug('Parquet destination done', logger)
 
         tqdm_log_info("Converting PSData to Matlab", logger)
@@ -99,6 +107,10 @@ def setup_parser() -> ArgumentParser:
         '--delete-matlab', '-d',
         action='store_true',
         help='delete generated Matlab files when conversion is done')
+    parser.add_argument(
+        '--fresh-destination', '-f',
+        action='store_true',
+        help='delete any previous Matlab and Parquet files if they exist')
     parser.add_argument(
         '--files-limit', '-l',
         type=int,
