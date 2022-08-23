@@ -8,7 +8,7 @@ import PySimpleGUI as sg
 
 from configuration import get_configuration
 from parquetizer import parquetize_directory
-from python.psdata_to_matlab import convert_psdata_directory
+from psdata_to_matlab import convert_psdata_directory
 from setup_logger import (cleanup_logger, setup_logger, tqdm_log_debug,
                           tqdm_log_info)
 
@@ -141,4 +141,4 @@ if __name__ == "__main__":
     config_path = args_dict.pop('config', None)
     config = get_configuration(args_dict, config_path)
 
-    main(config, psdata_folder_path=source_path)
+    main(config, psdata_folder_path=Path(source_path))
