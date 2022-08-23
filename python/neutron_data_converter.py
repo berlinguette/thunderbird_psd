@@ -7,14 +7,10 @@ from typing import Dict, Optional
 import PySimpleGUI as sg
 
 from configuration import get_configuration
-from python.psdata_to_matlab import convert_psdata_directory
 from parquetizer import parquetize_directory
-from setup_logger import (
-    cleanup_logger,
-    setup_logger,
-    tqdm_log_info,
-    tqdm_log_debug
-)
+from python.psdata_to_matlab import convert_psdata_directory
+from setup_logger import (cleanup_logger, setup_logger, tqdm_log_debug,
+                          tqdm_log_info)
 
 logger = logging.getLogger('main')
 
@@ -24,13 +20,13 @@ WINDOW_TITLE = 'Select Raw Data Folder'
 def prepare_destination(destination_path: Path, fresh_destination: bool):
     if fresh_destination and destination_path.is_dir():
         tqdm_log_debug(
-            f'Deleting destination {destination_path}', 
+            f'Deleting destination {destination_path}',
             logger, on_screen=True)
         rmtree(destination_path)
     # destinations must exist for converters to work properly
     if not destination_path.exists():
         tqdm_log_debug(
-            f'Making destination {destination_path}', 
+            f'Making destination {destination_path}',
             logger, on_screen=True)
         destination_path.mkdir()
 

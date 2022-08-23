@@ -41,7 +41,8 @@ def parquetize_folder(
     new_logger = logging.getLogger(f'proc-{end_folder_name}')
     # we're in sample_dataset/raw_data/mat, one folder deeper than usual
     setup_logger(new_logger, directory.parent.parent.parent)
-    tqdm_log_debug(f"Converting {end_folder_name}...", new_logger, on_screen=False)
+    tqdm_log_debug(f"Converting {end_folder_name}...",
+                   new_logger, on_screen=False)
 
     batch_number = f"b{end_folder_name.split('-')[1]}"
     file_names = map(lambda x: x.name, file_paths)
@@ -62,7 +63,7 @@ def parquetize_folder(
 
     df.to_parquet(str(destination / f"{end_folder_name}.parquet"))
     tqdm_log_debug(f"Folder {end_folder_name} Completed",
-                  new_logger, on_screen=False)
+                   new_logger, on_screen=False)
 
 
 def parquetize_directory(directory: Path, destination: Path, config: Dict):

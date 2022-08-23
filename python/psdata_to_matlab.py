@@ -10,8 +10,7 @@ from typing import Dict, Iterable, List, Optional, Tuple, TypeVar
 from tqdm import tqdm
 
 from get_limited_files import get_limited_files
-from setup_logger import (cleanup_logger, setup_logger, tqdm_log_debug,
-                          tqdm_log_info)
+from setup_logger import (cleanup_logger, setup_logger, tqdm_log_debug)
 
 FORMAT = 'mat'
 T = TypeVar('T')
@@ -26,7 +25,7 @@ def subprocess_results_printer(
     on_screen: bool = True
 ):
     tqdm_log_debug(f'[{command_text} exited with {returncode}]',
-                  logger, on_screen=on_screen)
+                   logger, on_screen=on_screen)
     if stdout:
         tqdm_log_debug(f'[stdout]\n{stdout}', logger, on_screen=on_screen)
     if stderr:
