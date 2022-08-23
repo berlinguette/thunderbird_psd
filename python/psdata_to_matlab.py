@@ -161,8 +161,13 @@ def convert_psdata_directory(
 
 
 if __name__ == "__main__":
+    from configuration import get_configuration
+
     if 'win32' in sys.platform:
         asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
+
     psdata_directory = Path("sample_dataset/raw_data/psdata")
     destination = psdata_directory.parent / 'mat'
-    convert_psdata_directory(psdata_directory, destination)
+
+    config = get_configuration({})
+    convert_psdata_directory(psdata_directory, destination, config)

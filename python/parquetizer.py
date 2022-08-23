@@ -92,7 +92,10 @@ def parquetize_directory(directory: Path, destination: Path, config: Dict):
 
 
 if __name__ == "__main__":
+    from configuration import get_configuration
+
     directory = Path("sample_dataset/raw_data/mat/")
     out_directory = Path("sample_dataset/processed_data/parquets/")
 
-    parquetize_directory(directory, out_directory)
+    config = get_configuration({})
+    parquetize_directory(directory, out_directory, config)
