@@ -6,11 +6,11 @@ from typing import Dict, Optional
 
 import PySimpleGUI as sg
 
-from configuration import get_configuration
+from configuration.configuration import get_configuration
+from logging_helpers.setup_logger import (cleanup_logger, setup_logger,
+                                          tqdm_log_debug, tqdm_log_info)
 from parquetizer import parquetize_directory
 from psdata_to_matlab import convert_psdata_directory
-from setup_logger import (cleanup_logger, setup_logger, tqdm_log_debug,
-                          tqdm_log_info)
 
 logger = logging.getLogger('main')
 

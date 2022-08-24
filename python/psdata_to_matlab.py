@@ -9,8 +9,9 @@ from typing import Dict, Iterable, List, Optional, Tuple, TypeVar
 
 from tqdm import tqdm
 
-from get_limited_files import get_limited_files
-from setup_logger import (cleanup_logger, setup_logger, tqdm_log_debug)
+from logging_helpers.setup_logger import (cleanup_logger, setup_logger,
+                                          tqdm_log_debug)
+from utilities.get_limited_files import get_limited_files
 
 FORMAT = 'mat'
 T = TypeVar('T')

@@ -10,9 +10,9 @@ import pandas as pd
 from scipy.io import loadmat
 from tqdm.contrib.concurrent import process_map
 
-from get_limited_files import get_limited_files
-from setup_logger import (cleanup_logger, setup_logger, tqdm_log_debug,
-                          tqdm_log_info)
+from logging_helpers.setup_logger import (cleanup_logger, setup_logger,
+                                          tqdm_log_debug, tqdm_log_info)
+from utilities.get_limited_files import get_limited_files
 
 logger = logging.getLogger('parquetizer')
 
