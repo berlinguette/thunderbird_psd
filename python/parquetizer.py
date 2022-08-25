@@ -12,6 +12,7 @@ from tqdm.contrib.concurrent import process_map
 
 from logging_helpers.setup_logger import (cleanup_logger, setup_logger,
                                           message_debug, message_info)
+from utilities.constants import BAR_FORMAT
 from utilities.get_limited_files import get_limited_files
 
 logger = logging.getLogger('parquetizer')
@@ -83,7 +84,10 @@ def parquetize_directory(directory: Path, destination: Path, config: Dict):
         repeat(destination),
         repeat(parquet_files),
         max_workers=parquet_tasks,
-        desc='Matlab Folders', unit='folder', total=len(folder_paths)
+        desc='Matlab Folders',
+        unit='dir',
+        total=len(folder_paths),
+        bar_format=BAR_FORMAT
     )
 
     message_info(f'Processed {len(list(results))} folders', logger)

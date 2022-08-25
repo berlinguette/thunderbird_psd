@@ -13,6 +13,8 @@ from logging_helpers.setup_logger import (cleanup_logger, setup_logger,
                                           message_debug)
 from utilities.get_limited_files import get_limited_files
 
+from utilities.constants import BAR_FORMAT
+
 FORMAT = 'mat'
 T = TypeVar('T')
 logger = logging.getLogger('psdata_converter')
@@ -117,7 +119,12 @@ def process_files_popen(
         folder_path, num_files)]
     chunks, chunks_count = chunkify(file_paths, chunk_size)
 
-    with tqdm(desc='PSData Files', unit='file', total=len(file_paths)) as progress_bar:
+    with tqdm(
+        desc='PSData Files',
+        unit='file',
+        total=len(file_paths),
+        bar_format=BAR_FORMAT
+    ) as progress_bar:
         for chunk_index, chunk in enumerate(chunks):
             message_debug(
                 f'Beginning work on chunk {chunk_index+1}/{chunks_count}',
