@@ -11,7 +11,7 @@ from scipy.io import loadmat
 from tqdm.contrib.concurrent import process_map
 
 from logging_helpers.setup_logger import (cleanup_logger, setup_logger,
-                                          tqdm_log_debug, tqdm_log_info)
+                                          message_debug, message_info)
 from utilities.get_limited_files import get_limited_files
 
 logger = logging.getLogger('parquetizer')
@@ -41,7 +41,7 @@ def parquetize_folder(
     new_logger = logging.getLogger(f'proc-{end_folder_name}')
     # we're in sample_dataset/raw_data/mat, one folder deeper than usual
     setup_logger(new_logger, directory.parent.parent.parent)
-    tqdm_log_debug(f"Converting {end_folder_name}...",
+    message_debug(f"Converting {end_folder_name}...",
                    new_logger, on_screen=False)
 
     batch_number = f"b{end_folder_name.split('-')[1]}"
@@ -62,7 +62,7 @@ def parquetize_folder(
     df.columns = df.columns.astype(str)
 
     df.to_parquet(str(destination / f"{end_folder_name}.parquet"))
-    tqdm_log_debug(f"Folder {end_folder_name} Completed",
+    message_debug(f"Folder {end_folder_name} Completed",
                    new_logger, on_screen=False)
 
 
@@ -86,8 +86,8 @@ def parquetize_directory(directory: Path, destination: Path, config: Dict):
         desc='Matlab Folders', unit='folder', total=len(folder_paths)
     )
 
-    tqdm_log_info(f'Processed {len(list(results))} folders', logger)
-    tqdm_log_debug(
+    message_info(f'Processed {len(list(results))} folders', logger)
+    message_debug(
         f"Elapsed Time: {elapsed_time(t1):.4f} s", logger, on_screen=False)
     cleanup_logger(logger)
 

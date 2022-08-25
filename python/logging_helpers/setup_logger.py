@@ -21,15 +21,22 @@ def cleanup_logger(logger: logging.Logger):
             handler.close()
 
 
-def tqdm_logging(message: str, level: int, logger: logging.Logger, on_screen: bool = True):
-    logger.log(level, message)
+def message(
+    msg: str, 
+    level: int, 
+    logger: logging.Logger, 
+    on_screen: bool = True,
+    in_log: bool = True
+    ):
+    if in_log:
+        logger.log(level, msg)
     if on_screen:
-        tqdm.write(message)
+        tqdm.write(msg)
 
 
-def tqdm_log_debug(message: str, logger: logging.Logger, on_screen: bool = True):
-    tqdm_logging(message, logging.DEBUG, logger, on_screen=on_screen)
+def message_debug(msg: str, logger: logging.Logger, **kwargs):
+    message(msg, logging.DEBUG, logger, **kwargs)
 
 
-def tqdm_log_info(message: str, logger: logging.Logger, on_screen: bool = True):
-    tqdm_logging(message, logging.INFO, logger, on_screen=on_screen)
+def message_info(msg: str, logger: logging.Logger, **kwargs):
+    message(msg, logging.INFO, logger, **kwargs)

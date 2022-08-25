@@ -10,7 +10,7 @@ from typing import Dict, Iterable, List, Optional, Tuple, TypeVar
 from tqdm import tqdm
 
 from logging_helpers.setup_logger import (cleanup_logger, setup_logger,
-                                          tqdm_log_debug)
+                                          message_debug)
 from utilities.get_limited_files import get_limited_files
 
 FORMAT = 'mat'
@@ -25,12 +25,12 @@ def subprocess_results_printer(
     stderr: Optional[str],
     on_screen: bool = True
 ):
-    tqdm_log_debug(f'[{command_text} exited with {returncode}]',
+    message_debug(f'[{command_text} exited with {returncode}]',
                    logger, on_screen=on_screen)
     if stdout:
-        tqdm_log_debug(f'[stdout]\n{stdout}', logger, on_screen=on_screen)
+        message_debug(f'[stdout]\n{stdout}', logger, on_screen=on_screen)
     if stderr:
-        tqdm_log_debug(f'[stderr]\n{stderr}', logger, on_screen=on_screen)
+        message_debug(f'[stderr]\n{stderr}', logger, on_screen=on_screen)
 
 
 def generate_shell_command(file_path: Path, destination: Path):
@@ -91,17 +91,17 @@ async def process_files_async(
     # Chunking code from https://fredrikaverpil.github.io/2017/06/20/async-and-await-with-subprocesses/
     chunks, chunks_count = chunkify(cors, chunk_size)
     for chunk_index, chunk in enumerate(chunks):
-        tqdm_log_debug(
+        message_debug(
             f'Beginning work on chunk {chunk_index+1}/{chunks_count}',
             logger, on_screen=False)
         await asyncio.gather(*chunk)
-        tqdm_log_debug(
+        message_debug(
             f'Completed work on chunk {chunk_index+1}/{chunks_count}',
             logger, on_screen=False)
 
     stop = timeit.default_timer()
     exec_time = stop - start
-    tqdm_log_debug(f"Method executed in {exec_time:.4f} seconds",
+    message_debug(f"Method executed in {exec_time:.4f} seconds",
                    logger, on_screen=False)
 
 
@@ -119,7 +119,7 @@ def process_files_popen(
 
     with tqdm(desc='PSData Files', unit='file', total=len(file_paths)) as progress_bar:
         for chunk_index, chunk in enumerate(chunks):
-            tqdm_log_debug(
+            message_debug(
                 f'Beginning work on chunk {chunk_index+1}/{chunks_count}',
                 logger, on_screen=False)
             procs = [(file_path, subprocess.Popen(generate_shell_command(
@@ -131,13 +131,13 @@ def process_files_popen(
                 subprocess_results_printer(
                     f'Converting {file_path.name}', returncode, None, None,
                     on_screen=False)
-            tqdm_log_debug(
+            message_debug(
                 f'Completed work on chunk {chunk_index+1}/{chunks_count}',
                 logger, on_screen=False)
 
     stop = timeit.default_timer()
     exec_time = stop - start
-    tqdm_log_debug(f"Method executed in {exec_time:.4f} seconds",
+    message_debug(f"Method executed in {exec_time:.4f} seconds",
                    logger, on_screen=False)
 
 

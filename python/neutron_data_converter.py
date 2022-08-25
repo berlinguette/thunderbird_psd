@@ -8,7 +8,7 @@ import PySimpleGUI as sg
 
 from configuration.configuration import get_configuration
 from logging_helpers.setup_logger import (cleanup_logger, setup_logger,
-                                          tqdm_log_debug, tqdm_log_info)
+                                          message_debug, message_info)
 from parquetizer import parquetize_directory
 from psdata_to_matlab import convert_psdata_directory
 
@@ -19,15 +19,15 @@ WINDOW_TITLE = 'Select Raw Data Folder'
 
 def prepare_destination(destination_path: Path, fresh_destination: bool):
     if fresh_destination and destination_path.is_dir():
-        tqdm_log_debug(
+        message_debug(
             f'Deleting destination {destination_path}',
-            logger, on_screen=True)
+            logger, on_screen=False)
         rmtree(destination_path)
     # destinations must exist for converters to work properly
     if not destination_path.exists():
-        tqdm_log_debug(
+        message_debug(
             f'Making destination {destination_path}',
-            logger, on_screen=True)
+            logger, on_screen=False)
         destination_path.mkdir()
 
 
@@ -59,27 +59,38 @@ def main(config: Dict, psdata_folder_path: Path = None):
 
     if psdata_folder_path is not None:
         setup_logger(logger, psdata_folder_path.parent.parent)
-        tqdm_log_info(f'Converting files at {psdata_folder_path}', logger)
-        tqdm_log_debug(
+        message_info(f'Converting files at {psdata_folder_path}', logger)
+        message_info("", logger, in_log=False)
+        message_debug(
             f'Final configuration: {config}', logger, on_screen=False)
 
         matlab_directory = psdata_folder_path.parent / 'mat'
         parquet_directory = psdata_folder_path.parent.parent / 'processed_data' / 'parquets'
         fresh_destination = config.get('fresh_destination', False)
-        tqdm_log_info('Preparing destination folders', logger)
+        message_info('Preparing destination folders', logger)
         prepare_destination(matlab_directory, fresh_destination)
-        tqdm_log_debug('Matlab destination done', logger)
+        message_debug(' - Matlab destination done', logger)
         prepare_destination(parquet_directory, fresh_destination)
-        tqdm_log_debug('Parquet destination done', logger)
+        message_debug(' - Parquet destination done', logger)
+        message_info("", logger, in_log=False)
 
-        tqdm_log_info("Converting PSData to Matlab", logger)
+        message_info("Converting PSData to Matlab", logger)
+        message_info(
+            "You might see other windows pop up quickly."
+            + " This is normal. Don't panic!",
+            logger,
+            in_log=False
+        )
         convert_psdata_directory(psdata_folder_path, matlab_directory, config)
-        tqdm_log_info("Converting Matlab to Parquet", logger)
+        message_info("", logger, in_log=False)
+        message_info("Converting Matlab to Parquet", logger)
         parquetize_directory(matlab_directory, parquet_directory, config)
 
         if config.get('delete_matlab'):
-            tqdm_log_info("Removing Matlab files", logger)
+            message_info("", logger, in_log=False)
+            message_info("Removing Matlab files", logger)
             rmtree(matlab_directory)
+        message_info('Done', logger)
         cleanup_logger(logger)
     else:
         print('Closing...')
