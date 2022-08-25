@@ -2,7 +2,7 @@ import logging
 from tqdm import tqdm
 from pathlib import Path
 
-from custom_formatter import CustomFormatter
+from logging_helpers.custom_formatter import CustomFormatter
 
 
 def setup_logger(logger: logging.Logger, experiment_folder: Path):

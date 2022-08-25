@@ -9,7 +9,8 @@ def override_config(old_config: Dict, new_config: Dict) -> Dict:
 
 
 def load_configuration(config_path: Path = None):
-    default_path = Path('default_config.yaml')
+    # this assumes default_config is in same dir as this py file
+    default_path = Path(__file__).parent / 'default_config.yaml'
     with open(default_path, 'r') as conf_file:
         config = yaml.safe_load(conf_file)
     
