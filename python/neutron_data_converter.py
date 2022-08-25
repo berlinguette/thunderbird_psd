@@ -3,6 +3,7 @@ from argparse import ArgumentParser
 from pathlib import Path
 from shutil import rmtree
 from typing import Dict, Optional
+from multiprocessing import freeze_support
 
 import PySimpleGUI as sg
 
@@ -145,6 +146,7 @@ def setup_parser() -> ArgumentParser:
 
 
 if __name__ == "__main__":
+    freeze_support()
     parser = setup_parser()
 
     args = parser.parse_args()
