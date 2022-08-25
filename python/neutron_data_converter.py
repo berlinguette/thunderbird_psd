@@ -53,9 +53,11 @@ def select_folder() -> Optional[Path]:
         return folder
 
 
-def main(config: Dict, psdata_folder_path: Path = None):
-    if psdata_folder_path is None:
+def main(config: Dict, psdata_folder_str: Optional[str] = None):
+    if psdata_folder_str is None:
         psdata_folder_path = select_folder()
+    else:
+        psdata_folder_path = Path(psdata_folder_str)
 
     if psdata_folder_path is not None:
         setup_logger(logger, psdata_folder_path.parent.parent)
@@ -152,4 +154,4 @@ if __name__ == "__main__":
     config_path = args_dict.pop('config', None)
     config = get_configuration(args_dict, config_path)
 
-    main(config, psdata_folder_path=Path(source_path))
+    main(config, psdata_folder_str=source_path)
