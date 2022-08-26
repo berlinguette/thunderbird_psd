@@ -68,7 +68,7 @@ def main(config: Dict, psdata_folder_str: Optional[str] = None):
             f'Final configuration: {config}', logger, on_screen=False)
 
         matlab_directory = psdata_folder_path.parent / 'mat'
-        parquet_directory = psdata_folder_path.parent.parent / 'processed_data' / 'parquets'
+        parquet_directory = psdata_folder_path.parent.parent / 'raw_data' / 'parquet'
         fresh_destination = config.get('fresh_destination', False)
         message_info('Preparing destination folders', logger)
         prepare_destination(matlab_directory, fresh_destination)

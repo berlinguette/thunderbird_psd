@@ -49,7 +49,7 @@ def parquetize_folder(
     file_names = map(lambda x: x.name, file_paths)
 
     def get_label(file_name: str, batch_number: str = batch_number):
-        serial_number = re.search("\_(\d\d\d\d)(.mat)", file_name)
+        serial_number = re.search("\_(\d+)(.mat)", file_name)
         return f"{batch_number}s{serial_number.group(1)}"
 
     labels = map(get_label, file_names)
@@ -99,8 +99,8 @@ def parquetize_directory(directory: Path, destination: Path, config: Dict):
 if __name__ == "__main__":
     from configuration import get_configuration
 
-    directory = Path("sample_dataset/raw_data/mat/")
-    out_directory = Path("sample_dataset/processed_data/parquets/")
+    directory = Path("sample_datasets/20220824_CERC_background/raw_data/mat")
+    out_directory = Path("sample_datasets/20220824_CERC_background/raw_data/parquet")
 
     config = get_configuration({})
     parquetize_directory(directory, out_directory, config)

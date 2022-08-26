@@ -93,3 +93,9 @@ cython_debug/
 # Ignore all local history of files
 .history
 .ionide
+
+# Sample Dataset Files
+sample_datasets/*/raw_data/mat/
+
+# Log files
+*.log
