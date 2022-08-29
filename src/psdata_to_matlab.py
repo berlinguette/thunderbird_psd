@@ -1,7 +1,5 @@
-import asyncio
 import logging
 import subprocess
-import sys
 import timeit
 from math import ceil
 from pathlib import Path
@@ -170,48 +168,7 @@ def _chunkify(list_to_chunk: List[T], chunk_size: int) -> Tuple[Iterable[List[T]
     return (chunks, chunk_count)
 
 
-async def _process_file_async(file_path: Path, destination: Path):
-    proc = await asyncio.create_subprocess_exec(
-        *_generate_shell_command(file_path, destination))
-    await proc.communicate()
-    if proc.returncode is not None:
-        returncode = proc.returncode
-    else:  # only happens if process not done, which should never happen with await
-        returncode = 420  # computer must be high
-    _subprocess_results_printer(
-        f'Converting {file_path.name}', returncode, None, None,
-        on_screen=False
-    )
-
-
-async def _process_files_async(
-    folder_path: Path,
-    destination: Path,
-    num_files: Optional[int],
-    chunk_size: int
-):
-    start = timeit.default_timer()
-
-    cors = [_process_file_async(file_path, destination, logger)
-            for file_path in get_limited_files(folder_path, num_files)]
-    # Chunking code from https://fredrikaverpil.github.io/2017/06/20/async-and-await-with-subprocesses/
-    chunks, chunks_count = _chunkify(cors, chunk_size)
-    for chunk_index, chunk in enumerate(chunks):
-        message_debug(
-            f'Beginning work on chunk {chunk_index+1}/{chunks_count}',
-            logger, on_screen=False)
-        await asyncio.gather(*chunk)
-        message_debug(
-            f'Completed work on chunk {chunk_index+1}/{chunks_count}',
-            logger, on_screen=False)
-
-    stop = timeit.default_timer()
-    exec_time = stop - start
-    message_debug(f"Method executed in {exec_time:.4f} seconds",
-                  logger, on_screen=False)
-
-
-def _process_files_popen(
+def _process_files(
     folder_path: Path,
     destination: Path,
     num_files: Optional[int],
@@ -290,8 +247,8 @@ def convert_psdata_directory(
     setup_logger(logger, logging_folder)
     num_files = config.get('files_limit')
     chunk_size = config.get('psdata_tasks', 0)
-    _process_files_popen(folder_path, destination,
-                         num_files, chunk_size)
+    _process_files(folder_path, destination,
+                   num_files, chunk_size)
     # asyncio.run(
     #     process_files_async(
     #         folder_path, destination, num_files, chunk_size
@@ -302,9 +259,6 @@ def convert_psdata_directory(
 
 if __name__ == "__main__":
     from configuration import get_configuration
-
-    if 'win32' in sys.platform:
-        asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
 
     psdata_directory = Path("sample_dataset/raw_data/psdata")
     destination = psdata_directory.parent / 'mat'
