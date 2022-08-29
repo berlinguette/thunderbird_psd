@@ -1,6 +1,5 @@
 import logging
 import subprocess
-import timeit
 from math import ceil
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Tuple, TypeVar
@@ -11,6 +10,7 @@ from logging_helpers.setup_logger import (cleanup_logger, message_debug,
                                           setup_logger)
 from utilities.constants import BAR_FORMAT
 from utilities.get_limited_files import get_limited_files
+from utilities.timing import Timer
 
 FORMAT = 'mat'
 T = TypeVar('T')
@@ -187,7 +187,8 @@ def _process_files(
     chunk_size : int
         Maximum number of files to process concurrently
     """
-    start = timeit.default_timer()
+    # start = timeit.default_timer()
+    timer = Timer(start_now=True)
 
     file_paths = [file_path for file_path in get_limited_files(
         folder_path, num_files)]
@@ -216,9 +217,12 @@ def _process_files(
                 f'Completed work on chunk {chunk_index+1}/{chunks_count}',
                 logger, on_screen=False)
 
-    stop = timeit.default_timer()
-    exec_time = stop - start
-    message_debug(f"Method executed in {exec_time:.4f} seconds",
+    # stop = timeit.default_timer()
+    # exec_time = stop - start
+    exec_time = timer.stop_timer()
+    # message_debug(f"Method executed in {exec_time:.4f} seconds",
+    #               logger, on_screen=False)
+    message_debug(f"Method executed in {timer.format_elapsed_time(exec_time)}",
                   logger, on_screen=False)
 
 

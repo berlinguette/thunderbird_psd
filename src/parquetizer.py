@@ -1,6 +1,5 @@
 import logging
 import re
-import time
 from concurrent.futures import ThreadPoolExecutor
 from itertools import repeat
 from pathlib import Path
@@ -14,6 +13,7 @@ from logging_helpers.setup_logger import (cleanup_logger, message_debug,
                                           message_info, setup_logger)
 from utilities.constants import BAR_FORMAT
 from utilities.get_limited_files import get_limited_files
+from utilities.timing import Timer
 
 if TYPE_CHECKING:
     from numpy import ndarray
@@ -39,22 +39,6 @@ def _get_data_tuple(file_path: Path, label: str) -> Tuple[ndarray, str]:
     data = loadmat(file_path)
     data = data["A"].flatten()
     return data, label
-
-
-def elapsed_time(t1: float) -> float:
-    """Determines the time elapsed in seconds 
-
-    Parameters
-    ----------
-    t1 : float
-        starting time, as produced by time.perf_counter()
-
-    Returns
-    -------
-    float
-        the time elapsed from t1 to now
-    """
-    return time.perf_counter() - t1
 
 
 def parquetize_folder(
@@ -135,7 +119,7 @@ def parquetize_directory(directory: Path, destination: Path, config: Dict):
         Configuration data. See configuration.py for more info
     """
     setup_logger(logger, directory.parent.parent)
-    t1 = time.perf_counter()
+    timer = Timer(start_now=True)
 
     num_folders = config.get('files_limit')
     parquet_tasks = config.get('parquet_tasks', 0)
@@ -154,9 +138,11 @@ def parquetize_directory(directory: Path, destination: Path, config: Dict):
         bar_format=BAR_FORMAT
     )
 
+    exec_time = timer.stop_timer()
     message_info(f'Processed {len(list(results))} folders', logger)
     message_debug(
-        f"Elapsed Time: {elapsed_time(t1):.4f} s", logger, on_screen=False)
+        f"Elapsed Time: {timer.format_elapsed_time(exec_time)}",
+        logger, on_screen=False)
     cleanup_logger(logger)
 
 
