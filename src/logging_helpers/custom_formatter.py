@@ -2,11 +2,12 @@ import logging
 
 
 class CustomFormatter(logging.Formatter):
-    """Logging Formatter to add colors and count warning / errors"""
+    """Logging Formatter giving different format for more severe log levels"""
 
     basic_format = ("%(asctime)s - %(levelname)s/%(name)s - %(message)s",
                     "%Y-%m-%d %H:%M:%S")
-    detailed_format = ("%(asctime)s - %(name)s - %(levelname)s - %(message)s (%(filename)s:%(lineno)d)",
+    detailed_format = ("%(asctime)s - %(name)s - %(levelname)s - " +
+                       "%(message)s (%(filename)s:%(lineno)d)",
                        None)
 
     FORMATS = {
@@ -18,6 +19,18 @@ class CustomFormatter(logging.Formatter):
     }
 
     def format(self, record):
+        """Formats a given record according to its severity level
+
+        Parameters
+        ----------
+        record : LogRecord
+            Record to format
+
+        Returns
+        -------
+        str
+            Formatted log record text
+        """
         log_fmt = self.FORMATS.get(record.levelno)
         formatter = logging.Formatter(*log_fmt)
         return formatter.format(record)

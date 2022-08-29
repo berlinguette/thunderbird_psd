@@ -1,15 +1,15 @@
 import logging
 from argparse import ArgumentParser
+from multiprocessing import freeze_support
 from pathlib import Path
 from shutil import rmtree
 from typing import Dict, Optional
-from multiprocessing import freeze_support
 
 import PySimpleGUI as sg
 
 from configuration.configuration import get_configuration
-from logging_helpers.setup_logger import (cleanup_logger, setup_logger,
-                                          message_debug, message_info)
+from logging_helpers.setup_logger import (cleanup_logger, message_debug,
+                                          message_info, setup_logger)
 from parquetizer import parquetize_directory
 from psdata_to_matlab import convert_psdata_directory
 
@@ -18,7 +18,16 @@ logger = logging.getLogger('main')
 WINDOW_TITLE = 'Select Raw Data Folder'
 
 
-def prepare_destination(destination_path: Path, fresh_destination: bool):
+def _prepare_destination(destination_path: Path, fresh_destination: bool):
+    """Ensures that the destination path exists, and is empty if needed
+
+    Parameters
+    ----------
+    destination_path : Path
+        Destination path to prepare
+    fresh_destination : bool
+        If true, deletes any files or folders at the destination folder
+    """
     if fresh_destination and destination_path.is_dir():
         message_debug(
             f'Deleting destination {destination_path}',
@@ -32,7 +41,14 @@ def prepare_destination(destination_path: Path, fresh_destination: bool):
         destination_path.mkdir()
 
 
-def select_folder() -> Optional[Path]:
+def _select_folder() -> Optional[Path]:
+    """Opens a folder picker GUI for user input
+
+    Returns
+    -------
+    Optional[Path]
+        The chosen path, or None if the GUI window is closed
+    """
     left_col = [[sg.Text('Folder'), sg.In(
         size=(25, 1), enable_events=True, key='-FOLDER-'), sg.FolderBrowse()]]
     layout = [[sg.Column(left_col, element_justification='c')]]
@@ -55,8 +71,24 @@ def select_folder() -> Optional[Path]:
 
 
 def main(config: Dict, psdata_folder_str: Optional[str] = None):
+    """Runs the neutron data conversion process:
+    - Running the folder picker GUI if needed
+    - Preparing destination folders
+    - Running conversion steps
+      - PSData to Matlab
+      - Matlab to Parquet
+    - Deleting Matlab files if needed
+
+    Parameters
+    ----------
+    config : Dict
+        Configuration data. See configuration.py for more info
+    psdata_folder_str : Optional[str], optional
+        location of the PSData folder from command line arguments.
+        If not provided, the folder picker window will be launched.
+    """
     if psdata_folder_str is None:
-        psdata_folder_path = select_folder()
+        psdata_folder_path = _select_folder()
     else:
         psdata_folder_path = Path(psdata_folder_str)
 
@@ -71,9 +103,9 @@ def main(config: Dict, psdata_folder_str: Optional[str] = None):
         parquet_directory = psdata_folder_path.parent.parent / 'raw_data' / 'parquet'
         fresh_destination = config.get('fresh_destination', False)
         message_info('Preparing destination folders', logger)
-        prepare_destination(matlab_directory, fresh_destination)
+        _prepare_destination(matlab_directory, fresh_destination)
         message_debug(' - Matlab destination done', logger)
-        prepare_destination(parquet_directory, fresh_destination)
+        _prepare_destination(parquet_directory, fresh_destination)
         message_debug(' - Parquet destination done', logger)
         message_info("", logger, in_log=False)
 
@@ -100,6 +132,13 @@ def main(config: Dict, psdata_folder_str: Optional[str] = None):
 
 
 def setup_parser() -> ArgumentParser:
+    """Produces ArgumentParser with all needed arguments
+
+    Returns
+    -------
+    ArgumentParser
+        ArgumentParser configured with all supported command line arguments
+    """
     parser = ArgumentParser(
         prog="PSData to Parquet Converter",
         description=("Converts PSData files from experiment"
