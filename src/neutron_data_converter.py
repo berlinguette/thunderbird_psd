@@ -18,27 +18,57 @@ logger = logging.getLogger('main')
 WINDOW_TITLE = 'Select Raw Data Folder'
 
 
-def _prepare_destination(destination_path: Path, fresh_destination: bool):
-    """Ensures that the destination path exists, and is empty if needed
+def _setup_parser() -> ArgumentParser:
+    """Produces ArgumentParser with all needed arguments
 
-    Parameters
-    ----------
-    destination_path : Path
-        Destination path to prepare
-    fresh_destination : bool
-        If true, deletes any files or folders at the destination folder
+    Returns
+    -------
+    ArgumentParser
+        ArgumentParser configured with all supported command line arguments
     """
-    if fresh_destination and destination_path.is_dir():
-        message_debug(
-            f'Deleting destination {destination_path}',
-            logger, on_screen=False)
-        rmtree(destination_path)
-    # destinations must exist for converters to work properly
-    if not destination_path.exists():
-        message_debug(
-            f'Making destination {destination_path}',
-            logger, on_screen=False)
-        destination_path.mkdir()
+    parser = ArgumentParser(
+        prog="PSData to Parquet Converter",
+        description=("Converts PSData files from experiment"
+                     " to Matlab and Parquet files"))
+
+    parser.add_argument(
+        '--source', '-s',
+        help='location of PSData source folder')
+    parser.add_argument(
+        '--config', '-c',
+        help=('Location of YAML configuration file. '
+              'This file will override any default configuration file, '
+              'and will be overridden by any arguments given here'))
+    parser.add_argument(
+        '--keep-matlab', '-k',
+        action='store_true',
+        help='keep generated Matlab files when conversion is done')
+    parser.add_argument(
+        '--fresh-destination', '-f',
+        action='store_true',
+        help='delete any previous Matlab and Parquet files if they exist')
+    parser.add_argument(
+        '--files-limit', '-l',
+        type=int,
+        help=('limit number of PSData files processed. '
+              'Omit this (or use 0) for no limit (process all files in folder)'))
+    parser.add_argument(
+        '--psdata-tasks',
+        type=int,
+        help=('max number of simultaneous PSData to Matlab conversions. '
+              'Use 0 for no limit (process all given files at the same time)'))
+    parser.add_argument(
+        '--parquet-tasks',
+        type=int,
+        help=('max number of simultaneous Matlab to Parquet conversions. '
+              'Use 0 to do as many tasks as possible on this machine'))
+    parser.add_argument(
+        '--parquet-files',
+        type=int,
+        help=('max number of simultaneous Matlab files loaded per conversion. '
+              'Use 0 to load as many files as possible'))
+
+    return parser
 
 
 def _select_folder() -> Optional[Path]:
@@ -68,6 +98,29 @@ def _select_folder() -> Optional[Path]:
         return Path(folder)
     else:
         return folder
+
+
+def _prepare_destination(destination_path: Path, fresh_destination: bool):
+    """Ensures that the destination path exists, and is empty if needed
+
+    Parameters
+    ----------
+    destination_path : Path
+        Destination path to prepare
+    fresh_destination : bool
+        If true, deletes any files or folders at the destination folder
+    """
+    if fresh_destination and destination_path.is_dir():
+        message_debug(
+            f'Deleting destination {destination_path}',
+            logger, on_screen=False)
+        rmtree(destination_path)
+    # destinations must exist for converters to work properly
+    if not destination_path.exists():
+        message_debug(
+            f'Making destination {destination_path}',
+            logger, on_screen=False)
+        destination_path.mkdir()
 
 
 def main(config: Dict, psdata_folder_str: Optional[str] = None):
@@ -121,7 +174,7 @@ def main(config: Dict, psdata_folder_str: Optional[str] = None):
         message_info("Converting Matlab to Parquet", logger)
         parquetize_directory(matlab_directory, parquet_directory, config)
 
-        if config.get('delete_matlab'):
+        if not config.get('keep_matlab'):
             message_info("", logger, in_log=False)
             message_info("Removing Matlab files", logger)
             rmtree(matlab_directory)
@@ -131,62 +184,9 @@ def main(config: Dict, psdata_folder_str: Optional[str] = None):
         print('Closing...')
 
 
-def setup_parser() -> ArgumentParser:
-    """Produces ArgumentParser with all needed arguments
-
-    Returns
-    -------
-    ArgumentParser
-        ArgumentParser configured with all supported command line arguments
-    """
-    parser = ArgumentParser(
-        prog="PSData to Parquet Converter",
-        description=("Converts PSData files from experiment"
-                     " to Matlab and Parquet files"))
-
-    parser.add_argument(
-        '--source', '-s',
-        help='location of PSData source folder')
-    parser.add_argument(
-        '--config', '-c',
-        help=('Location of YAML configuration file. '
-              'This file will override any default configuration file, '
-              'and will be overridden by any arguments given here'))
-    parser.add_argument(
-        '--delete-matlab', '-d',
-        action='store_true',
-        help='delete generated Matlab files when conversion is done')
-    parser.add_argument(
-        '--fresh-destination', '-f',
-        action='store_true',
-        help='delete any previous Matlab and Parquet files if they exist')
-    parser.add_argument(
-        '--files-limit', '-l',
-        type=int,
-        help=('limit number of PSData files processed. '
-              'Omit this (or use 0) for no limit (process all files in folder)'))
-    parser.add_argument(
-        '--psdata-tasks',
-        type=int,
-        help=('max number of simultaneous PSData to Matlab conversions. '
-              'Use 0 for no limit (process all given files at the same time)'))
-    parser.add_argument(
-        '--parquet-tasks',
-        type=int,
-        help=('max number of simultaneous Matlab to Parquet conversions. '
-              'Use 0 to do as many tasks as possible on this machine'))
-    parser.add_argument(
-        '--parquet-files',
-        type=int,
-        help=('max number of simultaneous Matlab files loaded per conversion. '
-              'Use 0 to load as many files as possible'))
-
-    return parser
-
-
 if __name__ == "__main__":
     freeze_support()
-    parser = setup_parser()
+    parser = _setup_parser()
 
     args = parser.parse_args()
     args_dict = vars(args)
