@@ -262,7 +262,7 @@ def convert_psdata_directory(
 
 
 if __name__ == "__main__":
-    from configuration import get_configuration
+    from configuration.configuration import get_configuration
 
     psdata_directory = Path("sample_dataset/raw_data/psdata")
     destination = psdata_directory.parent / 'mat'

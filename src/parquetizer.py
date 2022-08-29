@@ -68,7 +68,6 @@ def parquetize_folder(
     end_folder_name = directory.name
 
     # TODO allow on-screen when tqdm team fixes process pool issues
-    # setup_logger(f'pq-{end_folder_name}', directory.parent.parent)
     # each process needs own separate logger in processpool
     new_logger = logging.getLogger(f'proc-{end_folder_name}')
     # we're in sample_dataset/raw_data/mat, one folder deeper than usual
@@ -80,7 +79,10 @@ def parquetize_folder(
     file_names = map(lambda x: x.name, file_paths)
 
     def get_label(file_name: str, batch_number: str = batch_number):
-        serial_number = re.search("\_(\d+)(.mat)", file_name)
+        serial_number = re.search(r"\_(\d+)(.mat)", file_name)
+        # We know how PS names Matlab files, so search must find serial number
+        # Assert will catch format changes
+        assert serial_number is not None
         return f"{batch_number}s{serial_number.group(1)}"
 
     labels = map(get_label, file_names)
@@ -88,9 +90,10 @@ def parquetize_folder(
     with ThreadPoolExecutor(max_workers=max_workers) as thread_executor:
         result = thread_executor.map(_get_data_tuple, file_paths, labels)
 
-    labelled_data = list(zip(*result))
+    data = [entry[0] for entry in result]
+    indices = [entry[1] for entry in result]
 
-    df = pd.DataFrame(labelled_data[0], index=labelled_data[1])
+    df = pd.DataFrame(data, index=indices)
     df.columns = df.columns.astype(str)
 
     df.to_parquet(str(destination / f"{end_folder_name}.parquet"))
@@ -147,7 +150,7 @@ def parquetize_directory(directory: Path, destination: Path, config: Dict):
 
 
 if __name__ == "__main__":
-    from configuration import get_configuration
+    from configuration.configuration import get_configuration
 
     directory = Path("sample_datasets/20220824_CERC_background/raw_data/mat")
     out_directory = Path(
