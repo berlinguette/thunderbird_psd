@@ -185,7 +185,7 @@ def main(config: Dict, psdata_folder_str: Optional[str] = None):
 
 
 if __name__ == "__main__":
-    freeze_support()
+    freeze_support()  # needed for Windows multiprocessing/processpool
     parser = _setup_parser()
 
     args = parser.parse_args()
