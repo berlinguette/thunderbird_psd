@@ -264,8 +264,8 @@ def convert_psdata_directory(
 if __name__ == "__main__":
     from configuration.configuration import get_configuration
 
-    psdata_directory = Path("sample_dataset/raw_data/psdata")
+    psdata_directory = Path("sample_datasets/20220824_CERC_background/raw_data/psdata")
     destination = psdata_directory.parent / 'mat'
 
-    config = get_configuration({})
+    config = get_configuration({'files_limit': 5, 'psdata_tasks': 5})
     convert_psdata_directory(psdata_directory, destination, config)
