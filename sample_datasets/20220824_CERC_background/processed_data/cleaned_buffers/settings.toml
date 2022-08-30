@@ -1,11 +1,4 @@
-last_updated = 2022-08-30 14:52:56.942857
-
-[signal_stats]
-initial = 10000
-missing_or_nan = 620
-multipeaks = 9
-low_snr = 0
-final = 9371
+last_updated = 2022-08-30 16:03:18.466726
 
 [multipeak_filter_settings]
 height = 0.01
