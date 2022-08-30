@@ -90,10 +90,11 @@ def parquetize_folder(
     with ThreadPoolExecutor(max_workers=max_workers) as thread_executor:
         result = thread_executor.map(_get_data_tuple, file_paths, labels)
 
-    data = [entry[0] for entry in result]
-    indices = [entry[1] for entry in result]
+    data_list = list(result)
+    result_data = [x[0] for x in data_list]
+    indices = [x[1] for x in data_list]
 
-    df = pd.DataFrame(data, index=indices)
+    df = pd.DataFrame(result_data, index=indices)
     df.columns = df.columns.astype(str)
 
     df.to_parquet(str(destination / f"{end_folder_name}.parquet"))
