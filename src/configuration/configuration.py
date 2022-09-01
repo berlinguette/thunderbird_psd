@@ -188,6 +188,20 @@ def populate_args_parser(
     return parser
 
 
+def save_config(config: Dict, save_path: Path):
+    """Saves configuration data as YAML file
+
+    Parameters
+    ----------
+    config : Dict
+        configuration data to be saved
+    save_path : Path
+        path to destination file
+    """
+    with open(save_path, 'w') as config_file:
+        yaml.safe_dump(config, config_file)
+
+
 def get_configuration(
     cli_args: Dict,
     config_setup: Dict,
@@ -201,8 +215,8 @@ def get_configuration(
     - Command line arguments override both configuration files
 
     User-defined configuration files are in YAML format as key: value pairs.
-    Check default_config.yaml, or the command line arguments with `--help`, 
-    for all current configuration keys and default values. 
+    Check example_config.yaml for an example of the config file format.
+    Check config_fields_setup.yaml to see default values. 
 
     Parameters
     ----------
@@ -241,6 +255,9 @@ if __name__ == "__main__":
     config_setup = load_config_setup()
     default_config = _generate_default_config(config_setup)
     print(f"Default config:\n{default_config}")
+    print("Saving default config...")
+    default_config_path = Path(__file__).parent / 'example_config.yaml'
+    save_config(default_config, default_config_path)
 
     new_config_data = {'files_limit': 10}
     config_valid = _validate_config(new_config_data, config_setup)
