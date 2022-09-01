@@ -137,7 +137,10 @@ def _get_number_of_chunks(list_length: int, chunk_size: int) -> int:
     return ceil(list_length / chunk_size)
 
 
-def _chunkify(list_to_chunk: List[T], chunk_size: int) -> Tuple[Iterable[List[T]], int]:
+def _chunkify(
+    list_to_chunk: List[T],
+    chunk_size: int
+) -> Tuple[Iterable[List[T]], int]:
     """Makes a chunk iterator for this list, as well as providing the eventual 
        number of chunks that will be produced
 
@@ -187,7 +190,6 @@ def _process_files(
     chunk_size : int
         Maximum number of files to process concurrently
     """
-    # start = timeit.default_timer()
     timer = Timer(start_now=True)
 
     file_paths = [file_path for file_path in get_limited_files(
@@ -217,11 +219,7 @@ def _process_files(
                 f'Completed work on chunk {chunk_index+1}/{chunks_count}',
                 logger, on_screen=False)
 
-    # stop = timeit.default_timer()
-    # exec_time = stop - start
     exec_time = timer.stop_timer()
-    # message_debug(f"Method executed in {exec_time:.4f} seconds",
-    #               logger, on_screen=False)
     message_debug(f"Method executed in {timer.format_elapsed_time(exec_time)}",
                   logger, on_screen=False)
 
@@ -249,22 +247,20 @@ def convert_psdata_directory(
     """
     logging_folder = folder_path.parent.parent
     setup_logger(logger, logging_folder)
+    message_debug(f'PSData source: {folder_path}', logger, on_screen=False)
+    message_debug(f'Matlab destination: {destination}', logger, on_screen=False)
     num_files = config.get('files_limit')
     chunk_size = config.get('psdata_tasks', 0)
     _process_files(folder_path, destination,
                    num_files, chunk_size)
-    # asyncio.run(
-    #     process_files_async(
-    #         folder_path, destination, num_files, chunk_size
-    #     )
-    # )
     cleanup_logger(logger)
 
 
 if __name__ == "__main__":
     from configuration.configuration import get_configuration
 
-    psdata_directory = Path("sample_datasets/20220824_CERC_background/raw_data/psdata")
+    psdata_directory = Path(
+        "sample_datasets/20220824_CERC_background/raw_data/psdata")
     destination = psdata_directory.parent / 'mat'
 
     config = get_configuration({'files_limit': 5, 'psdata_tasks': 5})
