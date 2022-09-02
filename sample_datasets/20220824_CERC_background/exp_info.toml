@@ -13,4 +13,4 @@ sample_rate = 500  # MS/s
 no_samples = 250
 hardware_resolution = 12  # bits
 trigger_type = "simple"  
-trigger_threshoold = 85  # mV
+trigger_threshold = 85  # mV
