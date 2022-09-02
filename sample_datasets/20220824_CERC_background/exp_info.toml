@@ -1,0 +1,16 @@
+exp_id = "20220821A"
+desc = "Background data for CERC 273. Collected as a sample dataset for the 'thunderbird_psd'"
+
+[datetime]
+date = 2022-08-24
+time = 14:24:17
+
+[picoscope]
+channel_range = 1  # V
+channel_dc_offset = 95  # mV
+sample_interval = 2  # ns
+sample_rate = 500  # MS/s
+no_samples = 250
+hardware_resolution = 12  # bits
+trigger_type = "simple"  
+trigger_threshold = 85  # mV
