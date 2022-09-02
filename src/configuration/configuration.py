@@ -5,6 +5,8 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Union
 
 import yaml
 
+ValueType = Union[None, bool, int, float, str]
+
 if TYPE_CHECKING:
     from argparse import ArgumentParser
 
@@ -96,7 +98,6 @@ def _validate_config(config: Dict, config_setup: Dict[str, Any]) -> bool:
     Returns:
         bool: True if config file data has valid types and values, False if not
     """
-    ValueType = Union[None, bool, int, float, str]
 
     def test_int_valid(value: ValueType) -> bool:
         if isinstance(value, int):

@@ -3,7 +3,7 @@ from argparse import ArgumentParser
 from multiprocessing import freeze_support
 from pathlib import Path
 from shutil import rmtree
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple
 
 import PySimpleGUI as sg
 
@@ -65,7 +65,12 @@ def _converter_gui(
     done = False
     folder = None
     while not done:
-        event, values = window.read()
+        read_result = window.read()
+        if not isinstance(read_result, tuple):
+            continue
+        event: str
+        values: Dict[str, Any]
+        event, values = read_result
         if event in (sg.WIN_CLOSED, 'Exit', '-FOLDER-'):
             done = True
             if event == '-FOLDER-':
@@ -81,7 +86,7 @@ def _converter_gui(
     return config, folder
 
 
-def _settings_window(config: Dict, config_setup: Dict[str, Any]) -> Optional[Dict]:
+def _settings_window(config: Dict, config_setup: Dict[str, Any]) -> Dict:
     """Launch GUI window to change settings
 
     Parameters
@@ -94,23 +99,20 @@ def _settings_window(config: Dict, config_setup: Dict[str, Any]) -> Optional[Dic
     Returns
     -------
     Optional[Dict]
-        updated settings data, 
-        None when cancelled, window closed, or on malformed window data
+        new settings data dictionary with updated values
 
     Raises
     ------
     ValueError
         when config setup data has an unsupported UI control type
     """
-    PossibleControls = Union[sg.Checkbox, sg.Input]
-
     def make_control(
         control_name: str,
         current_value: Any,
         control_key: str,
         min_int: int = 0,
         max_int: int = 20
-    ) -> Union[sg.Checkbox, sg.Input]:
+    ) ->sg.Element:
         control_width = 10
 
         if control_name == 'checkbox':
@@ -134,7 +136,7 @@ def _settings_window(config: Dict, config_setup: Dict[str, Any]) -> Optional[Dic
     def make_controls_row(
         controls_data: Dict[str, Any],
         text_width: int
-    ) -> List[Union[sg.Text, PossibleControls]]:
+    ) -> List[sg.Element]:
         control_name: str = controls_data['control']
         title: str = controls_data['title']
         current_value = controls_data['value']
@@ -163,16 +165,22 @@ def _settings_window(config: Dict, config_setup: Dict[str, Any]) -> Optional[Dic
 
     window = sg.Window('Settings', layout)
 
+    new_config = {k: v for k, v in config.items()}
     done = False
     while not done:
-        event, values = window.read()
+        read_result = window.read()
+        if not isinstance(read_result, tuple):
+            continue
+        event: str
+        values: Dict[str, Any]
+        event, values = read_result
         if event in (sg.WIN_CLOSED, 'Cancel', 'Submit'):
             done = True
-            if event in (sg.WIN_CLOSED, 'Cancel'):
-                values = None
+            if event == 'Submit':
+                new_config = override_config(config, values)
 
     window.close()
-    return override_config(config, values) if isinstance(values, dict) else config
+    return new_config
 
 
 def _prepare_destination(destination_path: Path, fresh_destination: bool):
