@@ -17,6 +17,10 @@ keep_matlab:
     allowed_types:
       - 'bool'
     default: false
+    gui:
+      title: "Keep Matlab files"
+      control: 'checkbox'
+      order: 100
   cli:
     flags:
       - "--keep-matlab"
@@ -28,12 +32,16 @@ fresh_destination:
     allowed_types:
       - 'bool'
     default: false
+    gui:
+      title: "Clear existing destination folders"
+      control: 'checkbox'
+      order: 90
   cli:
     flags:
       - '--fresh-destination'
       - '-f'
     action: 'store_true'
-    help: 'delete any previous Matlab and Parquet files if they exist'
+    help: "delete any previous Matlab and Parquet files if they exist"
 files_limit:
   config: 
     allowed_types:
@@ -52,6 +60,10 @@ psdata_tasks:
     allowed_types:
       - 'int'
     default: 5
+    gui:
+      title: "Max simultaneous Stage 1 (PSData to Matlab) conversions"
+      control: 'spin'
+      order: 10
   cli:
     flags:
       - '--psdata-tasks'
@@ -63,6 +75,10 @@ parquet_tasks:
     allowed_types:
       - 'int'
     default: 4
+    gui:
+      title: "Max simultaneous Stage 2 (Matlab to Parquet) conversions"
+      control: 'spin'
+      order: 20
   cli:
     flags:
       - '--parquet-tasks'
@@ -74,6 +90,10 @@ parquet_files:
     allowed_types:
       - 'int'
     default: 4
+    gui:
+      title: "Max simultaneous file loads per Stage 2 conversion"
+      control: 'spin'
+      order: 30
   cli:
     flags:
       '--parquet-files'

@@ -68,7 +68,7 @@ def parquetize_folder(
     file_paths = [f for f in directory.iterdir()]
     end_folder_name = directory.name
 
-    # TODO allow on-screen when tqdm team fixes process pool issues
+    # FUTURE allow on-screen when tqdm team fixes process pool issues
     # each process needs own separate logger in processpool
     new_logger = logging.getLogger(f'proc-{end_folder_name}')
     # we're in sample_dataset/raw_data/mat, one folder deeper than usual

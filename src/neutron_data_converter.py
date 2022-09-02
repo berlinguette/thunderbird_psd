@@ -3,11 +3,12 @@ from argparse import ArgumentParser
 from multiprocessing import freeze_support
 from pathlib import Path
 from shutil import rmtree
-from typing import Dict, Optional, Any
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import PySimpleGUI as sg
 
-from configuration.configuration import get_configuration, load_config_setup, populate_args_parser
+from configuration.configuration import (get_configuration, load_config_setup,
+                                         override_config, populate_args_parser)
 from logging_helpers.setup_logger import (cleanup_logger, message_debug,
                                           message_info, setup_logger)
 from parquetizer import parquetize_directory
@@ -35,16 +36,29 @@ def _setup_parser(config_setup: Dict[str, Any]) -> ArgumentParser:
     return parser
 
 
-def _select_folder() -> Optional[Path]:
-    """Opens a folder picker GUI for user input
+def _converter_gui(
+    config: Dict,
+    config_setup: Dict[str, Any]
+) -> Tuple[Dict, Optional[Path]]:
+    """Opens a GUI window for user input, including settings changes and folder selection
 
     Returns
     -------
-    Optional[Path]
-        The chosen path, or None if the GUI window is closed
+    Tuple[Dict, Optional[Path]]
+        Tuple of:
+            - updated settings (or original if no updates)
+            - the chosen path, or None if the converter window is closed
     """
-    left_col = [[sg.Text('Folder'), sg.In(
-        size=(25, 1), enable_events=True, key='-FOLDER-'), sg.FolderBrowse()]]
+    left_col = [
+        [
+            sg.Text('Folder'),
+            sg.In(size=(25, 1), enable_events=True, key='-FOLDER-'),
+            sg.FolderBrowse()
+        ],
+        [
+            sg.Button('Settings')
+        ]
+    ]
     layout = [[sg.Column(left_col, element_justification='c')]]
     window = sg.Window(WINDOW_TITLE, layout, resizable=True)
 
@@ -56,12 +70,109 @@ def _select_folder() -> Optional[Path]:
             done = True
             if event == '-FOLDER-':
                 folder = values['-FOLDER-']
+        if event == 'Settings':
+            window.hide()
+            config = _settings_window(config, config_setup)
+            window.un_hide()
 
     window.close()
     if folder is not None:
-        return Path(folder)
-    else:
-        return folder
+        folder = Path(folder)
+    return config, folder
+
+
+def _settings_window(config: Dict, config_setup: Dict[str, Any]) -> Optional[Dict]:
+    """Launch GUI window to change settings
+
+    Parameters
+    ----------
+    config : Dict
+        configuration data
+    config_setup : Dict[str, Any]
+        config setup data
+
+    Returns
+    -------
+    Optional[Dict]
+        updated settings data, 
+        None when cancelled, window closed, or on malformed window data
+
+    Raises
+    ------
+    ValueError
+        when config setup data has an unsupported UI control type
+    """
+    PossibleControls = Union[sg.Checkbox, sg.Input]
+
+    def make_control(
+        control_name: str,
+        current_value: Any,
+        control_key: str,
+        min_int: int = 0,
+        max_int: int = 20
+    ) -> Union[sg.Checkbox, sg.Input]:
+        control_width = 10
+
+        if control_name == 'checkbox':
+            return sg.Checkbox('', default=current_value, key=control_key)
+        if control_name == 'input':
+            return sg.Input(
+                default_text=str(current_value),
+                size=control_width,
+                justification='left',
+                key=control_key
+            )
+        if control_name == 'spin':
+            return sg.Spin(
+                [x for x in range(min_int, max_int + 1)],
+                initial_value=current_value,
+                size=control_width,
+                key=control_key
+            )
+        raise ValueError(f"Unsupported control name {control_name}")
+
+    def make_controls_row(
+        controls_data: Dict[str, Any],
+        text_width: int
+    ) -> List[Union[sg.Text, PossibleControls]]:
+        control_name: str = controls_data['control']
+        title: str = controls_data['title']
+        current_value = controls_data['value']
+        control_key: str = controls_data['key']
+
+        text_element = sg.Text(
+            text=title, size=text_width, justification='right')
+        control_element = make_control(
+            control_name, current_value, control_key)
+        return [text_element, control_element]
+
+    gui_setup: Dict[str, Dict[str, Any]] = {
+        k: v['config']['gui'] for k, v in config_setup.items()
+        if 'gui' in v.get('config', {})
+    }
+    for key, value in gui_setup.items():
+        value['value'] = config[key]
+    layout_data: List[Dict[str, Any]] = sorted(
+        [{'key': k, **v} for k, v in gui_setup.items()],
+        key=lambda x: x['order'])
+
+    text_width = max([len(v.get('title', '')) for v in gui_setup.values()])
+    layout = [make_controls_row(controls_data, text_width)
+              for controls_data in layout_data]
+    layout.append([sg.Push(), sg.Submit(), sg.Cancel()])
+
+    window = sg.Window('Settings', layout)
+
+    done = False
+    while not done:
+        event, values = window.read()
+        if event in (sg.WIN_CLOSED, 'Cancel', 'Submit'):
+            done = True
+            if event in (sg.WIN_CLOSED, 'Cancel'):
+                values = None
+
+    window.close()
+    return override_config(config, values) if isinstance(values, dict) else config
 
 
 def _prepare_destination(destination_path: Path, fresh_destination: bool):
@@ -87,7 +198,11 @@ def _prepare_destination(destination_path: Path, fresh_destination: bool):
         destination_path.mkdir()
 
 
-def main(config: Dict, psdata_folder_str: Optional[str] = None):
+def main(
+    config: Dict,
+    config_setup: Dict[str, Any],
+    psdata_folder_str: Optional[str] = None
+):
     """Runs the neutron data conversion process:
     - Running the folder picker GUI if needed
     - Preparing destination folders
@@ -105,7 +220,7 @@ def main(config: Dict, psdata_folder_str: Optional[str] = None):
         If not provided, the folder picker window will be launched.
     """
     if psdata_folder_str is None:
-        psdata_folder_path = _select_folder()
+        config, psdata_folder_path = _converter_gui(config, config_setup)
     else:
         psdata_folder_path = Path(psdata_folder_str)
 
@@ -161,4 +276,4 @@ if __name__ == "__main__":
     config_path = args_dict.pop('config', None)
     config = get_configuration(args_dict, config_setup, config_path)
 
-    main(config, psdata_folder_str=source_path)
+    main(config, config_setup, psdata_folder_str=source_path)

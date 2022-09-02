@@ -9,7 +9,7 @@ if TYPE_CHECKING:
     from argparse import ArgumentParser
 
 
-def _override_config(old_config: Dict, new_config: Dict) -> Dict:
+def override_config(old_config: Dict, new_config: Dict) -> Dict:
     """Combines two configuration data dictionaries, such that if any keys 
        match between old_config and new_config, the values from new_config are 
        kept
@@ -239,12 +239,12 @@ def get_configuration(
     if user_config_path is not None:
         new_config = _load_yaml_dict_file(user_config_path)
         if _validate_config(new_config, config_setup):
-            config = _override_config(config, new_config)
+            config = override_config(config, new_config)
 
     # omitted args get None value, which would override config
     # so we must remove them
     cli_args = {k: v for k, v in cli_args.items() if v is not None}
-    config = _override_config(config, cli_args)
+    config = override_config(config, cli_args)
 
     return config
 
@@ -263,7 +263,7 @@ if __name__ == "__main__":
     config_valid = _validate_config(new_config_data, config_setup)
     print(f"config valid? {config_valid}")
     if config_valid:
-        config = _override_config(default_config, new_config_data)
+        config = override_config(default_config, new_config_data)
         print(f"Merged config:\n{config}")
 
     parser = populate_args_parser(ArgumentParser(), config_setup)
