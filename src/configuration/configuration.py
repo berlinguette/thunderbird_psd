@@ -203,6 +203,17 @@ def save_config(config: Dict, save_path: Path):
         yaml.safe_dump(config, config_file)
 
 
+def load_config(load_path: Path) -> Dict:
+    """_summary_
+
+    Parameters
+    ----------
+    load_path : Path
+        _description_
+    """
+    return _load_yaml_dict_file(load_path)
+        
+
 def get_configuration(
     cli_args: Dict,
     config_setup: Dict,
@@ -238,7 +249,7 @@ def get_configuration(
 
     config = default_config
     if user_config_path is not None:
-        new_config = _load_yaml_dict_file(user_config_path)
+        new_config = load_config(user_config_path)
         if _validate_config(new_config, config_setup):
             config = override_config(config, new_config)
 
