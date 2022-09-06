@@ -1,7 +1,7 @@
 import PySimpleGUI as sg
 from typing import Dict, Any, Tuple, Optional
 from pathlib import Path
-from settings_window import settings_window
+from ui.settings_window import settings_window
 
 WINDOW_TITLE = 'Select Raw Data Folder'
 FOLDER_KEY = '-FOLDER-'
@@ -75,6 +75,23 @@ def _event_handling_loop(
     config: Dict,
     config_setup: Dict[str, Any]
 ) -> Tuple[Optional[str], Dict]:
+    """Repeatedly checks for window events and handles them.
+    Closes when a terminating event is handled
+
+    Parameters
+    ----------
+    window : sg.Window
+        Window to be checked
+    config : Dict
+        Current conversion settings
+    config_setup : Dict[str, Any]
+        Configuration setup data
+
+    Returns
+    -------
+    Tuple[Optional[str], Dict]
+        Chosen folder, conversion settings with any updates applied
+    """
     state = {
         'done': False,
         'folder': None,

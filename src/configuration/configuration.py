@@ -45,8 +45,7 @@ def _load_yaml_dict_file(file_path: Path) -> Dict[str, Any]:
     Dict
         file data
     """
-    setup_file_path = Path(__file__).parent / 'config_fields_setup.yaml'
-    with open(setup_file_path, 'r') as setup_file:
+    with open(file_path, 'r') as setup_file:
         file_data = yaml.safe_load(setup_file)
 
     if isinstance(file_data, dict) and all(isinstance(key, str) for key in file_data.keys()):
@@ -83,7 +82,7 @@ def _generate_default_config(config_setup: Dict[str, Any]) -> Dict:
     return config
 
 
-def _validate_config(config: Dict, config_setup: Dict[str, Any]) -> bool:
+def validate_config(config: Dict, config_setup: Dict[str, Any]) -> bool:
     """Validates that config data is valid
 
     Config data is valid if:
@@ -250,7 +249,7 @@ def get_configuration(
     config = default_config
     if user_config_path is not None:
         new_config = load_config(user_config_path)
-        if _validate_config(new_config, config_setup):
+        if validate_config(new_config, config_setup):
             config = override_config(config, new_config)
 
     # omitted args get None value, which would override config
@@ -272,7 +271,7 @@ if __name__ == "__main__":
     save_config(default_config, default_config_path)
 
     new_config_data = {'files_limit': 10}
-    config_valid = _validate_config(new_config_data, config_setup)
+    config_valid = validate_config(new_config_data, config_setup)
     print(f"config valid? {config_valid}")
     if config_valid:
         config = override_config(default_config, new_config_data)
