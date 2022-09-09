@@ -13,7 +13,7 @@ call :Timestamp yyyy,mm,DD,hh,mn,ss,ms,tz
 echo Packaging ends - %yyyy%/%mm%/%DD% %hh%:%mn%:%dd% >>%logfile%
 call deactivate
 echo Packaging complete.
-echo The packaged converter can be found at %~dp0/dist/neutron_data_converter.exe
+echo The packaged converter can be found at %~dp0dist\neutron_data_converter.exe
 echo Press any key to finish...
 pause>nul
 exit /B %ERRORLEVEL%
