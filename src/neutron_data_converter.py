@@ -15,7 +15,7 @@ from psdata_to_matlab import convert_psdata_directory
 
 logger = logging.getLogger('main')
 
-WINDOW_TITLE = 'Select Raw Data Folder'
+WINDOW_TITLE = 'Select Experiment Folder'
 RAW_DATA_FOLDER_NAME = 'raw_data'
 PSDATA_FOLDER_NAME = 'psdata'
 MATLAB_FOLDER_NAME = 'mat'
@@ -199,7 +199,7 @@ def main(config: Dict, folder_str: Optional[str] = None):
             matlab_folder = raw_data_folder / MATLAB_FOLDER_NAME
             parquet_folder = raw_data_folder / PARQUET_FOLDER_NAME
             setup_logger(logger, experiment_root)
-            message_info(f'Converting files at {folder_path}', logger)
+            message_info(f'Converting files at {experiment_root}', logger)
             message_info("", logger, in_log=False)
             message_debug(
                 f'Final configuration: {config}', logger, on_screen=False)
