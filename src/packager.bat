@@ -12,6 +12,8 @@ pyi-makespec --onefile ^
     --splash="splash.png" ^
     neutron_data_converter.py >>%logfile% 2>&1
 echo -- Editing spec file for splash screen -- >>%logfile%
+rem Splash screen requires values to be set in specfile,
+rem but has no way to set these from command line
 python specfile_editor.py >>%logfile%
 echo -- Packaging converter -- >>%logfile%
 pyinstaller --clean --noconfirm neutron_data_converter.spec >>%logfile% 2>&1
@@ -24,6 +26,7 @@ echo Press any key to finish...
 pause>nul
 exit /B %ERRORLEVEL%
 :Timestamp 
+rem Generates timestamp data from local time
 rem Return vars: yyyy,mm,DD,hh,mn,ss,ms,tz
 set "ts="
 for /f "skip=1 delims=" %%A in ('wmic os get localdatetime') do if not defined ts set "ts=%%A"

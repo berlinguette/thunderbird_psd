@@ -2,6 +2,13 @@ from pathlib import Path
 from typing import Optional
 
 def main(specfile_name: str):
+    """Modify given specfile, adding settings for splash screen
+
+    Parameters
+    ----------
+    specfile_name : str
+        Name of specfile to edit
+    """
     specfile_path = Path(__file__).parent / specfile_name
     
     with open(specfile_path, "r") as specfile:
