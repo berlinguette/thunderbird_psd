@@ -5,12 +5,18 @@ echo Packaging... Please wait...
 call ../venv/Scripts/activate
 call :Timestamp yyyy,mm,dd,hh,mn,ss,ms,tz
 set "logfile=packaging_logs/packaging_%yyyy%%mm%%DD%T%hh%%mn%%ss%_%ms%%tz%.log"
-echo Packaging starts - %yyyy%/%mm%/%DD% %hh%:%mn%:%ss% >%logfile%
-pyinstaller --onefile --clean --noconfirm ^
+echo - Packaging starts - %yyyy%/%mm%/%DD% %hh%:%mn%:%ss% - >%logfile%
+echo -- Generating spec file -- >>%logfile%
+pyi-makespec --onefile ^
     --add-data="configuration/default_config.yaml;configuration" ^
-    neutron_data_converter.py 2>>%logfile%
+    --splash="splash.png" ^
+    neutron_data_converter.py >>%logfile% 2>&1
+echo -- Editing spec file for splash screen -- >>%logfile%
+python specfile_editor.py >>%logfile%
+echo -- Packaging converter -- >>%logfile%
+pyinstaller --clean --noconfirm neutron_data_converter.spec >>%logfile% 2>&1
 call :Timestamp yyyy,mm,DD,hh,mn,ss,ms,tz
-echo Packaging ends - %yyyy%/%mm%/%DD% %hh%:%mn%:%dd% >>%logfile%
+echo - Packaging ends - %yyyy%/%mm%/%DD% %hh%:%mn%:%dd% - >>%logfile%
 call deactivate
 echo Packaging complete.
 echo The packaged converter can be found at %~dp0dist\neutron_data_converter.exe

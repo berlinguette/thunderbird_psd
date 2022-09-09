@@ -1,6 +1,8 @@
 import logging
 from argparse import ArgumentParser
+from importlib.util import find_spec
 from multiprocessing import freeze_support
+from os import environ
 from pathlib import Path
 from shutil import rmtree
 from typing import Dict, Optional
@@ -186,6 +188,15 @@ def main(config: Dict, psdata_folder_str: Optional[str] = None):
 
 
 if __name__ == "__main__":
+    # taken from https://stackoverflow.com/a/68666505
+    if '_PYIBoot_SPLASH' in environ and find_spec("pyi_splash"):
+        # splash module only exists when packaged
+        import pyi_splash  # type: ignore
+        from time import sleep
+        pyi_splash.update_text('Loading complete')
+        sleep(1)
+        pyi_splash.close()
+        
     freeze_support()  # needed for Windows multiprocessing/processpool
     parser = _setup_parser()
 
