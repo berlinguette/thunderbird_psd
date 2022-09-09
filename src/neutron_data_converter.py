@@ -16,6 +16,10 @@ from psdata_to_matlab import convert_psdata_directory
 logger = logging.getLogger('main')
 
 WINDOW_TITLE = 'Select Raw Data Folder'
+RAW_DATA_FOLDER_NAME = 'raw_data'
+PSDATA_FOLDER_NAME = 'psdata'
+MATLAB_FOLDER_NAME = 'mat'
+PARQUET_FOLDER_NAME = 'parquet'
 
 
 def _setup_parser() -> ArgumentParser:
@@ -100,6 +104,46 @@ def _select_folder() -> Optional[Path]:
         return folder
 
 
+def _find_experiment_root(folder_path: Path, found_psdata: bool = False, found_rawdata: bool = False) -> Optional[Path]:
+    # check folder name
+    # if "psdata","parquet" or "mat", do "raw_data" check on parent
+    # if "raw_data", check for "exp_times.csv" and "psdata" subfolder; if so, do "other folder" check on parent
+    # if any other folder, check if it has "exp_info.txt" and correct subfolders; if so, return this folder
+    RAW_DATA_FOLDERS = (PSDATA_FOLDER_NAME, PARQUET_FOLDER_NAME, MATLAB_FOLDER_NAME)
+    RAW_DATA_METADATA_FILE = 'exp_times.csv'
+    ROOT_METADATA_FILE = 'exp_info.txt'
+
+    root_path = None
+    if folder_path.name in RAW_DATA_FOLDERS:
+        is_psdata_folder = folder_path.name == PSDATA_FOLDER_NAME
+        root_path = _find_experiment_root(
+            folder_path.parent, found_psdata=is_psdata_folder)
+    elif folder_path.name == RAW_DATA_FOLDER_NAME:
+        checks = [
+            (folder_path / RAW_DATA_METADATA_FILE).exists(),
+            found_psdata or (folder_path / PSDATA_FOLDER_NAME).exists()
+        ]
+        if all(checks):
+            root_path = _find_experiment_root(
+                folder_path.parent,
+                found_psdata=found_psdata,
+                found_rawdata=True
+            )
+        pass
+    else:
+        # check for "exp_info.txt"
+        # check for raw_data (and raw_data/psdata) if needed
+        # if all okay, return this path
+        checks = [
+            (folder_path / ROOT_METADATA_FILE).exists(),
+            found_rawdata or (folder_path / RAW_DATA_FOLDER_NAME).exists(),
+            found_psdata or (folder_path / RAW_DATA_FOLDER_NAME / PSDATA_FOLDER_NAME).exists(),
+        ]
+        if all(checks):
+            root_path = folder_path
+    return root_path  # TODO test this
+
+
 def _prepare_destination(destination_path: Path, fresh_destination: bool):
     """Ensures that the destination path exists, and is empty if needed
 
@@ -123,7 +167,7 @@ def _prepare_destination(destination_path: Path, fresh_destination: bool):
         destination_path.mkdir()
 
 
-def main(config: Dict, psdata_folder_str: Optional[str] = None):
+def main(config: Dict, folder_str: Optional[str] = None):
     """Runs the neutron data conversion process:
     - Running the folder picker GUI if needed
     - Preparing destination folders
@@ -140,46 +184,54 @@ def main(config: Dict, psdata_folder_str: Optional[str] = None):
         location of the PSData folder from command line arguments.
         If not provided, the folder picker window will be launched.
     """
-    if psdata_folder_str is None:
-        psdata_folder_path = _select_folder()
+    if folder_str is None:
+        folder_path = _select_folder()
     else:
-        psdata_folder_path = Path(psdata_folder_str)
+        folder_path = Path(folder_str)
 
-    if psdata_folder_path is not None:
-        setup_logger(logger, psdata_folder_path.parent.parent)
-        message_info(f'Converting files at {psdata_folder_path}', logger)
-        message_info("", logger, in_log=False)
-        message_debug(
-            f'Final configuration: {config}', logger, on_screen=False)
-
-        matlab_directory = psdata_folder_path.parent / 'mat'
-        parquet_directory = psdata_folder_path.parent.parent / 'raw_data' / 'parquet'
-        fresh_destination = config.get('fresh_destination', False)
-        message_info('Preparing destination folders', logger)
-        _prepare_destination(matlab_directory, fresh_destination)
-        message_debug(' - Matlab destination done', logger)
-        _prepare_destination(parquet_directory, fresh_destination)
-        message_debug(' - Parquet destination done', logger)
-        message_info("", logger, in_log=False)
-
-        message_info("Converting PSData to Matlab", logger)
-        message_info(
-            "You might see other windows pop up quickly."
-            + " This is normal. Don't panic!",
-            logger,
-            in_log=False
-        )
-        convert_psdata_directory(psdata_folder_path, matlab_directory, config)
-        message_info("", logger, in_log=False)
-        message_info("Converting Matlab to Parquet", logger)
-        parquetize_directory(matlab_directory, parquet_directory, config)
-
-        if not config.get('keep_matlab'):
+    if folder_path is not None:
+        # get experiment root
+        # get all needed subfolders from root
+        experiment_root = _find_experiment_root(folder_path)
+        if experiment_root is not None:
+            raw_data_folder = experiment_root / RAW_DATA_FOLDER_NAME
+            psdata_folder = raw_data_folder / PSDATA_FOLDER_NAME
+            matlab_folder = raw_data_folder / MATLAB_FOLDER_NAME
+            parquet_folder = raw_data_folder / PARQUET_FOLDER_NAME
+            setup_logger(logger, experiment_root)
+            message_info(f'Converting files at {folder_path}', logger)
             message_info("", logger, in_log=False)
-            message_info("Removing Matlab files", logger)
-            rmtree(matlab_directory)
-        message_info('Done', logger)
-        cleanup_logger(logger)
+            message_debug(
+                f'Final configuration: {config}', logger, on_screen=False)
+
+            fresh_destination = config.get('fresh_destination', False)
+            message_info('Preparing destination folders', logger)
+            _prepare_destination(matlab_folder, fresh_destination)
+            message_debug(' - Matlab destination done', logger)
+            _prepare_destination(parquet_folder, fresh_destination)
+            message_debug(' - Parquet destination done', logger)
+            message_info("", logger, in_log=False)
+
+            message_info("Converting PSData to Matlab", logger)
+            message_info(
+                "You might see other windows pop up quickly."
+                + " This is normal. Don't panic!",
+                logger,
+                in_log=False
+            )
+            convert_psdata_directory(psdata_folder, matlab_folder, config)
+            message_info("", logger, in_log=False)
+            message_info("Converting Matlab to Parquet", logger)
+            parquetize_directory(matlab_folder, parquet_folder, config)
+
+            if not config.get('keep_matlab'):
+                message_info("", logger, in_log=False)
+                message_info("Removing Matlab files", logger)
+                rmtree(matlab_folder)
+            message_info('Done', logger)
+            cleanup_logger(logger)
+        else:
+            print('Selected folder is not a valid experiment folder')
     else:
         print('Closing...')
 
@@ -195,4 +247,4 @@ if __name__ == "__main__":
     config_path = args_dict.pop('config', None)
     config = get_configuration(args_dict, config_path)
 
-    main(config, psdata_folder_str=source_path)
+    main(config, folder_str=source_path)
