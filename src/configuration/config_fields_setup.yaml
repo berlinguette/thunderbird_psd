@@ -1,0 +1,103 @@
+source:
+  cli:
+    flags:
+      - "--source"
+      - "-s"
+    help: "location of PSData source folder"
+config:
+  cli:
+    flags:
+      - "--config"
+      - "-c"
+    help: "location of YAML configuration file. 
+      This file will override any default configuration file, 
+      and will be overridden by any arguments given here"
+keep_matlab:
+  config: 
+    allowed_types:
+      - 'bool'
+    default: false
+    gui:
+      title: "Keep Matlab files"
+      control: 'checkbox'
+      order: 100
+  cli:
+    flags:
+      - "--keep-matlab"
+      - "-k"
+    action: 'store_true'
+    help: "keep generated Matlab files when conversion is done"
+fresh_destination:
+  config: 
+    allowed_types:
+      - 'bool'
+    default: false
+    gui:
+      title: "Clear existing destination folders"
+      control: 'checkbox'
+      order: 90
+  cli:
+    flags:
+      - '--fresh-destination'
+      - '-f'
+    action: 'store_true'
+    help: "delete any previous Matlab and Parquet files if they exist"
+files_limit:
+  config: 
+    allowed_types:
+      - 'none'
+      - 'int'
+    default: null
+  cli:
+    flags:
+      - '--files-limit'
+      - '-l'
+    type: 'int'
+    help: "limit number of PSData files processed. 
+      Omit this (or use 0) for no limit (process all files in folder)"
+psdata_tasks:
+  config:
+    allowed_types:
+      - 'int'
+    default: 5
+    gui:
+      title: "Max simultaneous Stage 1 (PSData to Matlab) conversions"
+      control: 'spin'
+      order: 10
+  cli:
+    flags:
+      - '--psdata-tasks'
+    type: 'int'
+    help: "max number of simultaneous PSData to Matlab conversions. 
+      Use 0 for no limit (process all given files at the same time)"
+parquet_tasks:
+  config:
+    allowed_types:
+      - 'int'
+    default: 4
+    gui:
+      title: "Max simultaneous Stage 2 (Matlab to Parquet) conversions"
+      control: 'spin'
+      order: 20
+  cli:
+    flags:
+      - '--parquet-tasks'
+    type: 'int'
+    help: "max number of simultaneous Matlab to Parquet conversions. 
+      Use 0 to do as many tasks as possible on this machine"
+parquet_files:
+  config:
+    allowed_types:
+      - 'int'
+    default: 4
+    gui:
+      title: "Max simultaneous file loads per Stage 2 conversion"
+      control: 'spin'
+      order: 30
+  cli:
+    flags:
+      '--parquet-files'
+    type: 'int'
+    help: "max number of simultaneous Matlab files loaded per conversion. 
+      Use 0 to load as many files as possible"
+  
