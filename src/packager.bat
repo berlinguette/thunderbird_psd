@@ -8,7 +8,7 @@ set "logfile=packaging_logs/packaging_%yyyy%%mm%%DD%T%hh%%mn%%ss%_%ms%%tz%.log"
 echo - Packaging starts - %yyyy%/%mm%/%DD% %hh%:%mn%:%ss% - >%logfile%
 echo -- Generating spec file -- >>%logfile%
 pyi-makespec --onefile ^
-    --add-data="configuration/default_config.yaml;configuration" ^
+    --add-data="configuration/config_fields_setup.yaml;configuration" ^
     --splash="splash.png" ^
     neutron_data_converter.py >>%logfile% 2>&1
 echo -- Editing spec file for splash screen -- >>%logfile%
