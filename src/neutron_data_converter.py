@@ -5,22 +5,21 @@ from multiprocessing import freeze_support
 from os import environ
 from pathlib import Path
 from shutil import rmtree
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 
-import PySimpleGUI as sg
 
-from configuration.configuration import get_configuration
+from configuration.configuration import (get_configuration, load_config_setup,
+                                         populate_args_parser)
 from logging_helpers.setup_logger import (cleanup_logger, message_debug,
                                           message_info, setup_logger)
 from parquetizer import parquetize_directory
 from psdata_to_matlab import convert_psdata_directory
+from ui.converter_gui import converter_gui
 
 logger = logging.getLogger('main')
 
-WINDOW_TITLE = 'Select Raw Data Folder'
 
-
-def _setup_parser() -> ArgumentParser:
+def _setup_parser(config_setup: Dict[str, Any]) -> ArgumentParser:
     """Produces ArgumentParser with all needed arguments
 
     Returns
@@ -32,74 +31,9 @@ def _setup_parser() -> ArgumentParser:
         prog="PSData to Parquet Converter",
         description=("Converts PSData files from experiment"
                      " to Matlab and Parquet files"))
-
-    parser.add_argument(
-        '--source', '-s',
-        help='location of PSData source folder')
-    parser.add_argument(
-        '--config', '-c',
-        help=('Location of YAML configuration file. '
-              'This file will override any default configuration file, '
-              'and will be overridden by any arguments given here'))
-    parser.add_argument(
-        '--keep-matlab', '-k',
-        action='store_true',
-        help='keep generated Matlab files when conversion is done')
-    parser.add_argument(
-        '--fresh-destination', '-f',
-        action='store_true',
-        help='delete any previous Matlab and Parquet files if they exist')
-    parser.add_argument(
-        '--files-limit', '-l',
-        type=int,
-        help=('limit number of PSData files processed. '
-              'Omit this (or use 0) for no limit (process all files in folder)'))
-    parser.add_argument(
-        '--psdata-tasks',
-        type=int,
-        help=('max number of simultaneous PSData to Matlab conversions. '
-              'Use 0 for no limit (process all given files at the same time)'))
-    parser.add_argument(
-        '--parquet-tasks',
-        type=int,
-        help=('max number of simultaneous Matlab to Parquet conversions. '
-              'Use 0 to do as many tasks as possible on this machine'))
-    parser.add_argument(
-        '--parquet-files',
-        type=int,
-        help=('max number of simultaneous Matlab files loaded per conversion. '
-              'Use 0 to load as many files as possible'))
+    parser = populate_args_parser(parser, config_setup)
 
     return parser
-
-
-def _select_folder() -> Optional[Path]:
-    """Opens a folder picker GUI for user input
-
-    Returns
-    -------
-    Optional[Path]
-        The chosen path, or None if the GUI window is closed
-    """
-    left_col = [[sg.Text('Folder'), sg.In(
-        size=(25, 1), enable_events=True, key='-FOLDER-'), sg.FolderBrowse()]]
-    layout = [[sg.Column(left_col, element_justification='c')]]
-    window = sg.Window(WINDOW_TITLE, layout, resizable=True)
-
-    done = False
-    folder = None
-    while not done:
-        event, values = window.read()
-        if event in (sg.WIN_CLOSED, 'Exit', '-FOLDER-'):
-            done = True
-            if event == '-FOLDER-':
-                folder = values['-FOLDER-']
-
-    window.close()
-    if folder is not None:
-        return Path(folder)
-    else:
-        return folder
 
 
 def _prepare_destination(destination_path: Path, fresh_destination: bool):
@@ -125,7 +59,11 @@ def _prepare_destination(destination_path: Path, fresh_destination: bool):
         destination_path.mkdir()
 
 
-def main(config: Dict, psdata_folder_str: Optional[str] = None):
+def main(
+    config: Dict,
+    config_setup: Dict[str, Any],
+    psdata_folder_str: Optional[str] = None
+):
     """Runs the neutron data conversion process:
     - Running the folder picker GUI if needed
     - Preparing destination folders
@@ -143,7 +81,7 @@ def main(config: Dict, psdata_folder_str: Optional[str] = None):
         If not provided, the folder picker window will be launched.
     """
     if psdata_folder_str is None:
-        psdata_folder_path = _select_folder()
+        config, psdata_folder_path = converter_gui(config, config_setup)
     else:
         psdata_folder_path = Path(psdata_folder_str)
 
@@ -198,13 +136,15 @@ if __name__ == "__main__":
         pyi_splash.close()
         
     freeze_support()  # needed for Windows multiprocessing/processpool
-    parser = _setup_parser()
+
+    config_setup = load_config_setup()
+    parser = _setup_parser(config_setup)
 
     args = parser.parse_args()
     args_dict = vars(args)
     # source and config are only needed here, not in config
     source_path = args_dict.pop('source', None)
     config_path = args_dict.pop('config', None)
-    config = get_configuration(args_dict, config_path)
+    config = get_configuration(args_dict, config_setup, config_path)
 
-    main(config, psdata_folder_str=source_path)
+    main(config, config_setup, psdata_folder_str=source_path)

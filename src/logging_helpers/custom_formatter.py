@@ -1,4 +1,5 @@
 import logging
+from typing import Dict, Tuple, Union
 
 
 class CustomFormatter(logging.Formatter):
@@ -10,7 +11,7 @@ class CustomFormatter(logging.Formatter):
                        "%(message)s (%(filename)s:%(lineno)d)",
                        None)
 
-    FORMATS = {
+    FORMATS: Dict[int, Union[Tuple[str, str], Tuple[str, None]]] = {
         logging.DEBUG: basic_format,
         logging.INFO: basic_format,
         logging.WARNING: detailed_format,
@@ -31,6 +32,6 @@ class CustomFormatter(logging.Formatter):
         str
             Formatted log record text
         """
-        log_fmt = self.FORMATS.get(record.levelno)
+        log_fmt = self.FORMATS.get(record.levelno, self.detailed_format)
         formatter = logging.Formatter(*log_fmt)
         return formatter.format(record)
