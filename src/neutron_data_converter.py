@@ -116,8 +116,9 @@ def main(
             message_info("", logger, in_log=False)
             message_info("Removing Matlab files", logger)
             rmtree(matlab_directory)
-        message_info('Done', logger)
+        message_info('Conversion complete!', logger)
         cleanup_logger(logger)
+        input("Press Enter to close window")
     else:
         print('Closing...')
 
