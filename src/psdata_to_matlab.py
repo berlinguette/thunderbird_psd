@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Tuple, TypeVar
 
 from tqdm import tqdm
+from configuration.configuration import load_config_setup
 
 from logging_helpers.setup_logger import (cleanup_logger, message_debug,
                                           setup_logger)
@@ -263,5 +264,7 @@ if __name__ == "__main__":
         "sample_datasets/20220824_CERC_background/raw_data/psdata")
     destination = psdata_directory.parent / 'mat'
 
-    config = get_configuration({'files_limit': 5, 'psdata_tasks': 5})
+    config_setup = load_config_setup()
+    config = get_configuration(
+        {'files_limit': 5, 'psdata_tasks': 5}, config_setup)
     convert_psdata_directory(psdata_directory, destination, config)

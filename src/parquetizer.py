@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 import logging
 import re
 from concurrent.futures import ThreadPoolExecutor
@@ -10,6 +11,7 @@ import pandas as pd
 from scipy.io import loadmat
 from tqdm.contrib.concurrent import process_map
 
+from configuration.configuration import load_config_setup
 from logging_helpers.setup_logger import (cleanup_logger, message_debug,
                                           message_info, setup_logger)
 from utilities.constants import BAR_FORMAT
@@ -68,7 +70,7 @@ def parquetize_folder(
     file_paths = [f for f in directory.iterdir()]
     end_folder_name = directory.name
 
-    # TODO allow on-screen when tqdm team fixes process pool issues
+    # FUTURE allow on-screen when tqdm team fixes process pool issues
     # each process needs own separate logger in processpool
     new_logger = logging.getLogger(f'proc-{end_folder_name}')
     # we're in sample_dataset/raw_data/mat, one folder deeper than usual
@@ -158,5 +160,6 @@ if __name__ == "__main__":
     out_directory = Path(
         "sample_datasets/20220824_CERC_background/raw_data/parquet")
 
-    config = get_configuration({})
+    config_setup = load_config_setup()
+    config = get_configuration({}, config_setup)
     parquetize_directory(directory, out_directory, config)
