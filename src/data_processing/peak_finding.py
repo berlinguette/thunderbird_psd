@@ -24,5 +24,7 @@ def get_bases(
     peak_offset: int = 10,
     tail_offset: int = 5
 ) -> tuple[list, list]:
-    """Gets the left and right indices. See :func:`get_left_bases` and :func:`get_right_bases` for more information."""
+    """Gets the left and right indices. See :func:`get_left_bases` 
+    and :func:`get_right_bases` for more information.
+    """
     return get_left_bases(series, peak_idx, peak_offset), get_right_bases(series, peak_idx, tail_offset)
