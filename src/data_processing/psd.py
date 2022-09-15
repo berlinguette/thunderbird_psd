@@ -1,5 +1,9 @@
 import pandas as pd
+import numpy as np
+
+from scipy import interpolate
 from data_processing.peak_finding import get_bases
+from data_processing.figure_of_merit import gaussian
 
 
 def generate_psd(
@@ -7,11 +11,13 @@ def generate_psd(
     left_bases: dict,
     right_bases: dict,
     amplitudes: dict,
-    cutoff_voltage: float
+    cutoff_voltage: float,
 ) -> pd.DataFrame:
+    """Returns the Pulse Shape Discrimination report"""
+
     def process(series: pd.Series) -> dict:
-        q_total = series[left_bases[series.name]:].sum()
-        q_tail = series[right_bases[series.name]:].sum()
+        q_total = series[left_bases[series.name] :].sum()
+        q_tail = series[right_bases[series.name] :].sum()
 
         res = {
             "total integral": q_total,
@@ -22,7 +28,8 @@ def generate_psd(
         return res
 
     psd_report = pd.DataFrame(
-        {signal_id: process(df[signal_id]) for signal_id in df.columns})
+        {signal_id: process(df[signal_id]) for signal_id in df.columns}
+    )
     psd_report.loc["amplitude"] = amplitudes
 
     filt = psd_report.loc["tail / total"].between(-0.1, 0.8)
@@ -46,11 +53,9 @@ def df_to_psd(
     Args
     -----
     peak_offset: index shifted from the peak where its base may begin; used to calculate the peak's base value
-    tail_onset: index shifted from the peak where the tail should start 
+    tail_onset: index shifted from the peak where the tail should start
     """
     df = df - dc_offset
-    output = df.apply(lambda x: get_bases(
-        x, x.idxmax(), peak_offset, tail_onset)
-    )
+    output = df.apply(lambda x: get_bases(x, x.idxmax(), peak_offset, tail_onset))
     left_bases, right_bases = output.iloc[0, :], output.iloc[1, :]
     return generate_psd(df, left_bases, right_bases, df.max(), cutoff_voltage)
