@@ -1,9 +1,5 @@
 import pandas as pd
-import numpy as np
-
-from scipy import interpolate
 from data_processing.peak_finding import get_bases
-from data_processing.figure_of_merit import gaussian
 
 
 def generate_psd(
