@@ -35,5 +35,14 @@ def filter_incomplete_triggers(df: pd.DataFrame, threshold: float):
     return df
 
 
-def snr_filter(peak_height: float, baseline_rms: float, threshold=1) -> bool:
-    return False if peak_height / baseline_rms < threshold else True
+def snr_filter(peak_height: float, baseline_rms: float, min_snr: float) -> bool:
+    return False if peak_height / baseline_rms < min_snr else True
+
+
+def filter_low_snr(
+    df: pd.DataFrame, peak_map: dict, baseline_rms: dict, min_snr: float
+) -> pd.DataFrame:
+    filt = df.apply(
+        lambda series: snr_filter((peak_map), baseline_rms[series.name], min_snr)
+    )
+    return df.T[filt].T
