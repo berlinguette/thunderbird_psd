@@ -1,4 +1,5 @@
 import re
+import time
 from pathlib import Path
 from typing import Optional
 
@@ -33,9 +34,6 @@ def clean_file(
     filepath: Path,
     root_dir: Path,
     plot_path: Optional[Path] = None,
-    settings_path: Optional[Path] = None,
-    report_path: Optional[Path] = None,
-    destination: Optional[Path] = None,
 ):
     df = pd.read_parquet(filepath)
     df.columns = df.columns.astype("int16")
@@ -75,11 +73,6 @@ def clean_file(
         fig, _ = plot_signal(df_complete_triggers, sample_interval)
         fig.savefig(plot_path / "Cleaned Signals.png")
 
-    dump_settings(
-        root_dir / "settings.toml" if settings_path is None else settings_path
-    )
-
-    uid = filepath.name.split(".")[0]
     report = generate_report(
         num_initial_signals,
         num_missing_signals,
@@ -89,32 +82,40 @@ def clean_file(
         df_high_snr.shape[0],
     )
 
-    save_report(
-        uid, report, root_dir / "report.toml" if report_path is None else report_path
-    )
+    return df_high_snr, report, props
 
-    filename = re.sub("(\d+\-\d+)(.parquet)", r"\1_clean\2", filepath.name)
-    save_parquet(
-        df_high_snr,
-        filename,
-        root_dir if destination is None else destination,
-    )
-
-
-import time
 
 if __name__ == "__main__":
     ROOT_DIR = Path("../sample_datasets/20220906_AmBe/")
     PARQ_PATH = ROOT_DIR / "raw_data/parquet/20220906-0005.parquet"
 
     DESTINATION = Path("../sample_datasets/AmBe_port_test")
+    SETTINGS_PATH = DESTINATION / "settings.toml"
+    REPORT_PATH = DESTINATION / "report.toml"
 
     t1 = time.perf_counter()
-    clean_file(
+
+    df_clean, report, props = clean_file(
         PARQ_PATH,
         ROOT_DIR,
-        settings_path=DESTINATION / "settings.toml",
-        report_path=DESTINATION / "report.toml",
         destination=DESTINATION,
     )
+
+    dump_settings(
+        ROOT_DIR / "settings.toml" if SETTINGS_PATH is None else SETTINGS_PATH
+    )
+
+    uid = PARQ_PATH.name.split(".")[0]
+
+    save_report(
+        uid, report, ROOT_DIR / "report.toml" if REPORT_PATH is None else REPORT_PATH
+    )
+
+    filename = re.sub("(\d+\-\d+)(.parquet)", r"\1_clean\2", PARQ_PATH.name)
+    save_parquet(
+        df_clean,
+        filename,
+        ROOT_DIR if DESTINATION is None else DESTINATION,
+    )
+
     print(f"Compelted in: {time.perf_counter() - t1}")
