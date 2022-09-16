@@ -161,7 +161,24 @@ class ConverterGui(QMainWindow):
 
     @Slot()
     def handle_button_clicked_folder_picker(self):
-        self._test_button_click('folder picker')
+        dialog = QFileDialog(self)
+        dialog.setWindowTitle('Choose Experiment Folder(s)')
+        dialog.setOption(QFileDialog.DontUseNativeDialog, True)
+        dialog.setFileMode(QFileDialog.Directory)
+
+        list_views = dialog.findChildren(QListView)
+        list_views.extend(dialog.findChildren(QTreeView))
+        for view in list_views:
+            if isinstance(view.model(), QFileSystemModel):
+                view.setSelectionMode(
+                    QAbstractItemView.ExtendedSelection)
+
+        if dialog.exec_() == QDialog.Accepted:
+            folders = [folder for folder in dialog.selectedFiles()
+                       if Path(folder).is_dir()]
+            self.folder_list.clear()
+            self.folder_list.addItems(folders)
+        dialog.deleteLater()
 
     @Slot()
     def handle_button_clicked_start(self):
