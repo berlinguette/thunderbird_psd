@@ -31,7 +31,7 @@ def filter_multipeaks(
     return df.T[peak_idx.apply(is_single)].T, props
 
 
-def filter_incomplete_triggers(df: pd.DataFrame, threshold: float):
+def filter_incomplete_triggers(df: pd.DataFrame, threshold: float) -> pd.DataFrame:
     entry_filter = df.iloc[0] > threshold
     exit_filter = df.iloc[-1] > threshold
     df = df.T[~entry_filter].T
