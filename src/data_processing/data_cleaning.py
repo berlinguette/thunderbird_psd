@@ -17,14 +17,18 @@ def is_single(series: list) -> bool:
     return True if len(series) == 1 else False
 
 
-def filter_multipeaks(df: pd.DataFrame, height: float, prominence: float):
+def filter_multipeaks(
+    df: pd.DataFrame, height: float, prominence: float
+) -> tuple[pd.DataFrame, pd.DataFrame]:
     output = df.apply(
-        lambda x: signal.find_peaks(x.values, height=height, prominence=prominence)
+        lambda series: signal.find_peaks(
+            series.values, height=height, prominence=prominence
+        )
     )
-    peak_idx, _ = output.iloc[0, :], output.iloc[1, :]
+    peak_idx, props = output.iloc[0, :], output.iloc[1, :]
 
     peak_idx: pd.Series
-    return df.T[peak_idx.apply(is_single)].T
+    return df.T[peak_idx.apply(is_single)].T, props
 
 
 def filter_incomplete_triggers(df: pd.DataFrame, threshold: float):
