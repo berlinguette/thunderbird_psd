@@ -18,5 +18,5 @@ def get_bases(
     and :func:`get_right_bases` for more information.
     """
     return get_left_bases(series, peak_idx, peak_offset), get_right_bases(
-        series, peak_idx, tail_offset
+        peak_idx, tail_offset
     )
