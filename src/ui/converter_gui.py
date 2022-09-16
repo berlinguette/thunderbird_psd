@@ -32,7 +32,7 @@ SETTINGS_KEY = 'Settings'
 #     values : Dict[str, Any]
 #         All window control values
 #     state : Dict[str, Any]
-#         Current state of the GUI window data. Includes any data needed to 
+#         Current state of the GUI window data. Includes any data needed to
 #         handle any event
 
 #     Returns
@@ -47,7 +47,7 @@ SETTINGS_KEY = 'Settings'
 
 #     if event == FOLDER_KEY:
 #         new_state = {**state, 'done': True, 'folder': values[FOLDER_KEY]}
-    
+
 #     if event == SETTINGS_KEY:
 #         window: sg.Window = state['window']
 #         window.hide()
@@ -100,14 +100,14 @@ SETTINGS_KEY = 'Settings'
 
 
 class ConverterGui(QMainWindow):
-    
+
     def __init__(self):
         super().__init__()
         self._set_window_params()
-        
+
         # models
         self._start_experiment = False
-        
+
         # controls
         self.settings_button = QPushButton(
             text="Settings"
@@ -120,24 +120,55 @@ class ConverterGui(QMainWindow):
             # TODO change size and text color
         )
         self.folder_list = QListWidget()
-        
+
+        # signal/slot connections
+        self.settings_button.clicked.connect(  # type: ignore
+            self.handle_button_clicked_settings
+        )
+        self.folder_picker_button.clicked.connect(  # type: ignore
+            self.handle_button_clicked_folder_picker
+        )
+        self.start_button.clicked.connect(  # type: ignore
+            self.handle_button_clicked_start
+        )
+
         # layout
         layout = QVBoxLayout()
         layout.addWidget(self.settings_button)
         layout.addWidget(self.folder_picker_button)
         layout.addWidget(self.folder_list)
         layout.addWidget(self.start_button)
-        
+
         widget = QWidget()
         widget.setLayout(layout)
         self.setCentralWidget(widget)
-    
+
     @property
     def start_experiment(self):
         return self._start_experiment
-        
+
     def _set_window_params(self):
         self.setWindowTitle(WINDOW_TITLE)
+
+    def clean_up(self):
+        self.settings_button.disconnect()  # type: ignore
+        self.folder_picker_button.disconnect()  # type: ignore
+        self.start_button.disconnect()  # type: ignore
+
+    @Slot()
+    def handle_button_clicked_settings(self):
+        self._test_button_click('settings')
+
+    @Slot()
+    def handle_button_clicked_folder_picker(self):
+        self._test_button_click('folder picker')
+
+    @Slot()
+    def handle_button_clicked_start(self):
+        self._test_button_click('start')
+
+    def _test_button_click(self, name: str):
+        print(f"Clicked {name} button")
 
 
 def converter_gui(
@@ -160,19 +191,30 @@ def converter_gui(
     # if folder is not None:
     #     folder = Path(folder)
     # return config, folder
-    
+
     app = QApplication([])
     converter_gui = ConverterGui()
     converter_gui.show()
-    
+
     app.exec_()
-    
-    return config, None  # stub TODO finish this
+
+    if converter_gui.start_experiment:
+        final_config = config
+        folders = [
+            Path(converter_gui.folder_list.item(folder).text())
+            for folder in range(converter_gui.folder_list.count())
+        ]
+    else:
+        final_config = config
+        folders = None
+
+    return final_config, folders  # stub TODO finish this
+
 
 if __name__ == "__main__":
     from configuration.configuration import (get_configuration,
                                              load_config_setup)
-    
+
     config_setup = load_config_setup()
     config = get_configuration({}, config_setup)
     config, folder = converter_gui(config, config_setup)
