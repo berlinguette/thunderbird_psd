@@ -1,14 +1,14 @@
-import pandas as pd
-import numpy as np
 import matplotlib.pyplot as plt
-from data_processing.figure_of_merit import fit_fom, gaussian, FOM
+import numpy as np
+import pandas as pd
+from matplotlib.axes import Axes
+from matplotlib.figure import Figure
 
+from data_processing.figure_of_merit import FOM, fit_fom, gaussian
 from data_processing.plot_configs import *
 
 
-def plot_signal(
-    data: pd.DataFrame, sample_interval: float = 2
-) -> tuple[plt.Figure, plt.Axes]:
+def plot_signal(data: pd.DataFrame, sample_interval: float = 2) -> tuple[Figure, Axes]:
     """Plots signals"""
 
     if data is None:
@@ -30,7 +30,7 @@ def plot_signal(
 
 def plot_fom(
     psd: list, unimodal: bool = False, n_bins: int = 100, guesses: tuple = None
-) -> tuple[plt.Figure, plt.Axes]:
+) -> tuple[Figure, Axes]:
     """Returns the Figure of Merit and fitting data for the biomdal gaussians"""
     counts, bins = np.histogram(psd, n_bins)
 
@@ -71,9 +71,7 @@ def plot_fom(
     return fig, ax, params_dict, cov
 
 
-def plot_scatter(
-    x: list, y: list, xlabel: str, ylabel: str
-) -> tuple[plt.Figure, plt.Axes]:
+def plot_scatter(x: list, y: list, xlabel: str, ylabel: str) -> tuple[Figure, Axes]:
     """Returns a generic scatter plot"""
     fig, ax = plt.subplots(figsize=(FIG_DIM_X, FIG_DIM_X))
 
@@ -91,7 +89,7 @@ def plot_scatter(
 def plot_classification(
     neutrons: pd.DataFrame,
     gammas: pd.DataFrame,
-) -> tuple[plt.Figure, plt.Axes]:
+) -> tuple[Figure, Axes]:
     fig, ax = plt.subplots(figsize=(FIG_DIM_X, FIG_DIM_Y))
 
     ax.scatter(
