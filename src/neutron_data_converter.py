@@ -18,7 +18,6 @@ from ui.converter_gui import converter_gui
 
 logger = logging.getLogger('main')
 
-WINDOW_TITLE = 'Select Experiment Folder'
 RAW_DATA_FOLDER_NAME = 'raw_data'
 PSDATA_FOLDER_NAME = 'psdata'
 MATLAB_FOLDER_NAME = 'mat'
