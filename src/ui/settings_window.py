@@ -1,12 +1,10 @@
-from pathlib import Path
-from tkinter.tix import ButtonBox
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Tuple
 
 # import PySimpleGUI as sg
 from configuration.configuration import (load_config, override_config,
                                          save_config, validate_config)
 from PySide6.QtWidgets import (QDialog, QDialogButtonBox, QFormLayout,
-                               QLineEdit, QVBoxLayout, QPushButton, QHBoxLayout)
+                               QLineEdit, QVBoxLayout, QPushButton, QWidget, QCheckBox, QSpinBox)
 
 # HIDDEN_SAVE_KEY = '-SAVE-'
 # HIDDEN_LOAD_KEY = '-LOAD-'
@@ -340,19 +338,34 @@ class SettingsWindow(QDialog):
         self.load_button = QPushButton('Load')
         self.button_box = QDialogButtonBox()
         
-        # self.controls = []
-        # for control_data in self._generate_layout_data(config, config_setup):
-        #     control_name: str = control_data['control']
-        #     title: str = control_data['title']
-        #     current_value = control_data['value']
-        #     control_key: str = control_data['key']
+        self.form_controls: Dict[str, Tuple[str, QWidget]] = {}
+        form_controls = self._generate_layout_data(config, config_setup)
+        for control_data in form_controls:
+            control_name: str = control_data['control']
+            title: str = control_data['title']
+            current_value = control_data['value']
+            control_key: str = control_data['key']
+            
+            if control_name == 'checkbox':
+                control = QCheckBox()
+                control.setChecked(current_value)
+            elif control_name == 'input':
+                control = QLineEdit()
+                control.setText(current_value)
+            elif control_name == 'spin':
+                control = QSpinBox()
+                control.setValue(current_value)
+            else:
+                raise ValueError(f"Unsupported control name {control_name}")
+            self.form_controls[control_key] = (title, control)
+        print(self.form_controls)
             
         # model/view connections
         self._connect_signals()
         self._layout_window()
     
     def _set_window_params(self):
-        pass
+        self.setWindowTitle("Converter Settings")
     
     def _connect_signals(self):
         self.button_box.accepted.connect(self.accept) # type: ignore
@@ -360,8 +373,9 @@ class SettingsWindow(QDialog):
     
     def _layout_window(self):
         form_layout = QFormLayout()
-        # test row
-        form_layout.addRow("test", QLineEdit())
+        for form_row in self.form_controls.values():
+            label, control = form_row
+            form_layout.addRow(label, control)
         
         self.button_box.addButton(self.save_button, 
                                   QDialogButtonBox.ApplyRole)
