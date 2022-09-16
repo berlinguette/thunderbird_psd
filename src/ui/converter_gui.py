@@ -11,7 +11,7 @@ from PySide6.QtWidgets import (QAbstractItemView, QApplication, QDialog,
                                QListWidget, QMainWindow, QPushButton,
                                QTreeView, QVBoxLayout, QWidget)
 
-from ui.settings_window import settings_window
+from ui.settings_window import SettingsWindow
 
 WINDOW_TITLE = 'Select Experiment Folder'
 FOLDER_KEY = '-FOLDER-'
@@ -101,14 +101,16 @@ SETTINGS_KEY = 'Settings'
 
 class ConverterGui(QMainWindow):
 
-    def __init__(self):
+    def __init__(self, config: Dict, config_setup: Dict[str, Any]):
         super().__init__()
         self._set_window_params()
 
-        # models
+        # Models
         self._start_experiment = False
+        self._config = config
+        self._config_setup = config_setup
 
-        # controls
+        # UI Elements
         self.settings_button = QPushButton(
             text="Settings"
         )
@@ -121,7 +123,11 @@ class ConverterGui(QMainWindow):
         )
         self.folder_list = QListWidget()
 
-        # signal/slot connections
+        self._connect_signals()
+        self._layout_window()
+        
+
+    def _connect_signals(self):
         self.settings_button.clicked.connect(  # type: ignore
             self.handle_button_clicked_settings
         )
@@ -131,8 +137,8 @@ class ConverterGui(QMainWindow):
         self.start_button.clicked.connect(  # type: ignore
             self.handle_button_clicked_start
         )
-
-        # layout
+    
+    def _layout_window(self):
         layout = QVBoxLayout()
         layout.addWidget(self.settings_button)
         layout.addWidget(self.folder_picker_button)
@@ -157,7 +163,16 @@ class ConverterGui(QMainWindow):
 
     @Slot()
     def handle_button_clicked_settings(self):
-        self._test_button_click('settings')
+        print("Clicked settings button")
+        dialog = SettingsWindow(self._config, self._config_setup)
+        dialog.setParent(self)
+        # dialog.setModal(True)
+        dialog.finished.connect(self.handle_settings_closed) # type: ignore
+        dialog.open()
+        
+    @Slot(int)
+    def handle_settings_closed(self, result: int):
+        print(result)
 
     @Slot()
     def handle_button_clicked_folder_picker(self):
@@ -185,9 +200,6 @@ class ConverterGui(QMainWindow):
         self._start_experiment = True
         self.close()
 
-    def _test_button_click(self, name: str):
-        print(f"Clicked {name} button")
-
 
 def converter_gui(
     config: Dict,
@@ -211,7 +223,7 @@ def converter_gui(
     # return config, folder
 
     app = QApplication([])
-    converter_gui = ConverterGui()
+    converter_gui = ConverterGui(config, config_setup)
     converter_gui.show()
 
     app.exec_()
