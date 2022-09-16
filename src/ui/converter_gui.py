@@ -165,7 +165,8 @@ class ConverterGui(QMainWindow):
 
     @Slot()
     def handle_button_clicked_start(self):
-        self._test_button_click('start')
+        self._start_experiment = True
+        self.close()
 
     def _test_button_click(self, name: str):
         print(f"Clicked {name} button")
