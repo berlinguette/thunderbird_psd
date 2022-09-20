@@ -1,15 +1,15 @@
 import re
 import time
-from io.io import dump_settings, save_parquet, save_report
 from pathlib import Path
 
 import pandas as pd
 
 from cleaning.cleaner import clean_file
 from processing.processor import process_file
+from saving.io import dump_settings, save_parquet, save_report
 
 if __name__ == "__main__":
-    ROOT_DIR = Path("../sample_datasets/20220906_AmBe/")
+    ROOT_DIR = Path("../../sample_datasets/20220906_AmBe/")
     PARQ_PATH = ROOT_DIR / "raw_data/parquet/20220906-0005.parquet"
     EXP_TIMES_PATH = ROOT_DIR / "raw_data/exp_times.csv"
     # PLOT_PATH = ROOT_DIR / "processed_data/plots"
