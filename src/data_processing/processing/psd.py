@@ -1,5 +1,6 @@
 import pandas as pd
-from data_processing.peak_finding import get_bases
+
+from processing.peak_finding import get_bases
 
 
 def generate_psd(
@@ -12,8 +13,8 @@ def generate_psd(
     """Returns the Pulse Shape Discrimination report"""
 
     def process(series: pd.Series) -> dict:
-        q_total = series[left_bases[series.name] :].sum()
-        q_tail = series[right_bases[series.name] :].sum()
+        q_total = series[left_bases[series.name]:].sum()
+        q_tail = series[right_bases[series.name]:].sum()
 
         res = {
             "total integral": q_total,
@@ -52,6 +53,7 @@ def df_to_psd(
     tail_onset: index shifted from the peak where the tail should start
     """
     df = df - dc_offset
-    output = df.apply(lambda x: get_bases(x, x.idxmax(), peak_offset, tail_onset))
+    output = df.apply(lambda x: get_bases(
+        x, x.idxmax(), peak_offset, tail_onset))
     left_bases, right_bases = output.iloc[0, :], output.iloc[1, :]
     return generate_psd(df, left_bases, right_bases, df.max(), cutoff_voltage)

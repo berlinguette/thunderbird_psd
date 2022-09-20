@@ -5,13 +5,7 @@ import pandas as pd
 import tomli
 import tomli_w
 
-from data_processing.processing_configs import (
-    MIN_SNR,
-    PK_FIND_HEIGHT,
-    PK_FIND_PROMINENCE,
-    TRIGGER_THRESHOLD,
-)
-
+from cleaning.cleaning_configs import *
 
 def load_exp_info(exp_info_path: Path) -> dict:
     # TODO: add checking
@@ -40,27 +34,6 @@ def dump_settings(destination: Path) -> None:
 
     with open(destination, "w+b") as f:
         tomli_w.dump(report, f)
-
-
-def generate_report(
-    num_initial_signals: int,
-    num_missing_signals: int,
-    num_multipeaks: int,
-    num_incomplete: int,
-    num_low_snr: int,
-    final_size: int,
-) -> dict:
-    report = {
-        "last_updated": datetime.datetime.now(),
-        "initial": num_initial_signals,
-        "missing_or_nan": num_missing_signals,
-        "multipeaks": num_multipeaks,
-        "incomplete": num_incomplete,
-        "low_snr": num_low_snr,
-        "final": final_size,
-    }
-    return report
-
 
 def save_parquet(df: pd.DataFrame, filename: str, destination: Path) -> None:
     df = df.T

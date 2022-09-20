@@ -3,11 +3,11 @@ import numpy as np
 import pandas as pd
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
+from processing.figure_of_merit import FOM, gaussian
+from processing.processing_configs import CLASSIFIER_WINDOW_N, CUTOFF_VOLTAGE
 from scipy import interpolate
 
-from data_processing.figure_of_merit import FOM, gaussian
-from data_processing.plot_configs import *
-from data_processing.processing_configs import CLASSIFIER_WINDOW_N, CUTOFF_VOLTAGE
+from reporting.plot_configs import *
 
 
 def plot_signal(data: pd.DataFrame, sample_interval: float = 2) -> tuple[Figure, Axes]:
@@ -17,7 +17,8 @@ def plot_signal(data: pd.DataFrame, sample_interval: float = 2) -> tuple[Figure,
         return None
 
     fig, ax = plt.subplots(figsize=(FIG_DIM_X, FIG_DIM_Y))
-    ax.plot(np.arange(0, data.shape[0] * sample_interval, sample_interval), data)
+    ax.plot(np.arange(0, data.shape[0] *
+            sample_interval, sample_interval), data)
 
     ax.grid(visible=True)
     ax.tick_params(axis="both", labelsize=FONT_SIZE)
@@ -45,7 +46,8 @@ def plot_fom(
             bins[:-1], gaussian(bins[:-1], *params[0:3]), label="Neutron", c="orange"
         )
 
-    ax.plot(bins[:-1], gaussian(bins[:-1], *params[3:]), label="$\gamma$", c="indigo")
+    ax.plot(bins[:-1], gaussian(bins[:-1], *params[3:]),
+            label="$\gamma$", c="indigo")
 
     fom_val = (
         "N/A" if unimodal else f"{FOM(params[0], params[1], params[3], params[4]):.3f}"
