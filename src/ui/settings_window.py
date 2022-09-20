@@ -5,6 +5,7 @@ from configuration.configuration import (load_config, override_config,
                                          save_config, validate_config)
 from PySide6.QtWidgets import (QDialog, QDialogButtonBox, QFormLayout,
                                QLineEdit, QVBoxLayout, QPushButton, QWidget, QCheckBox, QSpinBox)
+from PySide6.QtCore import Slot
 
 # HIDDEN_SAVE_KEY = '-SAVE-'
 # HIDDEN_LOAD_KEY = '-LOAD-'
@@ -322,6 +323,97 @@ from PySide6.QtWidgets import (QDialog, QDialogButtonBox, QFormLayout,
 
 #     window.close()
 #     return new_config
+        
+    
+class CheckboxProxy():
+    
+    def __init__(self, checkbox: QCheckBox):
+        self._checkbox = checkbox
+        
+    @property
+    def control_widget(self) -> QCheckBox:
+        return self._checkbox
+    
+    @property
+    def value(self) -> bool:
+        return self._checkbox.isChecked()
+    
+    @value.setter
+    def value(self, new_value: bool):
+        self._checkbox.setChecked(new_value)
+        
+    @property
+    def valid_type(self) -> type:
+        return bool
+
+
+class TextInputProxy():
+    
+    def __init__(self, text_input: QLineEdit) -> None:
+        self._textinput = text_input
+        
+    @property
+    def control_widget(self) -> QLineEdit:
+        return self._textinput
+    
+    @property
+    def value(self) -> str:
+        return self._textinput.text()
+    
+    @value.setter
+    def value(self, new_value: str):
+        self._textinput.setText(new_value)
+        
+    @property
+    def valid_type(self) -> type:
+        return str
+    
+    
+class SpinboxProxy():
+    
+    def __init__(self, spinbox: QSpinBox) -> None:
+        self._spinbox = spinbox
+        
+    @property
+    def control_widget(self) -> QSpinBox:
+        return self._spinbox
+    
+    @property
+    def value(self) -> int:
+        return self._spinbox.value()
+    
+    @value.setter
+    def value(self, new_value: int):
+        self._spinbox.setValue(new_value)
+        
+    @property
+    def valid_type(self) -> type:
+        return int
+    
+    
+class SettingControlProxy():
+    
+    def __init__(self, setting_control: QCheckBox | QLineEdit | QSpinBox):
+        if isinstance(setting_control, QCheckBox):
+            self._strategy = CheckboxProxy(setting_control)
+        elif isinstance(setting_control, QLineEdit):
+            self._strategy = TextInputProxy(setting_control)
+        elif isinstance(setting_control, QSpinBox):
+            self._strategy = SpinboxProxy(setting_control)
+        else:
+            raise ValueError('Unsupported setting control type')
+                
+    @property
+    def control_widget(self) -> QCheckBox | QLineEdit | QSpinBox:
+        return self._strategy.control_widget
+    
+    @property
+    def value(self) -> bool | str | int:
+        return self._strategy.value
+    
+    @value.setter
+    def value(self, new_value: Any):
+        self._strategy.value = new_value
 
 
 class SettingsWindow(QDialog):
@@ -332,6 +424,7 @@ class SettingsWindow(QDialog):
         
         # models
         self._config = config
+        self._original_config = config
         
         # controls
         self._test_line_edit = QLineEdit()
@@ -339,7 +432,7 @@ class SettingsWindow(QDialog):
         self.load_button = QPushButton('Load')
         self.button_box = QDialogButtonBox()
         
-        self.form_controls: Dict[str, Tuple[str, QWidget]] = {}
+        self._form_controls: Dict[str, Tuple[str, SettingControlProxy]] = {}
         form_controls = self._generate_layout_data(config, config_setup)
         for control_data in form_controls:
             control_name: str = control_data['control']
@@ -348,18 +441,15 @@ class SettingsWindow(QDialog):
             control_key: str = control_data['key']
             
             if control_name == 'checkbox':
-                control = QCheckBox()
-                control.setChecked(current_value)
+                control = SettingControlProxy(QCheckBox())
             elif control_name == 'input':
-                control = QLineEdit()
-                control.setText(current_value)
+                control = SettingControlProxy(QLineEdit())
             elif control_name == 'spin':
-                control = QSpinBox()
-                control.setValue(current_value)
+                control = SettingControlProxy(QSpinBox())
             else:
                 raise ValueError(f"Unsupported control name {control_name}")
-            self.form_controls[control_key] = (title, control)
-        print(self.form_controls)
+            control.value = current_value
+            self._form_controls[control_key] = (title, control)
             
         # model/view connections
         self._connect_signals()
@@ -369,14 +459,18 @@ class SettingsWindow(QDialog):
         self.setWindowTitle("Converter Settings")
     
     def _connect_signals(self):
-        self.button_box.accepted.connect(self.accept) # type: ignore
-        self.button_box.rejected.connect(self.reject) # type: ignore
+        self.button_box.accepted.connect(self._handle_accepted) # type: ignore
+        self.button_box.rejected.connect(self._handle_rejected) # type: ignore
+        self.save_button.clicked.connect( # type: ignore
+            self._handle_save_button_clicked)
+        self.load_button.clicked.connect( # type: ignore
+            self._handle_load_button_clicked)
     
     def _layout_window(self):
         form_layout = QFormLayout()
-        for form_row in self.form_controls.values():
+        for form_row in self._form_controls.values():
             label, control = form_row
-            form_layout.addRow(label, control)
+            form_layout.addRow(label, control.control_widget)
         
         self.button_box.addButton(self.save_button, 
                                   QDialogButtonBox.ApplyRole)
@@ -389,7 +483,45 @@ class SettingsWindow(QDialog):
         main_layout.addLayout(form_layout)
         main_layout.addWidget(self.button_box)
         self.setLayout(main_layout)
-        
+    
+    @property
+    def config(self) -> Dict:
+        return self._config
+    
+    @Slot()
+    def _handle_save_button_clicked(self):
+        print("Save button clicked")
+    
+    @Slot()
+    def _handle_load_button_clicked(self):
+        print("Load button clicked")
+    
+    @Slot()
+    def _handle_accepted(self):
+        controls_values = self._get_control_values()
+        self._config = {**self._config, **controls_values}
+        self._original_config = {**self._config}  # maintain independence
+        self.accept()
+    
+    @Slot()
+    def _handle_rejected(self):
+        self._config = {**self._original_config}  # maintain independence
+        self._update_control_values(self._original_config)
+        self.reject()
+    
+    def _get_control_values(self) -> Dict:
+        controls_values = {}
+        for key, control_row in self._form_controls.items():
+            control = control_row[1]
+            value = control.value
+            controls_values[key] = value
+        return controls_values
+    
+    def _update_control_values(self, config: Dict):
+        for key, control_row in self._form_controls.items():
+            value = config[key]
+            control = control_row[1]
+            control.value = value
     
     def _generate_layout_data(
         self,
