@@ -171,7 +171,7 @@ class ConverterGui(QMainWindow):
         
     @Slot(int)
     def handle_settings_closed(self, result: int):
-        print(result)
+        self._config = self.settings_dialog.config
 
     @Slot()
     def handle_button_clicked_folder_picker(self):

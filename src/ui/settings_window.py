@@ -486,7 +486,7 @@ class SettingsWindow(QDialog):
     
     @property
     def config(self) -> Dict:
-        return self._config
+        return {**self._config}
     
     @Slot()
     def _handle_save_button_clicked(self):
