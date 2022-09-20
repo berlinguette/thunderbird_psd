@@ -331,6 +331,7 @@ class SettingsWindow(QDialog):
         self._set_window_params()
         
         # models
+        self._config = config
         
         # controls
         self._test_line_edit = QLineEdit()

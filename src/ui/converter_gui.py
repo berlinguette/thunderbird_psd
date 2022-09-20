@@ -122,6 +122,7 @@ class ConverterGui(QMainWindow):
             # TODO change size and text color
         )
         self.folder_list = QListWidget()
+        self.settings_dialog = SettingsWindow(self._config, self._config_setup)
 
         self._connect_signals()
         self._layout_window()
@@ -137,6 +138,8 @@ class ConverterGui(QMainWindow):
         self.start_button.clicked.connect(  # type: ignore
             self.handle_button_clicked_start
         )
+        self.settings_dialog.finished.connect( # type: ignore
+            self.handle_settings_closed)
     
     def _layout_window(self):
         layout = QVBoxLayout()
@@ -163,12 +166,8 @@ class ConverterGui(QMainWindow):
 
     @Slot()
     def handle_button_clicked_settings(self):
-        print("Clicked settings button")
-        dialog = SettingsWindow(self._config, self._config_setup)
-        dialog.setParent(self)
-        # dialog.setModal(True)
-        dialog.finished.connect(self.handle_settings_closed) # type: ignore
-        dialog.open()
+        print("Clicked settings button")  # TODO remove this
+        self.settings_dialog.open()
         
     @Slot(int)
     def handle_settings_closed(self, result: int):
