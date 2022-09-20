@@ -1,11 +1,13 @@
+from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
 # import PySimpleGUI as sg
-from configuration.configuration import (load_config, override_config,
-                                         save_config, validate_config)
-from PySide6.QtWidgets import (QDialog, QDialogButtonBox, QFormLayout,
-                               QLineEdit, QVBoxLayout, QPushButton, QWidget, QCheckBox, QSpinBox)
+from configuration.configuration import (is_config_valid, load_config,
+                                         override_config, save_config)
 from PySide6.QtCore import Slot
+from PySide6.QtWidgets import (QCheckBox, QDialog, QDialogButtonBox,
+                               QFileDialog, QFormLayout, QLineEdit,
+                               QPushButton, QSpinBox, QVBoxLayout)
 
 # HIDDEN_SAVE_KEY = '-SAVE-'
 # HIDDEN_LOAD_KEY = '-LOAD-'
@@ -425,6 +427,7 @@ class SettingsWindow(QDialog):
         # models
         self._config = config
         self._original_config = config
+        self._config_setup = config_setup
         
         # controls
         self._test_line_edit = QLineEdit()
@@ -490,7 +493,15 @@ class SettingsWindow(QDialog):
     
     @Slot()
     def _handle_save_button_clicked(self):
-        print("Save button clicked")
+        control_values = override_config(
+            self._config, self._get_control_values())
+        if is_config_valid(control_values, self._config_setup):
+            filename, _ = QFileDialog.getSaveFileName(
+                self, 
+                "Save Configuration", 
+                filter="Configuration Files (*.yaml)")
+            if filename:
+            save_config(self._config, Path(filename))
     
     @Slot()
     def _handle_load_button_clicked(self):
@@ -498,8 +509,8 @@ class SettingsWindow(QDialog):
     
     @Slot()
     def _handle_accepted(self):
-        controls_values = self._get_control_values()
-        self._config = {**self._config, **controls_values}
+        self._config = override_config(
+            self._config, self._get_control_values())
         self._original_config = {**self._config}  # maintain independence
         self.accept()
     

@@ -166,7 +166,6 @@ class ConverterGui(QMainWindow):
 
     @Slot()
     def handle_button_clicked_settings(self):
-        print("Clicked settings button")  # TODO remove this
         self.settings_dialog.open()
         
     @Slot(int)
