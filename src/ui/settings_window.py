@@ -166,9 +166,9 @@ class SettingsWindow(QDialog):
             self._handle_save_button_clicked)
         self.load_button.clicked.connect(  # type: ignore
             self._handle_load_button_clicked)
-        self._save_dialog.finished.connect( # type: ignore
+        self._save_dialog.finished.connect(  # type: ignore
             self._handle_save_dialog_finished)
-        self._load_dialog.finished.connect( # type: ignore
+        self._load_dialog.finished.connect(  # type: ignore
             self._handle_load_dialog_finished)
         self._save_dialog.fileSelected.connect(  # type: ignore
             self._handle_save_file_picked)
@@ -208,11 +208,11 @@ class SettingsWindow(QDialog):
         if self._settings_active_folder is not None:
             self._load_dialog.setDirectory(self._settings_active_folder)
         self._load_dialog.open()
-        
+
     @Slot()
     def _handle_save_dialog_finished(self):
         self._settings_active_folder = self._save_dialog.directory()
-    
+
     @Slot()
     def _handle_load_dialog_finished(self):
         self._settings_active_folder = self._load_dialog.directory()

@@ -1,11 +1,7 @@
-# import PySimpleGUI as sg
-import sys
-from email.charset import QP
-from lib2to3.pytree import convert
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-from PySide6.QtCore import QStringListModel, Slot
+from PySide6.QtCore import Slot
 from PySide6.QtWidgets import (QAbstractItemView, QApplication, QDialog,
                                QFileDialog, QFileSystemModel, QListView,
                                QListWidget, QMainWindow, QPushButton,
@@ -14,89 +10,6 @@ from PySide6.QtWidgets import (QAbstractItemView, QApplication, QDialog,
 from ui.settings_window import SettingsWindow
 
 WINDOW_TITLE = 'Select Experiment Folder'
-FOLDER_KEY = '-FOLDER-'
-SETTINGS_KEY = 'Settings'
-
-
-# def _handle_event(
-#     event: str,
-#     values: Dict[str, Any],
-#     state: Dict[str, Any]
-# ) -> Dict[str, Any]:
-#     """Handles button events on GUI window, immutably updating state
-
-#     Parameters
-#     ----------
-#     event : str
-#         Event key
-#     values : Dict[str, Any]
-#         All window control values
-#     state : Dict[str, Any]
-#         Current state of the GUI window data. Includes any data needed to
-#         handle any event
-
-#     Returns
-#     -------
-#     Dict[str, Any]
-#         Updated window state. Since state is updated immutably, this is a new
-#         dictionary object.
-#     """
-#     new_state = state
-#     if event in (sg.WIN_CLOSED, 'Exit'):
-#         new_state = {**state, 'done': True}
-
-#     if event == FOLDER_KEY:
-#         new_state = {**state, 'done': True, 'folder': values[FOLDER_KEY]}
-
-#     if event == SETTINGS_KEY:
-#         window: sg.Window = state['window']
-#         window.hide()
-#         new_config = settings_window(state['config'], state['config_setup'])
-#         new_state = {**state, 'config': new_config}
-#         window.un_hide()
-#     return new_state
-
-
-# def _event_handling_loop(
-#     window: sg.Window,
-#     config: Dict,
-#     config_setup: Dict[str, Any]
-# ) -> Tuple[Optional[str], Dict]:
-#     """Repeatedly checks for window events and handles them.
-#     Closes when a terminating event is handled
-
-#     Parameters
-#     ----------
-#     window : sg.Window
-#         Window to be checked
-#     config : Dict
-#         Current conversion settings
-#     config_setup : Dict[str, Any]
-#         Configuration setup data
-
-#     Returns
-#     -------
-#     Tuple[Optional[str], Dict]
-#         Chosen folder, conversion settings with any updates applied
-#     """
-#     state = {
-#         'done': False,
-#         'folder': None,
-#         'window': window,
-#         'config': config,
-#         'config_setup': config_setup
-#     }
-#     while not state['done']:
-#         read_result = window.read()
-#         if not isinstance(read_result, tuple):
-#             continue
-#         event: str
-#         values: Dict[str, Any]
-#         event, values = read_result
-#         state = _handle_event(
-#             event, values, state)
-
-#     return state['folder'], state['config']
 
 
 class ConverterGui(QMainWindow):
@@ -126,7 +39,6 @@ class ConverterGui(QMainWindow):
 
         self._connect_signals()
         self._layout_window()
-        
 
     def _connect_signals(self):
         self.settings_button.clicked.connect(  # type: ignore
@@ -138,7 +50,7 @@ class ConverterGui(QMainWindow):
         self.start_button.clicked.connect(  # type: ignore
             self.handle_button_clicked_start
         )
-        self.settings_dialog.finished.connect( # type: ignore
+        self.settings_dialog.finished.connect(  # type: ignore
             self.handle_settings_closed)
 
     def _set_window_params(self):

@@ -70,7 +70,7 @@ def _find_experiment_root(folder_path: Path, found_psdata: bool = False, found_r
         ]
         if all(checks):
             root_path = folder_path
-    return root_path  # TODO test this
+    return root_path
 
 
 def _prepare_destination(destination_path: Path, fresh_destination: bool):
@@ -128,48 +128,48 @@ def main(
     if folder_paths is not None:
         folders_count = len(folder_paths)
         for folder_i, folder_path in enumerate(folder_paths):
-        experiment_root = _find_experiment_root(folder_path)
-        if experiment_root is not None:
-            raw_data_folder = experiment_root / RAW_DATA_FOLDER_NAME
-            psdata_folder = raw_data_folder / PSDATA_FOLDER_NAME
-            matlab_folder = raw_data_folder / MATLAB_FOLDER_NAME
-            parquet_folder = raw_data_folder / PARQUET_FOLDER_NAME
-            setup_logger(logger, experiment_root)
+            experiment_root = _find_experiment_root(folder_path)
+            if experiment_root is not None:
+                raw_data_folder = experiment_root / RAW_DATA_FOLDER_NAME
+                psdata_folder = raw_data_folder / PSDATA_FOLDER_NAME
+                matlab_folder = raw_data_folder / MATLAB_FOLDER_NAME
+                parquet_folder = raw_data_folder / PARQUET_FOLDER_NAME
+                setup_logger(logger, experiment_root)
                 message_info(
                     f'Converting files in folder {folder_i}/{folders_count}:' +
                     f' {experiment_root}',
                     logger)
-            message_info("", logger, in_log=False)
-            message_debug(
-                f'Final configuration: {config}', logger, on_screen=False)
-
-            fresh_destination = config.get('fresh_destination', False)
-            message_info('Preparing destination folders', logger)
-            _prepare_destination(matlab_folder, fresh_destination)
-            message_debug(' - Matlab destination done', logger)
-            _prepare_destination(parquet_folder, fresh_destination)
-            message_debug(' - Parquet destination done', logger)
-            message_info("", logger, in_log=False)
-
-            message_info("Converting PSData to Matlab", logger)
-            message_info(
-                "You might see other windows pop up quickly."
-                + " This is normal. Don't panic!",
-                logger,
-                in_log=False
-            )
-            convert_psdata_directory(psdata_folder, matlab_folder, config)
-            message_info("", logger, in_log=False)
-            message_info("Converting Matlab to Parquet", logger)
-            parquetize_directory(matlab_folder, parquet_folder, config)
-
-            if not config.get('keep_matlab'):
                 message_info("", logger, in_log=False)
-                message_info("Removing Matlab files", logger)
-                rmtree(matlab_folder)
+                message_debug(
+                    f'Final configuration: {config}', logger, on_screen=False)
+
+                fresh_destination = config.get('fresh_destination', False)
+                message_info('Preparing destination folders', logger)
+                _prepare_destination(matlab_folder, fresh_destination)
+                message_debug(' - Matlab destination done', logger)
+                _prepare_destination(parquet_folder, fresh_destination)
+                message_debug(' - Parquet destination done', logger)
+                message_info("", logger, in_log=False)
+
+                message_info("Converting PSData to Matlab", logger)
+                message_info(
+                    "You might see other windows pop up quickly."
+                    + " This is normal. Don't panic!",
+                    logger,
+                    in_log=False
+                )
+                convert_psdata_directory(psdata_folder, matlab_folder, config)
+                message_info("", logger, in_log=False)
+                message_info("Converting Matlab to Parquet", logger)
+                parquetize_directory(matlab_folder, parquet_folder, config)
+
+                if not config.get('keep_matlab'):
+                    message_info("", logger, in_log=False)
+                    message_info("Removing Matlab files", logger)
+                    rmtree(matlab_folder)
                 message_info(f'Conversion of {experiment_root} complete!', logger)
-        else:
-            print('Selected folder is not a valid experiment folder')
+            else:
+                print('Selected folder is not a valid experiment folder')
         message_info("All conversions complete!", logger)
         cleanup_logger(logger)
         input("Press Enter to close window")
