@@ -1,21 +1,15 @@
 from pathlib import Path
 from typing import Optional
 
-import pandas as pd
 import numpy as np
-
-from cleaning.data_cleaning import (
-    filter_incomplete_triggers,
-    filter_low_snr,
-    filter_multipeaks,
-    rms,
-    subtract_rms,
-)
+import pandas as pd
+from reporting.plotting import plot_signal
+from reporting.reporting import generate_report, save_plot
+from saving.io import load_exp_info
 
 from cleaning.cleaning_configs import *
-from saving.io import load_exp_info
-from reporting.plotting import plot_signal
-from reporting.reporting import generate_report
+from cleaning.data_cleaning import (filter_incomplete_triggers, filter_low_snr,
+                                    filter_multipeaks, rms, subtract_rms)
 
 
 def clean_file(
@@ -59,8 +53,9 @@ def clean_file(
         exp_info = load_exp_info(exp_info_path)
         sample_interval = exp_info["picoscope"]["sample_interval"]
         fig, _ = plot_signal(df_complete_triggers, sample_interval)
-        fig.savefig(
-            plot_path / f"{filepath.name.split('.')[0]}-cleaned_signals.png")
+        
+        file_name = filepath.name.split('.')[0]
+        save_plot(plot_path / file_name, fig, f"{file_name}-cleaned_signals.png")
 
     report = generate_report(
         num_initial_signals,
