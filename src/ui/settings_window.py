@@ -512,15 +512,27 @@ class SettingsWindow(QDialog):
     
     @Slot()
     def _handle_save_button_clicked(self):
+        self._save_dialog.open()
+
+    @Slot(str)
+    def _handle_save_file_picked(self, filename: str):
+        filepath = Path(filename)
+        if not filepath.is_dir():
         control_values = override_config(
             self._config, self._get_control_values())
         if is_config_valid(control_values, self._config_setup):
-            filename, _ = QFileDialog.getSaveFileName(
+                save_config(control_values, filepath)
+            else:
+                QMessageBox.warning(
                 self, 
-                "Save Configuration", 
-                filter="Configuration Files (*.yaml)")
-            if filename:
-            save_config(self._config, Path(filename))
+                    "Invalid settings",
+                    "Some settings were not valid and could not be saved.")
+        else:
+            QMessageBox.warning(
+                self,
+                "Invalid file",
+                "The chosen save file was not a valid file."
+            )
     
     @Slot()
     def _handle_load_button_clicked(self):
