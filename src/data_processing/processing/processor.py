@@ -3,9 +3,12 @@ from typing import Optional
 
 import numpy as np
 import pandas as pd
-
-from reporting.plotting import plot_bounded_scatter, plot_fom, plot_classification_with_grouping
 from reporting.plot_configs import QUOTIENT_LOWER_LIM, QUOTIENT_UPPER_LIM
+from reporting.plotting import (
+    plot_bounded_scatter,
+    plot_classification_with_grouping,
+    plot_fom,
+)
 from reporting.reporting import save_plot
 
 from processing.figure_of_merit import FOM, fit_fom, n_sigma_classifier
@@ -23,13 +26,11 @@ def process_file(
     df = df - FINE_DC_OFFSET
 
     output = df.apply(
-        lambda series: get_bases(
-            series, series.idxmax(), PEAK_OFFSET, TAIL_ONSET)
+        lambda series: get_bases(series, series.idxmax(), PEAK_OFFSET, TAIL_ONSET)
     )
     left_bases, right_bases = output.iloc[0, :], output.iloc[1, :]
 
-    psd_report = generate_psd(
-        df, left_bases, right_bases, df.max(), CUTOFF_VOLTAGE)
+    psd_report = generate_psd(df, left_bases, right_bases, df.max(), CUTOFF_VOLTAGE)
 
     counts, bins = np.histogram(psd_report.loc["tail / total"], N_BINS)
     params, _ = fit_fom(counts, bins)
@@ -44,7 +45,9 @@ def process_file(
             "total integral (a.u.)",
             "tail integral (a.u.)",
         )
-        save_plot(plot_path / buffer_id, tail_vs_total, f"{buffer_id}-tail_vs_total.png")
+        save_plot(
+            plot_path / buffer_id, tail_vs_total, f"{buffer_id}-tail_vs_total.png"
+        )
 
         q_vs_amplitude, _ = plot_bounded_scatter(
             psd_report.loc["amplitude"],
@@ -54,8 +57,9 @@ def process_file(
             (0, MAX_VOLTAGE),
             (QUOTIENT_LOWER_LIM, QUOTIENT_UPPER_LIM),
         )
-        q_vs_amplitude.savefig(plot_path / f"{buffer_id}-q_vs_amplitude.png")
-        save_plot(plot_path / buffer_id, q_vs_amplitude, f"{buffer_id}-tail_vs_total.png")
+        save_plot(
+            plot_path / buffer_id, q_vs_amplitude, f"{buffer_id}-q_vs_amplitude.png"
+        )
 
         fom, _, = plot_fom(
             psd_report.loc["tail / total"], params=params, unimodal=False, n_bins=N_BINS
@@ -63,9 +67,10 @@ def process_file(
         save_plot(plot_path / buffer_id, fom, f"{buffer_id}-fom.png")
 
         classification, _ = plot_classification_with_grouping(
-            neutrons, gammas, f_gamma, f_gate, psd_report.loc["amplitude"].max(
-            )
+            neutrons, gammas, f_gamma, f_gate, psd_report.loc["amplitude"].max()
         )
-        save_plot(plot_path / buffer_id, classification, f"{buffer_id}-classification.png")
+        save_plot(
+            plot_path / buffer_id, classification, f"{buffer_id}-classification.png"
+        )
 
     return FOM(*params[0:2], *params[3:-1]), neutrons.shape[1] / elapsed_time
