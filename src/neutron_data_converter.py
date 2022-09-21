@@ -121,11 +121,13 @@ def main(
         If not provided, the UI window will be launched.
     """
     if folder_str is None:
-        config, folder_path = converter_gui(config, config_setup)
+        config, folder_paths = converter_gui(config, config_setup)
     else:
-        folder_path = Path(folder_str)
+        folder_paths = [Path(folder_str)]
 
-    if folder_path is not None:
+    if folder_paths is not None:
+        folders_count = len(folder_paths)
+        for folder_i, folder_path in enumerate(folder_paths):
         experiment_root = _find_experiment_root(folder_path)
         if experiment_root is not None:
             raw_data_folder = experiment_root / RAW_DATA_FOLDER_NAME
@@ -133,7 +135,10 @@ def main(
             matlab_folder = raw_data_folder / MATLAB_FOLDER_NAME
             parquet_folder = raw_data_folder / PARQUET_FOLDER_NAME
             setup_logger(logger, experiment_root)
-            message_info(f'Converting files at {experiment_root}', logger)
+                message_info(
+                    f'Converting files in folder {folder_i}/{folders_count}:' +
+                    f' {experiment_root}',
+                    logger)
             message_info("", logger, in_log=False)
             message_debug(
                 f'Final configuration: {config}', logger, on_screen=False)
@@ -162,11 +167,12 @@ def main(
                 message_info("", logger, in_log=False)
                 message_info("Removing Matlab files", logger)
                 rmtree(matlab_folder)
-            message_info('Conversion complete!', logger)
-            cleanup_logger(logger)
-            input("Press Enter to close window")
+                message_info(f'Conversion of {experiment_root} complete!', logger)
         else:
             print('Selected folder is not a valid experiment folder')
+        message_info("All conversions complete!", logger)
+        cleanup_logger(logger)
+        input("Press Enter to close window")
     else:
         print('Closing...')
 
