@@ -140,7 +140,7 @@ class ConverterGui(QMainWindow):
         )
         self.settings_dialog.finished.connect( # type: ignore
             self.handle_settings_closed)
-    
+
     def _layout_window(self):
         layout = QVBoxLayout()
         layout.addWidget(self.settings_button)
@@ -156,18 +156,14 @@ class ConverterGui(QMainWindow):
     def start_experiment(self):
         return self._start_experiment
 
-    def _set_window_params(self):
-        self.setWindowTitle(WINDOW_TITLE)
-
-    def clean_up(self):
-        self.settings_button.disconnect()  # type: ignore
-        self.folder_picker_button.disconnect()  # type: ignore
-        self.start_button.disconnect()  # type: ignore
+    @property
+    def config(self) -> Dict:
+        return self._config
 
     @Slot()
     def handle_button_clicked_settings(self):
         self.settings_dialog.open()
-        
+
     @Slot(int)
     def handle_settings_closed(self, result: int):
         self._config = self.settings_dialog.config
@@ -227,7 +223,7 @@ def converter_gui(
     app.exec_()
 
     if converter_gui.start_experiment:
-        final_config = config
+        final_config = converter_gui.config
         folders = [
             Path(converter_gui.folder_list.item(folder).text())
             for folder in range(converter_gui.folder_list.count())
