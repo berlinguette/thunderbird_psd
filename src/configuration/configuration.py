@@ -120,7 +120,12 @@ def is_config_valid(config: Dict, config_setup: Dict[str, Any]) -> bool:
         if setup_data is None:
             return False
 
-        allowed_types: List[str] = setup_data['config']['allowed_types']
+        try:
+            allowed_types: List[str] = setup_data['config']['allowed_types']
+        except KeyError:
+            # given config may have non-config keys (and is thus invalid)
+            # those can be found in setup data, but don't have 'config' entries
+            return False
         return any([
             is_valid_type(value, type_string) for type_string in allowed_types
         ])
