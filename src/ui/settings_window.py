@@ -110,6 +110,7 @@ class SettingsWindow(QDialog):
         self._config = config
         self._original_config = config
         self._config_setup = config_setup
+        self._settings_active_folder = None
 
         # controls
         self._test_line_edit = QLineEdit()
@@ -165,6 +166,10 @@ class SettingsWindow(QDialog):
             self._handle_save_button_clicked)
         self.load_button.clicked.connect(  # type: ignore
             self._handle_load_button_clicked)
+        self._save_dialog.finished.connect( # type: ignore
+            self._handle_save_dialog_finished)
+        self._load_dialog.finished.connect( # type: ignore
+            self._handle_load_dialog_finished)
         self._save_dialog.fileSelected.connect(  # type: ignore
             self._handle_save_file_picked)
         self._load_dialog.fileSelected.connect(  # type: ignore
@@ -194,11 +199,23 @@ class SettingsWindow(QDialog):
 
     @Slot()
     def _handle_save_button_clicked(self):
+        if self._settings_active_folder is not None:
+            self._save_dialog.setDirectory(self._settings_active_folder)
         self._save_dialog.open()
 
     @Slot()
     def _handle_load_button_clicked(self):
+        if self._settings_active_folder is not None:
+            self._load_dialog.setDirectory(self._settings_active_folder)
         self._load_dialog.open()
+        
+    @Slot()
+    def _handle_save_dialog_finished(self):
+        self._settings_active_folder = self._save_dialog.directory()
+    
+    @Slot()
+    def _handle_load_dialog_finished(self):
+        self._settings_active_folder = self._load_dialog.directory()
 
     @Slot(str)
     def _handle_save_file_picked(self, filename: str):
@@ -222,7 +239,6 @@ class SettingsWindow(QDialog):
 
     @Slot(str)
     def _handle_load_file_picked(self, filename: str):
-        print(f"Load file picked: {filename}")
         filepath = Path(filename)
         if filepath.is_file():
             new_config = override_config(
