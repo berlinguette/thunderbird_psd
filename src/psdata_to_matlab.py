@@ -5,9 +5,9 @@ from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Tuple, TypeVar
 
 from tqdm import tqdm
-from configuration.configuration import load_config_setup
 
-from logging_helpers.setup_logger import (cleanup_logger, message_debug,
+from configuration.configuration import load_config_setup
+from logging_helpers.setup_logger import (Messenger, cleanup_logger,
                                           setup_logger)
 from utilities.constants import BAR_FORMAT
 from utilities.get_limited_files import get_limited_files
@@ -16,6 +16,7 @@ from utilities.timing import Timer
 FORMAT = 'mat'
 T = TypeVar('T')
 logger = logging.getLogger('psdata_converter')
+log_only_messenger = Messenger(logger, on_screen=False)
 
 
 def _subprocess_results_printer(
@@ -41,12 +42,12 @@ def _subprocess_results_printer(
         whether to display subprocess messages on console screen, default True.
         Messages are always written to log
     """
-    message_debug(f'[{command_text} exited with {returncode}]',
-                  logger, on_screen=on_screen)
+    subprocess_messenger = Messenger(logger, on_screen=on_screen)
+    subprocess_messenger.debug(f'[{command_text} exited with {returncode}]')
     if stdout:
-        message_debug(f'[stdout]\n{stdout}', logger, on_screen=on_screen)
+        subprocess_messenger.debug(f'[stdout]\n{stdout}')
     if stderr:
-        message_debug(f'[stderr]\n{stderr}', logger, on_screen=on_screen)
+        subprocess_messenger.debug(f'[stderr]\n{stderr}')
 
 
 def _generate_shell_command(file_path: Path, destination: Path) -> List[str]:
@@ -204,9 +205,7 @@ def _process_files(
         bar_format=BAR_FORMAT
     ) as progress_bar:
         for chunk_index, chunk in enumerate(chunks):
-            message_debug(
-                f'Beginning work on chunk {chunk_index+1}/{chunks_count}',
-                logger, on_screen=False)
+            log_only_messenger.debug(f'Beginning work on chunk {chunk_index+1}/{chunks_count}')
             procs = [(file_path, subprocess.Popen(_generate_shell_command(
                 file_path, destination))) for file_path in chunk]
             for proc_data in procs:
@@ -216,13 +215,10 @@ def _process_files(
                 _subprocess_results_printer(
                     f'Converting {file_path.name}', returncode, None, None,
                     on_screen=False)
-            message_debug(
-                f'Completed work on chunk {chunk_index+1}/{chunks_count}',
-                logger, on_screen=False)
+            log_only_messenger.debug(f'Completed work on chunk {chunk_index+1}/{chunks_count}')
 
     exec_time = timer.stop_timer()
-    message_debug(f"Method executed in {timer.format_elapsed_time(exec_time)}",
-                  logger, on_screen=False)
+    log_only_messenger.debug(f"Method executed in {timer.format_elapsed_time(exec_time)}")
 
 
 def convert_psdata_directory(
@@ -248,8 +244,8 @@ def convert_psdata_directory(
     """
     logging_folder = folder_path.parent.parent
     setup_logger(logger, logging_folder)
-    message_debug(f'PSData source: {folder_path}', logger, on_screen=False)
-    message_debug(f'Matlab destination: {destination}', logger, on_screen=False)
+    log_only_messenger.debug(f'PSData source: {folder_path}')
+    log_only_messenger.debug(f'Matlab destination: {destination}')
     num_files = config.get('files_limit')
     chunk_size = config.get('psdata_tasks', 0)
     _process_files(folder_path, destination,

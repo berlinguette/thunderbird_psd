@@ -27,63 +27,52 @@ def cleanup_logger(logger: logging.Logger):
     for handler in logger.handlers:
         if isinstance(handler, logging.FileHandler):
             handler.close()
+    
 
+class Messenger:
+    def __init__(
+        self, 
+        logger: logging.Logger, 
+        in_log: bool = True, 
+        on_screen: bool = True
+        ):
+        self.logger = logger
+        self.in_log = in_log
+        self.on_screen = on_screen
+    
+    def message(self, msg: str, level: int):
+        """Send a message that can be logged and/or displayed on screen
 
-def message(
-    msg: str,
-    level: int,
-    logger: logging.Logger,
-    on_screen: bool = True,
-    in_log: bool = True
-):
-    """Send a message that can be logged and/or displayed on screen
+        These messages are compatible with tqdm. 
 
-    These messages are compatible with tqdm. 
+        Parameters
+        ----------
+        msg : str
+            message to log/display
+        level : int
+            desired log level
+        """
+        if self.in_log:
+            self.logger.log(level, msg)
+        if self.on_screen:
+            tqdm.write(msg)
+    
+    def debug(self, msg: str):
+        """Send a message that logs at the debug log level
 
-    Parameters
-    ----------
-    msg : str
-        message to log/display
-    level : int
-        desired log level
-    logger : logging.Logger
-        logger to use when logging this message
-    on_screen : bool, optional
-        whether to display the message on screen, by default True
-    in_log : bool, optional
-        whether to log the message, by default True
-    """
-    if in_log:
-        logger.log(level, msg)
-    if on_screen:
-        tqdm.write(msg)
+        Parameters
+        ----------
+        msg : str
+            message to log/display
+        """
+        self.message(msg, logging.DEBUG)
+    
+    def info(self, msg: str):
+        """Send a message that logs at the debug log level
 
-
-def message_debug(msg: str, logger: logging.Logger, **kwargs):
-    """Send a message that logs at the debug log level
-
-    See message() for info on possible keyword arguments
-
-    Parameters
-    ----------
-    msg : str
-        message to log/display
-    logger : logging.Logger
-        logger to use when logging this message
-    """
-    message(msg, logging.DEBUG, logger, **kwargs)
-
-
-def message_info(msg: str, logger: logging.Logger, **kwargs):
-    """Send a message that logs at the info log level
-
-    See message() for info on possible keyword arguments
-
-    Parameters
-    ----------
-    msg : str
-        message to log/display
-    logger : logging.Logger
-        logger to use when logging this message
-    """
-    message(msg, logging.INFO, logger, **kwargs)
+        Parameters
+        ----------
+        msg : str
+            message to log/display
+        """
+        self.message(msg, logging.INFO)

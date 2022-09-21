@@ -7,16 +7,18 @@ from pathlib import Path
 from shutil import rmtree
 from typing import Any, Dict, Optional
 
-
 from configuration.configuration import (get_configuration, load_config_setup,
                                          populate_args_parser)
-from logging_helpers.setup_logger import (cleanup_logger, message_debug,
-                                          message_info, setup_logger)
+from logging_helpers.setup_logger import (Messenger, cleanup_logger,
+                                          setup_logger)
 from parquetizer import parquetize_directory
 from psdata_to_matlab import convert_psdata_directory
 from ui.converter_gui import converter_gui
 
 logger = logging.getLogger('main')
+messenger = Messenger(logger)
+log_only_messenger = Messenger(logger, on_screen=False)
+screen_only_messenger = Messenger(logger, in_log=False)
 
 RAW_DATA_FOLDER_NAME = 'raw_data'
 PSDATA_FOLDER_NAME = 'psdata'
@@ -84,15 +86,11 @@ def _prepare_destination(destination_path: Path, fresh_destination: bool):
         If true, deletes any files or folders at the destination folder
     """
     if fresh_destination and destination_path.is_dir():
-        message_debug(
-            f'Deleting destination {destination_path}',
-            logger, on_screen=False)
+        log_only_messenger.debug(f'Deleting destination {destination_path}')
         rmtree(destination_path)
     # destinations must exist for converters to work properly
     if not destination_path.exists():
-        message_debug(
-            f'Making destination {destination_path}',
-            logger, on_screen=False)
+        log_only_messenger.debug(f'Making destination {destination_path}')
         destination_path.mkdir()
 
 
@@ -135,43 +133,40 @@ def main(
                 matlab_folder = raw_data_folder / MATLAB_FOLDER_NAME
                 parquet_folder = raw_data_folder / PARQUET_FOLDER_NAME
                 setup_logger(logger, experiment_root)
-                message_info(
+                messenger.info(
                     f'Converting files in folder {folder_i+1}/{folders_count}:' +
-                    f' {experiment_root}',
-                    logger)
-                message_info("", logger, in_log=False)
-                message_debug(
-                    f'Final configuration: {config}', logger, on_screen=False)
+                    f' {experiment_root}'
+                )
+                screen_only_messenger.info('')
+                log_only_messenger.debug(f'Final configuration: {config}')
 
                 fresh_destination = config.get('fresh_destination', False)
-                message_info('Preparing destination folders', logger)
+                messenger.info('Preparing destination folders')
                 _prepare_destination(matlab_folder, fresh_destination)
-                message_debug(' - Matlab destination done', logger)
+                messenger.debug(' - Matlab destination done')
                 _prepare_destination(parquet_folder, fresh_destination)
-                message_debug(' - Parquet destination done', logger)
-                message_info("", logger, in_log=False)
+                messenger.debug(' - Parquet destination done')
+                screen_only_messenger.info('')
 
-                message_info("Converting PSData to Matlab", logger)
-                message_info(
-                    "You might see other windows pop up quickly."
-                    + " This is normal. Don't panic!",
-                    logger,
-                    in_log=False
+                messenger.info("Converting PSData to Matlab")
+                screen_only_messenger.info(
+                    "You might see other windows pop up quickly." + 
+                    " This is normal. Don't panic!"
                 )
                 convert_psdata_directory(psdata_folder, matlab_folder, config)
-                message_info("", logger, in_log=False)
-                message_info("Converting Matlab to Parquet", logger)
+                screen_only_messenger.info('')
+                messenger.info("Converting Matlab to Parquet")
                 parquetize_directory(matlab_folder, parquet_folder, config)
 
                 if not config.get('keep_matlab'):
-                    message_info("", logger, in_log=False)
-                    message_info("Removing Matlab files", logger)
+                    screen_only_messenger.info('')
+                    messenger.info("Removing Matlab files")
                     rmtree(matlab_folder)
-                message_info(f'Conversion of {experiment_root} complete!', logger)
-                message_info("", logger, in_log=False)
+                messenger.info(f'Conversion of {experiment_root} complete!')
+                screen_only_messenger.info('')
             else:
                 print('Selected folder is not a valid experiment folder')
-        message_info("All conversions complete!", logger)
+        messenger.info("All conversions complete!")
         cleanup_logger(logger)
         input("Press Enter to close window")
     else:
@@ -182,8 +177,9 @@ if __name__ == "__main__":
     # taken from https://stackoverflow.com/a/68666505
     if '_PYIBoot_SPLASH' in environ and find_spec("pyi_splash"):
         # splash module only exists when packaged
-        import pyi_splash  # type: ignore
         from time import sleep
+
+        import pyi_splash  # type: ignore
         pyi_splash.update_text('Loading complete')
         sleep(1)
         pyi_splash.close()
