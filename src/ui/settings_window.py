@@ -434,9 +434,22 @@ class SettingsWindow(QDialog):
         self.save_button = QPushButton('Save')
         self.load_button = QPushButton('Load')
         self.button_box = QDialogButtonBox()
+        self._save_dialog = QFileDialog(self)
+        self._load_dialog = QFileDialog(self)
         
         self._form_controls: Dict[str, Tuple[str, SettingControlProxy]] = {}
-        form_controls = self._generate_layout_data(config, config_setup)
+        self._set_up_form_controls()
+        self._set_up_dialogs()
+
+        self._connect_signals()
+        self._layout_window()
+
+    def _set_window_params(self):
+        self.setWindowTitle("Converter Settings")
+
+    def _set_up_form_controls(self):
+        form_controls = self._generate_layout_data(
+            self._config, self._config_setup)
         for control_data in form_controls:
             control_name: str = control_data['control']
             title: str = control_data['title']
@@ -454,20 +467,26 @@ class SettingsWindow(QDialog):
             control.value = current_value
             self._form_controls[control_key] = (title, control)
             
-        # model/view connections
-        self._connect_signals()
-        self._layout_window()
-    
-    def _set_window_params(self):
-        self.setWindowTitle("Converter Settings")
+    def _set_up_dialogs(self):
+        settings_file_filter = "Configuration Files (*.yaml)"
+        self._save_dialog.setWindowTitle('Save Settings')
+        self._save_dialog.setNameFilter(settings_file_filter)
+        self._save_dialog.setFileMode(QFileDialog.AnyFile)
+        self._save_dialog.setAcceptMode(QFileDialog.AcceptSave)
+        self._load_dialog.setWindowTitle('Load Settings')
+        self._load_dialog.setNameFilter(settings_file_filter)
     
     def _connect_signals(self):
-        self.button_box.accepted.connect(self._handle_accepted) # type: ignore
-        self.button_box.rejected.connect(self._handle_rejected) # type: ignore
-        self.save_button.clicked.connect( # type: ignore
+        self.button_box.accepted.connect(self._handle_accepted)  # type: ignore
+        self.button_box.rejected.connect(self._handle_rejected)  # type: ignore
+        self.save_button.clicked.connect(  # type: ignore
             self._handle_save_button_clicked)
-        self.load_button.clicked.connect( # type: ignore
+        self.load_button.clicked.connect(  # type: ignore
             self._handle_load_button_clicked)
+        self._save_dialog.fileSelected.connect(  # type: ignore
+            self._handle_save_file_picked)
+        self._load_dialog.fileSelected.connect(  # type: ignore
+            self._handle_load_file_picked)
     
     def _layout_window(self):
         form_layout = QFormLayout()
