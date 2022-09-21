@@ -141,6 +141,10 @@ class ConverterGui(QMainWindow):
         self.settings_dialog.finished.connect( # type: ignore
             self.handle_settings_closed)
 
+    def _set_window_params(self):
+        self.setWindowTitle(WINDOW_TITLE)
+        self.setMinimumWidth(800)
+
     def _layout_window(self):
         layout = QVBoxLayout()
         layout.addWidget(self.settings_button)
