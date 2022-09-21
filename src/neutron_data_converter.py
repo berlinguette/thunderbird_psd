@@ -136,7 +136,7 @@ def main(
                 parquet_folder = raw_data_folder / PARQUET_FOLDER_NAME
                 setup_logger(logger, experiment_root)
                 message_info(
-                    f'Converting files in folder {folder_i}/{folders_count}:' +
+                    f'Converting files in folder {folder_i+1}/{folders_count}:' +
                     f' {experiment_root}',
                     logger)
                 message_info("", logger, in_log=False)
@@ -168,6 +168,7 @@ def main(
                     message_info("Removing Matlab files", logger)
                     rmtree(matlab_folder)
                 message_info(f'Conversion of {experiment_root} complete!', logger)
+                message_info("", logger, in_log=False)
             else:
                 print('Selected folder is not a valid experiment folder')
         message_info("All conversions complete!", logger)
