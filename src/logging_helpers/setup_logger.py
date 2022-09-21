@@ -13,6 +13,7 @@ def setup_logger(logger: logging.Logger, experiment_folder: Path):
     handler.setLevel(logging.DEBUG)
     handler.setFormatter(CustomFormatter())
 
+    cleanup_logger(logger)
     logger.addHandler(handler)
 
 
@@ -27,6 +28,7 @@ def cleanup_logger(logger: logging.Logger):
     for handler in logger.handlers:
         if isinstance(handler, logging.FileHandler):
             handler.close()
+            logger.removeHandler(handler)
     
 
 class Messenger:
