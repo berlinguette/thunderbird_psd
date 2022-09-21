@@ -1,37 +1,56 @@
+import logging
+import time
 from pathlib import Path
 from typing import Optional
 
 import numpy as np
 import pandas as pd
-from reporting.plot_configs import QUOTIENT_LOWER_LIM, QUOTIENT_UPPER_LIM
-from reporting.plotting import (
+from data_processing.processing.figure_of_merit import FOM, fit_fom, n_sigma_classifier
+from data_processing.processing.peak_finding import get_bases
+from data_processing.processing.processing_configs import *
+from data_processing.processing.psd import generate_psd
+from data_processing.reporting.plot_configs import (
+    QUOTIENT_LOWER_LIM,
+    QUOTIENT_UPPER_LIM,
+)
+from data_processing.reporting.plotting import (
     plot_bounded_scatter,
     plot_classification_with_grouping,
     plot_fom,
 )
-from reporting.reporting import save_plot
-
-from processing.figure_of_merit import FOM, fit_fom, n_sigma_classifier
-from processing.peak_finding import get_bases
-from processing.processing_configs import *
-from processing.psd import generate_psd
+from data_processing.reporting.reporting import save_plot
+from logging_helpers.setup_logger import (
+    cleanup_logger,
+    message_debug,
+    message_info,
+    setup_logger,
+)
 
 
 def process_file(
     df: pd.DataFrame,
     elapsed_time: float,
+    root_dir: Path,
     buffer_id: Optional[str] = None,
     plot_path: Optional[Path] = None,
 ):
+    logger = logging.getLogger(f"Data-Processing-{buffer_id}")
+    setup_logger(logger, root_dir.parent.parent)
+    t1 = time.perf_counter()
+
+    message_info("Removing fine DC offset", logger)
     df = df - FINE_DC_OFFSET
 
+    message_info("Getting bases", logger)
     output = df.apply(
         lambda series: get_bases(series, series.idxmax(), PEAK_OFFSET, TAIL_ONSET)
     )
     left_bases, right_bases = output.iloc[0, :], output.iloc[1, :]
 
+    message_info("Computing PSD metrics", logger)
     psd_report = generate_psd(df, left_bases, right_bases, df.max(), CUTOFF_VOLTAGE)
 
+    message_info("Fitting Figure of Merit", logger)
     counts, bins = np.histogram(psd_report.loc["tail / total"], N_BINS)
     params, _ = fit_fom(counts, bins)
     neutrons, gammas, f_gate, f_gamma = n_sigma_classifier(
@@ -39,6 +58,7 @@ def process_file(
     )
 
     if plot_path is not None:
+        message_info("Plotting graphs", logger)
         tail_vs_total, _ = plot_bounded_scatter(
             psd_report.loc["total integral"],
             psd_report.loc["tail integral"],
@@ -73,4 +93,5 @@ def process_file(
             plot_path / buffer_id, classification, f"{buffer_id}-classification.png"
         )
 
+    message_debug(f"Elapsed Time: {time.perf_counter() - t1}", logger, on_screen=False)
     return FOM(*params[0:2], *params[3:-1]), neutrons.shape[1] / elapsed_time
