@@ -514,6 +514,10 @@ class SettingsWindow(QDialog):
     def _handle_save_button_clicked(self):
         self._save_dialog.open()
 
+    @Slot()
+    def _handle_load_button_clicked(self):
+        self._load_dialog.open()
+
     @Slot(str)
     def _handle_save_file_picked(self, filename: str):
         filepath = Path(filename)
@@ -534,9 +538,26 @@ class SettingsWindow(QDialog):
                 "The chosen save file was not a valid file."
             )
     
-    @Slot()
-    def _handle_load_button_clicked(self):
-        print("Load button clicked")
+    @Slot(str)
+    def _handle_load_file_picked(self, filename: str):
+        print(f"Load file picked: {filename}")
+        filepath = Path(filename)
+        if filepath.is_file():
+            new_config = override_config(
+                self._config, load_config(filepath))
+            if is_config_valid(new_config, self._config_setup):
+                self._config = new_config
+                self._update_control_values(self._config)
+            else:
+                QMessageBox.warning(
+                    self,
+                    "Invalid settings file",
+                    "The chosen file is not a valid settings file.")
+        else:
+            QMessageBox.warning(
+                self,
+                "Not a file",
+                "You did not choose a file.")
     
     @Slot()
     def _handle_accepted(self):
