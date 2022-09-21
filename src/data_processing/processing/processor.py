@@ -6,6 +6,7 @@ import pandas as pd
 
 from reporting.plotting import plot_bounded_scatter, plot_fom, plot_classification_with_grouping
 from reporting.plot_configs import QUOTIENT_LOWER_LIM, QUOTIENT_UPPER_LIM
+from reporting.reporting import save_plot
 
 from processing.figure_of_merit import FOM, fit_fom, n_sigma_classifier
 from processing.peak_finding import get_bases
@@ -43,7 +44,7 @@ def process_file(
             "total integral (a.u.)",
             "tail integral (a.u.)",
         )
-        tail_vs_total.savefig(plot_path / f"{buffer_id}-tail_vs_total.png")
+        save_plot(plot_path / buffer_id, tail_vs_total, f"{buffer_id}-tail_vs_total.png")
 
         q_vs_amplitude, _ = plot_bounded_scatter(
             psd_report.loc["amplitude"],
@@ -54,16 +55,17 @@ def process_file(
             (QUOTIENT_LOWER_LIM, QUOTIENT_UPPER_LIM),
         )
         q_vs_amplitude.savefig(plot_path / f"{buffer_id}-q_vs_amplitude.png")
+        save_plot(plot_path / buffer_id, q_vs_amplitude, f"{buffer_id}-tail_vs_total.png")
 
         fom, _, = plot_fom(
             psd_report.loc["tail / total"], params=params, unimodal=False, n_bins=N_BINS
         )
-        fom.savefig(plot_path / f"{buffer_id}-fom.png")
+        save_plot(plot_path / buffer_id, fom, f"{buffer_id}-fom.png")
 
         classification, _ = plot_classification_with_grouping(
             neutrons, gammas, f_gamma, f_gate, psd_report.loc["amplitude"].max(
             )
         )
-        classification.savefig(plot_path / f"{buffer_id}-classification.png")
+        save_plot(plot_path / buffer_id, classification, f"{buffer_id}-classification.png")
 
     return FOM(*params[0:2], *params[3:-1]), neutrons.shape[1] / elapsed_time

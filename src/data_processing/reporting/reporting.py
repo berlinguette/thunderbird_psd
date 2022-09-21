@@ -1,4 +1,8 @@
 import datetime
+from pathlib import Path
+
+from matplotlib.figure import Figure
+
 
 def generate_report(
     num_initial_signals: int,
@@ -18,3 +22,12 @@ def generate_report(
         "final": final_size,
     }
     return report
+
+
+def save_plot(destination: Path, fig: Figure, label: str | Path) -> None:
+    destination.mkdir(exist_ok=True)
+
+    fig.savefig(
+        destination / label
+    )
+
