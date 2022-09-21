@@ -5,8 +5,9 @@ from configuration.configuration import (is_config_valid, load_config,
                                          override_config, save_config)
 from PySide6.QtCore import Slot
 from PySide6.QtWidgets import (QCheckBox, QDialog, QDialogButtonBox,
-                               QFileDialog, QFormLayout, QLineEdit,
-                               QMessageBox, QPushButton, QSpinBox, QVBoxLayout)
+                               QFileDialog, QFormLayout, QHBoxLayout,
+                               QLineEdit, QMessageBox, QPushButton, QSpinBox,
+                               QVBoxLayout)
 
 
 class CheckboxProxy():
@@ -181,16 +182,18 @@ class SettingsWindow(QDialog):
             label, control = form_row
             form_layout.addRow(label, control.control_widget)
 
-        self.button_box.addButton(self.save_button,
-                                  QDialogButtonBox.ApplyRole)
-        self.button_box.addButton(self.load_button,
-                                  QDialogButtonBox.ActionRole)
         self.button_box.addButton(QDialogButtonBox.Ok)
         self.button_box.addButton(QDialogButtonBox.Cancel)
+        
+        button_row = QHBoxLayout()
+        button_row.addWidget(self.save_button)
+        button_row.addWidget(self.load_button)
+        button_row.addStretch()
+        button_row.addWidget(self.button_box)
 
         main_layout = QVBoxLayout()
         main_layout.addLayout(form_layout)
-        main_layout.addWidget(self.button_box)
+        main_layout.addLayout(button_row)
         self.setLayout(main_layout)
 
     @property
