@@ -111,10 +111,11 @@ def process_directory(
         The path to the directory that contains the parquet files
     n_start : Optional[int]
         The starting index of parquets to use; default set to 1 since `exp_times.csv`
-        does record correct elapsed time
+        does not correctly record elapsed time
     n_end : Optional[int]
         The number of parquets to process. if not specified, the entire directory
-        will be processed starting from `n_start`
+        will be processed starting from `n_start` to the second last parquet.
+        Last parquet is also removed as `exp_times.csv` does not correctly record elapsed time
     plot_destination : Optional[Path]
         The location where plots will be stored. If `plot_destination` is not specified, no plots
         will be generated
@@ -123,8 +124,9 @@ def process_directory(
         folder inside of root
     """
     PARQ_PATHS = [f for f in directory.iterdir()]
+    n_end = n_end + 1 if n_end is not None else len(PARQ_PATHS[n_start:])
 
-    for PARQ_PATH in PARQ_PATHS[n_start : n_end + 1 if n_end is not None else n_end]:
+    for PARQ_PATH in PARQ_PATHS[n_start:n_end]:
         process_file(PARQ_PATH, plot_destination, config_destination)
 
 
