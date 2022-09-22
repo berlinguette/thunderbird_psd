@@ -5,8 +5,12 @@ from pathlib import Path
 from typing import Optional
 
 import pandas as pd
-from logging_helpers.setup_logger import (cleanup_logger, message_debug,
-                                          message_info, setup_logger)
+from logging_helpers.setup_logger import (
+    cleanup_logger,
+    message_debug,
+    message_info,
+    setup_logger,
+)
 
 from data_processing.cleaning.cleaner import clean_file
 from data_processing.processing.processor import process
@@ -64,9 +68,24 @@ def process_file(
     # TODO: Update this
     print(f"FOM={fom:.3f}; CPS={cps:.3f}")
 
-    message_info(f"--- Completed processing buffer {uid} in {processing_time:.3f} s ---", logger)
+    message_info(
+        f"--- Completed processing buffer {uid} in {processing_time:.3f} s ---", logger
+    )
     message_debug(f"Elapsed Time: {processing_time:.3f} s", logger, on_screen=False)
     cleanup_logger(logger)
+
+
+def process_directory(
+    directory: Path,
+    n_start: Optional[int] = 1,
+    n_end: Optional[int] = None,
+    plot_destination: Optional[Path] = None,
+    config_destination: Optional[Path] = None,
+) -> None:
+    PARQ_PATHS = [f for f in directory.iterdir()]
+
+    for PARQ_PATH in PARQ_PATHS[n_start : n_end + 1]:
+        process_file(PARQ_PATH, plot_destination, config_destination)
 
 
 if __name__ == "__main__":
@@ -76,4 +95,8 @@ if __name__ == "__main__":
 
     PLOT_PATH = ROOT_DIR / "processed_data/plots"
 
-    process_file(PARQ_PATH, PLOT_PATH, None)
+    # process_file(PARQ_PATH, PLOT_PATH, None)
+
+    process_directory(
+        ROOT_DIR / "raw_data/parquet", n_end=2, plot_destination=PLOT_PATH
+    )
