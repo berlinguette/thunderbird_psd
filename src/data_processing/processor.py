@@ -5,15 +5,11 @@ from pathlib import Path
 from typing import Optional
 
 import pandas as pd
-from logging_helpers.setup_logger import (
-    cleanup_logger,
-    message_debug,
-    message_info,
-    setup_logger,
-)
+from logging_helpers.setup_logger import (cleanup_logger, message_debug,
+                                          message_info, setup_logger)
 
 from data_processing.cleaning.cleaner import clean_file
-from data_processing.processing.processor import process_file
+from data_processing.processing.processor import process
 from data_processing.saving.io import dump_settings, save_parquet, save_report
 
 
@@ -30,6 +26,7 @@ def process_file(
 
     logger = logging.getLogger(f"Data-Pipeline-{uid}")
     setup_logger(logger, ROOT_DIR.parent.parent)
+    message_info(f"--- Starting processing for buffer {uid} ---", logger)
     t1 = time.perf_counter()
 
     df_clean, report, _ = clean_file(parquet_path, ROOT_DIR, plot_destination)
@@ -60,13 +57,14 @@ def process_file(
         buffer_number, "elapsed_s"
     ]
 
-    fom, cps = process_file(df_clean, elapsed_time, ROOT_DIR, uid, plot_destination)
+    fom, cps = process(df_clean, elapsed_time, ROOT_DIR, uid, plot_destination)
 
     processing_time = time.perf_counter() - t1
 
     # TODO: Update this
-    print(f"Elapsed Time: {processing_time:.3f} s || FOM={fom:.3f}; CPS={cps:.3f}")
+    print(f"FOM={fom:.3f}; CPS={cps:.3f}")
 
+    message_info(f"--- Completed processing buffer {uid} in {processing_time:.3f} s ---", logger)
     message_debug(f"Elapsed Time: {processing_time:.3f} s", logger, on_screen=False)
     cleanup_logger(logger)
 

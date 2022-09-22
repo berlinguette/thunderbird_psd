@@ -19,7 +19,7 @@ from logging_helpers.setup_logger import (message_debug, message_info,
                                           setup_logger)
 
 
-def process_file(
+def process(
     df: pd.DataFrame,
     elapsed_time: float,
     root_dir: Path,
