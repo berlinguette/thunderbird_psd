@@ -21,11 +21,10 @@ from logging_helpers.setup_logger import (message_debug, message_info,
 
 def process(
     df: pd.DataFrame,
-    elapsed_time: float,
     root_dir: Path,
     buffer_id: Optional[str] = None,
     plot_path: Optional[Path] = None,
-):
+) -> tuple[float, int]:
     """Processes a given dataframe containg signals using the following pipeline:
     1. Adjusting DC offset
     2. Computing PSD Metrics
@@ -35,8 +34,6 @@ def process(
     ----------
     df : DataFrame
         The dataframe that contains signals to be processed. Assumes no invalid signals
-    elapsed_time : float
-        The runtime of the experiment
     root_dir: Path
         The path to the root of the experiment
     buffer_id: Optional[str]
@@ -44,6 +41,13 @@ def process(
     plot_path : Optional[Path]
         The location of where plots will be stored; if `plot_destination` is not specified,
         no plots will be generated
+
+    Returns
+    -------
+    float:
+        The figure of merit (FOM) value
+    int:
+        The number of neutrons
     """
     logger = logging.getLogger(f"Data-Processing-{buffer_id}")
     setup_logger(logger, root_dir.parent.parent / "processing.log")
@@ -107,4 +111,4 @@ def process(
     message_debug(
         f"Elapsed Time: {time.perf_counter() - t1:.3f} s", logger, on_screen=False
     )
-    return FOM(*params[0:2], *params[3:-1]), neutrons.shape[1] / elapsed_time
+    return FOM(*params[0:2], *params[3:-1]), neutrons.shape[1]

@@ -42,6 +42,15 @@ def process_file(
     report_destination : Optional[Path]
         The location where reports will be stored. If not specified, data will be stored in a `processed_data`
         folder inside of root
+
+    Returns
+    -------
+    float:
+        The figure of merit (FOM) value
+    int:
+        The number of neutrons
+    float:
+        The counts per second of neutrons
     """
     ROOT_DIR = parquet_path.parent.parent.parent
     EXP_TIMES_PATH = ROOT_DIR / "raw_data/exp_times.csv"
@@ -82,7 +91,8 @@ def process_file(
         buffer_number, "elapsed_s"
     ]
 
-    fom, cps = process(df_clean, elapsed_time, ROOT_DIR, uid, plot_destination)
+    fom, counts = process(df_clean, ROOT_DIR, uid, plot_destination)
+    cps = counts  / elapsed_time
 
     processing_time = time.perf_counter() - t1
 
@@ -94,6 +104,7 @@ def process_file(
     )
     cleanup_logger(logger)
 
+    return fom, counts, cps
 
 def process_directory(
     directory: Path,
@@ -127,7 +138,7 @@ def process_directory(
     n_end = n_end + 1 if n_end is not None else -1
 
     for PARQ_PATH in PARQ_PATHS[n_start:n_end]:
-        process_file(PARQ_PATH, plot_destination, config_destination)
+        cps, counts, fom = process_file(PARQ_PATH, plot_destination, config_destination)
 
 
 if __name__ == "__main__":
