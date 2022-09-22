@@ -17,7 +17,7 @@ from data_processing.processing.processor import process_file
 from data_processing.saving.io import dump_settings, save_parquet, save_report
 
 
-def process(
+def process_file(
     parquet_path: Path,
     plot_destination: Optional[Path] = None,
     config_destination: Optional[Path] = None,
@@ -78,4 +78,4 @@ if __name__ == "__main__":
 
     PLOT_PATH = ROOT_DIR / "processed_data/plots"
 
-    process(PARQ_PATH, PLOT_PATH, None)
+    process_file(PARQ_PATH, PLOT_PATH, None)
