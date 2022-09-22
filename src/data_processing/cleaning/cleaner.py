@@ -6,22 +6,49 @@ from typing import Optional
 import numpy as np
 import pandas as pd
 from data_processing.cleaning.cleaning_configs import *
-from data_processing.cleaning.data_cleaning import (filter_incomplete_triggers,
-                                                    filter_low_snr,
-                                                    filter_multipeaks, rms,
-                                                    subtract_rms)
+from data_processing.cleaning.data_cleaning import (
+    filter_incomplete_triggers,
+    filter_low_snr,
+    filter_multipeaks,
+    rms,
+    subtract_rms,
+)
 from data_processing.reporting.plotting import plot_signal
 from data_processing.reporting.reporting import generate_report, save_plot
 from data_processing.saving.io import load_exp_info
-from logging_helpers.setup_logger import (message_debug, message_info,
-                                          setup_logger)
+from logging_helpers.setup_logger import message_debug, message_info, setup_logger
 
 
 def clean_file(
     filepath: Path,
     root_dir: Path,
-    plot_path: Optional[Path] = None,
+    plot_destination: Optional[Path] = None,
 ) -> tuple[pd.DataFrame, dict, pd.DataFrame]:
+    """Cleans the given parquet file using the following pipeline:
+    1. Removing invalid entries
+    2. Recentering mean DC offset
+    3. Filtering multipeak signals
+    4. Filtering low signal-to-noise
+
+    Parameters
+    ----------
+    filepath : Path
+        The path to the parquet file
+    root_dir : Path
+        The path to the root directory of the parquet file
+    plot_path : Optional[Path]
+        The location of where plots will be stored; if `plot_destination` is not specified,
+        no plots will be generated
+
+    Returns
+    -------
+    DataFrame:
+        Contains the dataframe of cleaned signals
+    Dict:
+        Contains the cleaning report
+    DataFrame:
+        Contains peak information generated during multipeak filtering
+    """
     file_name = filepath.name.split(".")[0]
     logger = logging.getLogger(f"Data-Cleaning-{file_name}")
     setup_logger(logger, root_dir.parent.parent / "processing.log")
@@ -62,13 +89,13 @@ def clean_file(
     )
     num_low_snr = df_complete_triggers.shape[0] - df_high_snr.shape[0]
 
-    if plot_path is not None:
+    if plot_destination is not None:
         message_info("Plotting clean signals", logger)
         exp_info_path = root_dir / "exp_info.toml"
         exp_info = load_exp_info(exp_info_path)
         sample_interval = exp_info["picoscope"]["sample_interval"]
         fig, _ = plot_signal(df_complete_triggers, sample_interval)
-        save_plot(plot_path / file_name, fig, f"{file_name}-cleaned_signals.png")
+        save_plot(plot_destination / file_name, fig, f"{file_name}-cleaned_signals.png")
 
     message_info("Generating cleaning report", logger)
     report = generate_report(

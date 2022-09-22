@@ -26,6 +26,25 @@ def process(
     buffer_id: Optional[str] = None,
     plot_path: Optional[Path] = None,
 ):
+    """Processes a given dataframe containg signals using the following pipeline:
+    1. Adjusting DC offset
+    2. Computing PSD Metrics
+    3. Classification of PSD
+
+    Parameters
+    ----------
+    df : DataFrame
+        The dataframe that contains signals to be processed. Assumes no invalid signals
+    elapsed_time : float
+        The runtime of the experiment
+    root_dir: Path
+        The path to the root of the experiment
+    buffer_id: Optional[str]
+        The id of the buffer used as prefix for file outputs
+    plot_path : Optional[Path]
+        The location of where plots will be stored; if `plot_destination` is not specified,
+        no plots will be generated
+    """
     logger = logging.getLogger(f"Data-Processing-{buffer_id}")
     setup_logger(logger, root_dir.parent.parent / "processing.log")
     t1 = time.perf_counter()
@@ -85,5 +104,7 @@ def process(
             plot_path / buffer_id, classification, f"{buffer_id}-classification.png"
         )
 
-    message_debug(f"Elapsed Time: {time.perf_counter() - t1:.3f} s", logger, on_screen=False)
+    message_debug(
+        f"Elapsed Time: {time.perf_counter() - t1:.3f} s", logger, on_screen=False
+    )
     return FOM(*params[0:2], *params[3:-1]), neutrons.shape[1] / elapsed_time
