@@ -50,7 +50,7 @@ def process_file(
     uid = parquet_path.name.split(".")[0]
 
     logger = logging.getLogger(f"Data-Pipeline-{uid}")
-    setup_logger(logger, ROOT_DIR.parent.parent)
+    setup_logger(logger, ROOT_DIR.parent.parent / "processing.log")
     message_info(f"--- Starting processing for buffer {uid} ---", logger)
     t1 = time.perf_counter()
 

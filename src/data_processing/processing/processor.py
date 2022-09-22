@@ -27,7 +27,7 @@ def process(
     plot_path: Optional[Path] = None,
 ):
     logger = logging.getLogger(f"Data-Processing-{buffer_id}")
-    setup_logger(logger, root_dir.parent.parent)
+    setup_logger(logger, root_dir.parent.parent / "processing.log")
     t1 = time.perf_counter()
 
     message_info("Removing fine DC offset", logger)
