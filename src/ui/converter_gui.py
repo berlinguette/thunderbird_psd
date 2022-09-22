@@ -142,6 +142,10 @@ class ConverterGui(QMainWindow):
         dialog.setOption(QFileDialog.DontUseNativeDialog, True)
         dialog.setFileMode(QFileDialog.Directory)
 
+        # hack to allow multi-folder selection from https://stackoverflow.com/q/28544425
+        # native Windows folder picker doesn't support multiple folders
+        # must use Qt version, but can't just set ExtendedSelection because
+        # it has multiple views, and each must be set separately
         list_views = dialog.findChildren(QListView)
         list_views.extend(dialog.findChildren(QTreeView))
         for view in list_views:
