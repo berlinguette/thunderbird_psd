@@ -7,7 +7,6 @@ from typing import Optional
 import pandas as pd
 from logging_helpers.setup_logger import (
     cleanup_logger,
-    message_debug,
     message_info,
     setup_logger,
 )
@@ -71,7 +70,6 @@ def process_file(
     message_info(
         f"--- Completed processing buffer {uid} in {processing_time:.3f} s ---", logger
     )
-    message_debug(f"Elapsed Time: {processing_time:.3f} s", logger, on_screen=False)
     cleanup_logger(logger)
 
 
