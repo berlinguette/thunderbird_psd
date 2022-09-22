@@ -4,6 +4,7 @@ title Python Packager - Thunderbird Neutron Data Converter
 echo Packaging... Please wait...
 call ../venv/Scripts/activate
 call :Timestamp yyyy,mm,dd,hh,mn,ss,ms,tz
+if not exist packaging_logs\nul mkdir packaging_logs
 set "logfile=packaging_logs/packaging_%yyyy%%mm%%DD%T%hh%%mn%%ss%_%ms%%tz%.log"
 echo - Packaging starts - %yyyy%/%mm%/%DD% %hh%:%mn%:%ss% - >%logfile%
 echo -- Generating spec file -- >>%logfile%

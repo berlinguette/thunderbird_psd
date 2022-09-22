@@ -6,15 +6,44 @@ from tqdm import tqdm
 from logging_helpers.custom_formatter import CustomFormatter
 
 
-def setup_logger(logger: logging.Logger, experiment_folder: Path):
+def setup_logger(logger: logging.Logger, log_file: Path):
+    """Sets up logger:
+    - sets level to Debug
+    - applies CustomFormatter
+    - sets logger to log to given log file
+
+    Parameters
+    ----------
+    logger : logging.Logger
+        logger to set up
+    log_file : Path
+        path to log file
+    """
     logger.setLevel(logging.DEBUG)
 
-    handler = logging.FileHandler(experiment_folder / 'conversion.log')
+    handler = logging.FileHandler(log_file)
     handler.setLevel(logging.DEBUG)
     handler.setFormatter(CustomFormatter())
 
     cleanup_logger(logger)
     logger.addHandler(handler)
+    
+
+def get_conversion_logfile_path(experiment_folder: Path) -> Path:
+    """Gives correct conversion log file path for given experiment folder
+
+    Parameters
+    ----------
+    experiment_folder : Path
+        path to root folder for this experiment
+
+    Returns
+    -------
+    Path
+        path to experiment's conversion log file
+    """
+    log_filename = 'conversion.log'
+    return experiment_folder / log_filename
 
 
 def cleanup_logger(logger: logging.Logger):

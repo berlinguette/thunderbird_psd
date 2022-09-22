@@ -8,6 +8,7 @@ from tqdm import tqdm
 
 from configuration.configuration import load_config_setup
 from logging_helpers.setup_logger import (Messenger, cleanup_logger,
+                                          get_conversion_logfile_path,
                                           setup_logger)
 from utilities.constants import BAR_FORMAT
 from utilities.get_limited_files import get_limited_files
@@ -242,8 +243,8 @@ def convert_psdata_directory(
     config : Dict
         Configuration data. See configuration.py for more info
     """
-    logging_folder = folder_path.parent.parent
-    setup_logger(logger, logging_folder)
+    log_file = get_conversion_logfile_path(folder_path.parent.parent)
+    setup_logger(logger, log_file)
     log_only_messenger.debug(f'PSData source: {folder_path}')
     log_only_messenger.debug(f'Matlab destination: {destination}')
     num_files = config.get('files_limit')
