@@ -29,19 +29,31 @@ def cleanup_logger(logger: logging.Logger):
         if isinstance(handler, logging.FileHandler):
             handler.close()
             logger.removeHandler(handler)
-    
+
 
 class Messenger:
+    """Handles sending log messages that are compatible with tqdm
+
+    Parameters
+    ----------
+    logger : logging.Logger
+        logger used when sending log messages
+    in_log : bool, optional
+        whether messages should be saved to log file, by default True
+    on_screen : bool, optional
+        whether messages should be displayed in console, by default True
+    """
+
     def __init__(
-        self, 
-        logger: logging.Logger, 
-        in_log: bool = True, 
+        self,
+        logger: logging.Logger,
+        in_log: bool = True,
         on_screen: bool = True
-        ):
+    ):
         self.logger = logger
         self.in_log = in_log
         self.on_screen = on_screen
-    
+
     def message(self, msg: str, level: int):
         """Send a message that can be logged and/or displayed on screen
 
@@ -58,7 +70,7 @@ class Messenger:
             self.logger.log(level, msg)
         if self.on_screen:
             tqdm.write(msg)
-    
+
     def debug(self, msg: str):
         """Send a message that logs at the debug log level
 
@@ -68,7 +80,7 @@ class Messenger:
             message to log/display
         """
         self.message(msg, logging.DEBUG)
-    
+
     def info(self, msg: str):
         """Send a message that logs at the debug log level
 

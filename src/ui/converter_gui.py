@@ -13,13 +13,23 @@ WINDOW_TITLE = 'Select Experiment Folder'
 
 
 class ConverterGui(QMainWindow):
+    """The main GUI for the converter, 
+    used to change settings and choose experiment folders
+
+    Parameters
+    ----------
+    config : Dict
+        Converter configuration data
+    config_setup : Dict[str, Any]
+        Config setup data
+    """
 
     def __init__(self, config: Dict, config_setup: Dict[str, Any]):
         super().__init__()
         self._set_window_params()
 
         # Models
-        self._start_experiment = False
+        self._start_conversion = False
         self._config = config
         self._config_setup = config_setup
 
@@ -31,7 +41,7 @@ class ConverterGui(QMainWindow):
             text="Choose Experiment Folder(s)"
         )
         self.start_button = QPushButton(
-            text="Start Experiment"
+            text="Start Conversion"
             # TODO change size and text color
         )
         self.folder_list = QListWidget()
@@ -41,6 +51,8 @@ class ConverterGui(QMainWindow):
         self._layout_window()
 
     def _connect_signals(self):
+        """Connects all UI element signals to appropriate slots
+        """
         self.settings_button.clicked.connect(  # type: ignore
             self.handle_button_clicked_settings
         )
@@ -54,10 +66,14 @@ class ConverterGui(QMainWindow):
             self.handle_settings_closed)
 
     def _set_window_params(self):
+        """Sets up all UI window parameters
+        """
         self.setWindowTitle(WINDOW_TITLE)
         self.setMinimumWidth(800)
 
     def _layout_window(self):
+        """Generates window layout
+        """
         layout = QVBoxLayout()
         layout.addWidget(self.settings_button)
         layout.addWidget(self.folder_picker_button)
@@ -69,23 +85,41 @@ class ConverterGui(QMainWindow):
         self.setCentralWidget(widget)
 
     @property
-    def start_experiment(self):
-        return self._start_experiment
+    def start_conversion(self) -> bool:
+        """This property indicates whether the "Start" button has been pressed, 
+        and should not be changed
+        """
+        return self._start_conversion
 
     @property
     def config(self) -> Dict:
+        """This property gives the current conversion settings, and should not 
+        be changed.
+        """
         return self._config
 
     @Slot()
     def handle_button_clicked_settings(self):
+        """Slot handling click events on the "Settings" button
+        """
         self.settings_dialog.open()
 
     @Slot(int)
     def handle_settings_closed(self, result: int):
-        self._config = self.settings_dialog.config
+        """Slot handling dialog close events on the "Settings" dialog
+
+        Parameters
+        ----------
+        result : int
+            Dialog status code, indicating how it was closed (i.e. cancel/OK)
+        """
+        if result == QDialog.Accepted:
+            self._config = self.settings_dialog.config
 
     @Slot()
     def handle_button_clicked_folder_picker(self):
+        """Slot handling click events on the experiment folder picker button
+        """
         dialog = QFileDialog(self)
         dialog.setWindowTitle('Choose Experiment Folder(s)')
         dialog.setOption(QFileDialog.DontUseNativeDialog, True)
@@ -107,7 +141,9 @@ class ConverterGui(QMainWindow):
 
     @Slot()
     def handle_button_clicked_start(self):
-        self._start_experiment = True
+        """Slot handling click events on the "Start Conversion" button
+        """
+        self._start_conversion = True
         self.close()
 
 
@@ -124,21 +160,13 @@ def converter_gui(
             - updated settings (or original if no updates)
             - the chosen path, or None if the converter window is closed
     """
-    # window = _layout_window()
-    # folder, config = _event_handling_loop(window, config, config_setup)
-
-    # window.close()
-    # if folder is not None:
-    #     folder = Path(folder)
-    # return config, folder
-
     app = QApplication([])
     converter_gui = ConverterGui(config, config_setup)
     converter_gui.show()
 
     app.exec_()
 
-    if converter_gui.start_experiment:
+    if converter_gui.start_conversion:
         final_config = converter_gui.config
         folders = [
             Path(converter_gui.folder_list.item(folder).text())
