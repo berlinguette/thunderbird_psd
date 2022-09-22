@@ -6,15 +6,17 @@ from typing import Optional
 import numpy as np
 import pandas as pd
 from data_processing.cleaning.cleaning_configs import *
-from data_processing.cleaning.data_cleaning import (filter_incomplete_triggers,
-                                                    filter_low_snr,
-                                                    filter_multipeaks, rms,
-                                                    subtract_rms)
+from data_processing.cleaning.data_cleaning import (
+    filter_incomplete_triggers,
+    filter_low_snr,
+    filter_multipeaks,
+    rms,
+    subtract_rms,
+)
 from data_processing.reporting.plotting import plot_signal
 from data_processing.reporting.reporting import generate_report, save_plot
 from data_processing.saving.io import load_exp_info
-from logging_helpers.setup_logger import (cleanup_logger, message_debug,
-                                          message_info, setup_logger)
+from logging_helpers.setup_logger import message_debug, message_info, setup_logger
 
 
 def clean_file(
