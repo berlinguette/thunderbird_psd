@@ -7,6 +7,7 @@ import tomli_w
 
 from cleaning.cleaning_configs import *
 
+
 def load_exp_info(exp_info_path: Path) -> dict:
     # TODO: add checking
     with open(exp_info_path, "rb") as f:
@@ -35,6 +36,7 @@ def dump_settings(destination: Path) -> None:
     with open(destination, "w+b") as f:
         tomli_w.dump(report, f)
 
+
 def save_parquet(df: pd.DataFrame, filename: str, destination: Path) -> None:
     df = df.T
     df.columns = df.columns.astype("str")
@@ -52,9 +54,22 @@ def save_report(uid: str, signal_stats: dict, destination: Path) -> None:
                 saved_report[uid] = signal_stats
 
             with open(destination, "wb") as f:
-                sorted_report = {key: saved_report[key] for key in sorted(saved_report)}
+                sorted_report = {key: saved_report[key]
+                                 for key in sorted(saved_report)}
                 tomli_w.dump(sorted_report, f)
 
     except FileNotFoundError:
         with open(destination, "w+b") as f:
             tomli_w.dump({uid: signal_stats}, f)
+
+
+def save_results(results: pd.DataFrame, destination: Path) -> None:
+    try:
+        df = pd.read_csv(destination, index_col=0)
+    except FileNotFoundError:
+        results.to_csv(destination, index_label="buffer_id")
+    else:
+        df.update(results)
+        missing_rows = results.loc[results.index.difference(df.index)]
+        df = pd.concat([df, missing_rows])
+        df.to_csv(destination, encoding="utf-8", index_label="buffer_id")

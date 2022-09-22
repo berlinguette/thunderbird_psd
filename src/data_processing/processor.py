@@ -1,15 +1,17 @@
+from ipaddress import collapse_addresses
 import logging
 import re
 import time
 from pathlib import Path
 from typing import Optional
+from unittest.mock import patch
 
 import pandas as pd
 from logging_helpers.setup_logger import cleanup_logger, message_info, setup_logger
 
 from data_processing.cleaning.cleaner import clean_file
 from data_processing.processing.processor import process
-from data_processing.saving.io import dump_settings, save_parquet, save_report
+from data_processing.saving.io import dump_settings, save_parquet, save_report, save_results
 
 
 def process_file(
@@ -92,7 +94,7 @@ def process_file(
     ]
 
     fom, counts = process(df_clean, ROOT_DIR, uid, plot_destination)
-    cps = counts  / elapsed_time
+    cps = counts / elapsed_time
 
     processing_time = time.perf_counter() - t1
 
@@ -102,9 +104,9 @@ def process_file(
     message_info(
         f"--- Completed processing buffer {uid} in {processing_time:.3f} s ---", logger
     )
-    cleanup_logger(logger)
 
     return fom, counts, cps
+
 
 def process_directory(
     directory: Path,
@@ -114,7 +116,10 @@ def process_directory(
     config_destination: Optional[Path] = None,
 ) -> None:
     """Executes data processing pipeline on raw parquets in a directory.
-    See `process_file()` for output information.
+    See `process_file()` for output information. An output `.csv` is created/updated
+    in a `processed_data` folder two directories up. This output contains the
+    counts, counts per second, and figure of merit (FOM) value for each buffer that 
+    was processed.
 
     Parameters
     ----------
@@ -134,11 +139,30 @@ def process_directory(
         The location where reports will be stored. If not specified, data will be stored in a `processed_data`
         folder inside of root
     """
+    logger = logging.getLogger("Directory-Processor")
+    setup_logger(logger, directory.parent.parent.parent / "processor.log")
+
     PARQ_PATHS = [f for f in directory.iterdir()]
     n_end = n_end + 1 if n_end is not None else -1
 
+    message_info("Intiating directory processing...", logger)
+    column_labels = ["counts", "counts / sec", "FOM"]
+    results = pd.DataFrame(columns=column_labels)
     for PARQ_PATH in PARQ_PATHS[n_start:n_end]:
-        cps, counts, fom = process_file(PARQ_PATH, plot_destination, config_destination)
+        cps, counts, fom = process_file(
+            PARQ_PATH, plot_destination, config_destination)
+        df = pd.DataFrame(
+            [(counts, cps, fom)],
+            columns=column_labels,
+            index=[PARQ_PATH.name.split(".")[0]]
+        )
+        results = pd.concat([results, df])
+
+    save_results(results, directory.parent.parent /
+                 "processed_data/report.csv")
+
+    message_info("Completed directory processing!", logger)
+    cleanup_logger(logger)
 
 
 if __name__ == "__main__":
