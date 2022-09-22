@@ -5,11 +5,13 @@ from tqdm import tqdm
 
 from logging_helpers.custom_formatter import CustomFormatter
 
+CONVERSION_LOG_FILENAME = 'conversion.log'
 
-def setup_logger(logger: logging.Logger, experiment_folder: Path):
+
+def setup_logger(logger: logging.Logger, log_file: Path):
     logger.setLevel(logging.DEBUG)
 
-    handler = logging.FileHandler(experiment_folder / 'conversion.log')
+    handler = logging.FileHandler(log_file)
     handler.setLevel(logging.DEBUG)
     handler.setFormatter(CustomFormatter())
 
