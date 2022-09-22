@@ -9,9 +9,10 @@ from typing import Any, Dict, Optional
 
 from configuration.configuration import (get_configuration, load_config_setup,
                                          populate_args_parser)
-from logging_helpers.setup_logger import (CONVERSION_LOG_FILENAME,
-                                          cleanup_logger, message_debug,
-                                          message_info, setup_logger)
+from logging_helpers.setup_logger import (cleanup_logger,
+                                          get_conversion_logfile_path,
+                                          message_debug, message_info,
+                                          setup_logger)
 from parquetizer import parquetize_directory
 from psdata_to_matlab import convert_psdata_directory
 from ui.converter_gui import converter_gui
@@ -136,7 +137,8 @@ def main(
             psdata_folder = raw_data_folder / PSDATA_FOLDER_NAME
             matlab_folder = raw_data_folder / MATLAB_FOLDER_NAME
             parquet_folder = raw_data_folder / PARQUET_FOLDER_NAME
-            setup_logger(logger, experiment_root / CONVERSION_LOG_FILENAME)
+            setup_logger(logger,
+                         get_conversion_logfile_path(experiment_root))
             message_info(f'Converting files at {experiment_root}', logger)
             message_info("", logger, in_log=False)
             message_debug(
