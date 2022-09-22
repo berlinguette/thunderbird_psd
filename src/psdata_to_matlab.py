@@ -5,10 +5,11 @@ from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Tuple, TypeVar
 
 from tqdm import tqdm
-from configuration.configuration import load_config_setup
 
-from logging_helpers.setup_logger import (cleanup_logger, message_debug,
-                                          setup_logger)
+from configuration.configuration import load_config_setup
+from logging_helpers.setup_logger import (cleanup_logger,
+                                          get_conversion_logfile_path,
+                                          message_debug, setup_logger)
 from utilities.constants import BAR_FORMAT
 from utilities.get_limited_files import get_limited_files
 from utilities.timing import Timer
@@ -246,10 +247,11 @@ def convert_psdata_directory(
     config : Dict
         Configuration data. See configuration.py for more info
     """
-    logging_folder = folder_path.parent.parent
-    setup_logger(logger, logging_folder)
+    log_file = get_conversion_logfile_path(folder_path.parent.parent)
+    setup_logger(logger, log_file)
     message_debug(f'PSData source: {folder_path}', logger, on_screen=False)
-    message_debug(f'Matlab destination: {destination}', logger, on_screen=False)
+    message_debug(
+        f'Matlab destination: {destination}', logger, on_screen=False)
     num_files = config.get('files_limit')
     chunk_size = config.get('psdata_tasks', 0)
     _process_files(folder_path, destination,

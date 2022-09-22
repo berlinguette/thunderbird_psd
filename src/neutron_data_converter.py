@@ -7,11 +7,12 @@ from pathlib import Path
 from shutil import rmtree
 from typing import Any, Dict, Optional
 
-
 from configuration.configuration import (get_configuration, load_config_setup,
                                          populate_args_parser)
-from logging_helpers.setup_logger import (cleanup_logger, message_debug,
-                                          message_info, setup_logger)
+from logging_helpers.setup_logger import (cleanup_logger,
+                                          get_conversion_logfile_path,
+                                          message_debug, message_info,
+                                          setup_logger)
 from parquetizer import parquetize_directory
 from psdata_to_matlab import convert_psdata_directory
 from ui.converter_gui import converter_gui
@@ -23,6 +24,7 @@ RAW_DATA_FOLDER_NAME = 'raw_data'
 PSDATA_FOLDER_NAME = 'psdata'
 MATLAB_FOLDER_NAME = 'mat'
 PARQUET_FOLDER_NAME = 'parquet'
+
 
 def _setup_parser(config_setup: Dict[str, Any]) -> ArgumentParser:
     """Produces ArgumentParser with all needed arguments
@@ -42,7 +44,8 @@ def _setup_parser(config_setup: Dict[str, Any]) -> ArgumentParser:
 
 
 def _find_experiment_root(folder_path: Path, found_psdata: bool = False, found_rawdata: bool = False) -> Optional[Path]:
-    RAW_DATA_FOLDERS = (PSDATA_FOLDER_NAME, PARQUET_FOLDER_NAME, MATLAB_FOLDER_NAME)
+    RAW_DATA_FOLDERS = (PSDATA_FOLDER_NAME,
+                        PARQUET_FOLDER_NAME, MATLAB_FOLDER_NAME)
     RAW_DATA_METADATA_FILE = 'exp_times.csv'
     ROOT_METADATA_FILE = 'exp_info.txt'
 
@@ -67,7 +70,8 @@ def _find_experiment_root(folder_path: Path, found_psdata: bool = False, found_r
         checks = [
             (folder_path / ROOT_METADATA_FILE).exists(),
             found_rawdata or (folder_path / RAW_DATA_FOLDER_NAME).exists(),
-            found_psdata or (folder_path / RAW_DATA_FOLDER_NAME / PSDATA_FOLDER_NAME).exists(),
+            found_psdata or (folder_path / RAW_DATA_FOLDER_NAME /
+                             PSDATA_FOLDER_NAME).exists(),
         ]
         if all(checks):
             root_path = folder_path
@@ -133,7 +137,8 @@ def main(
             psdata_folder = raw_data_folder / PSDATA_FOLDER_NAME
             matlab_folder = raw_data_folder / MATLAB_FOLDER_NAME
             parquet_folder = raw_data_folder / PARQUET_FOLDER_NAME
-            setup_logger(logger, experiment_root)
+            setup_logger(logger,
+                         get_conversion_logfile_path(experiment_root))
             message_info(f'Converting files at {experiment_root}', logger)
             message_info("", logger, in_log=False)
             message_debug(
@@ -176,12 +181,13 @@ if __name__ == "__main__":
     # taken from https://stackoverflow.com/a/68666505
     if '_PYIBoot_SPLASH' in environ and find_spec("pyi_splash"):
         # splash module only exists when packaged
-        import pyi_splash  # type: ignore
         from time import sleep
+
+        import pyi_splash  # type: ignore
         pyi_splash.update_text('Loading complete')
         sleep(1)
         pyi_splash.close()
-        
+
     freeze_support()  # needed for Windows multiprocessing/processpool
 
     config_setup = load_config_setup()

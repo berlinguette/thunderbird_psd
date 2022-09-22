@@ -12,8 +12,10 @@ from scipy.io import loadmat
 from tqdm.contrib.concurrent import process_map
 
 from configuration.configuration import load_config_setup
-from logging_helpers.setup_logger import (cleanup_logger, message_debug,
-                                          message_info, setup_logger)
+from logging_helpers.setup_logger import (cleanup_logger,
+                                          get_conversion_logfile_path,
+                                          message_debug, message_info,
+                                          setup_logger)
 from utilities.constants import BAR_FORMAT
 from utilities.get_limited_files import get_limited_files
 from utilities.timing import Timer
@@ -74,7 +76,8 @@ def parquetize_folder(
     # each process needs own separate logger in processpool
     new_logger = logging.getLogger(f'proc-{end_folder_name}')
     # we're in sample_dataset/raw_data/mat, one folder deeper than usual
-    setup_logger(new_logger, directory.parent.parent.parent)
+    setup_logger(new_logger,
+                 get_conversion_logfile_path(directory.parent.parent.parent))
     message_debug(f"Converting {end_folder_name}...",
                   new_logger, on_screen=False)
 
@@ -125,7 +128,8 @@ def parquetize_directory(directory: Path, destination: Path, config: Dict):
     config : Dict
         Configuration data. See configuration.py for more info
     """
-    setup_logger(logger, directory.parent.parent)
+    setup_logger(logger,
+                 get_conversion_logfile_path(directory.parent.parent))
     timer = Timer(start_now=True)
 
     num_folders = config.get('files_limit')
