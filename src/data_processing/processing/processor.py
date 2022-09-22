@@ -19,12 +19,7 @@ from data_processing.reporting.plotting import (
     plot_fom,
 )
 from data_processing.reporting.reporting import save_plot
-from logging_helpers.setup_logger import (
-    cleanup_logger,
-    message_debug,
-    message_info,
-    setup_logger,
-)
+from logging_helpers.setup_logger import message_debug, message_info, setup_logger
 
 
 def process_file(
@@ -58,7 +53,7 @@ def process_file(
     )
 
     if plot_path is not None:
-        message_info("Plotting graphs", logger)
+        message_info("Plotting processed data", logger)
         tail_vs_total, _ = plot_bounded_scatter(
             psd_report.loc["total integral"],
             psd_report.loc["tail integral"],
