@@ -44,6 +44,23 @@ class ConverterGui(QMainWindow):
             text="Start Conversion"
             # TODO change size and text color
         )
+        self.start_button.setStyleSheet(
+            "QPushButton {"
+            "color: green;"
+            "background-color: white;"
+            "font: bold 14px;"
+            "border-style: outset;"
+            "border-width: 1px;"
+            "border-radius: 5px;"
+            "border-color: grey;"
+            "min-width: 10em;"
+            "padding: 6px;"
+            "}"
+            "QPushButton:pressed {"
+            "border-style: inset"
+            "}"
+        )
+        self.start_button.setMinimumHeight(50)
         self.folder_list = QListWidget()
         self.settings_dialog = SettingsWindow(self._config, self._config_setup)
 
