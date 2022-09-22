@@ -124,7 +124,7 @@ def process_directory(
         folder inside of root
     """
     PARQ_PATHS = [f for f in directory.iterdir()]
-    n_end = n_end + 1 if n_end is not None else len(PARQ_PATHS[n_start:])
+    n_end = n_end + 1 if n_end is not None else -1
 
     for PARQ_PATH in PARQ_PATHS[n_start:n_end]:
         process_file(PARQ_PATH, plot_destination, config_destination)
