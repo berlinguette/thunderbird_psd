@@ -82,5 +82,7 @@ def clean_file(
         df_high_snr.shape[0],
     )
 
-    message_debug(f"Elapsed Time: {time.perf_counter() - t1}", logger, on_screen=False)
+    message_debug(
+        f"Elapsed Time: {time.perf_counter() - t1:.3f} s", logger, on_screen=False
+    )
     return df_high_snr, report, props

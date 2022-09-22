@@ -5,21 +5,18 @@ from typing import Optional
 
 import numpy as np
 import pandas as pd
-from data_processing.processing.figure_of_merit import FOM, fit_fom, n_sigma_classifier
+from data_processing.processing.figure_of_merit import (FOM, fit_fom,
+                                                        n_sigma_classifier)
 from data_processing.processing.peak_finding import get_bases
 from data_processing.processing.processing_configs import *
 from data_processing.processing.psd import generate_psd
-from data_processing.reporting.plot_configs import (
-    QUOTIENT_LOWER_LIM,
-    QUOTIENT_UPPER_LIM,
-)
+from data_processing.reporting.plot_configs import (QUOTIENT_LOWER_LIM,
+                                                    QUOTIENT_UPPER_LIM)
 from data_processing.reporting.plotting import (
-    plot_bounded_scatter,
-    plot_classification_with_grouping,
-    plot_fom,
-)
+    plot_bounded_scatter, plot_classification_with_grouping, plot_fom)
 from data_processing.reporting.reporting import save_plot
-from logging_helpers.setup_logger import message_debug, message_info, setup_logger
+from logging_helpers.setup_logger import (message_debug, message_info,
+                                          setup_logger)
 
 
 def process_file(
@@ -88,5 +85,5 @@ def process_file(
             plot_path / buffer_id, classification, f"{buffer_id}-classification.png"
         )
 
-    message_debug(f"Elapsed Time: {time.perf_counter() - t1}", logger, on_screen=False)
+    message_debug(f"Elapsed Time: {time.perf_counter() - t1:.3f} s", logger, on_screen=False)
     return FOM(*params[0:2], *params[3:-1]), neutrons.shape[1] / elapsed_time
