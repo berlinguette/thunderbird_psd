@@ -42,7 +42,7 @@ def save_parquet(df: pd.DataFrame, filename: str, destination: Path) -> None:
     df.to_parquet(destination / filename)
 
 
-def save_report(uid: str, signal_stats: dict, destination: Path) -> None:
+def save_cleaning_report(uid: str, signal_stats: dict, destination: Path) -> None:
     try:
         with open(destination, "r+b") as f:
             saved_report = tomli.load(f)
