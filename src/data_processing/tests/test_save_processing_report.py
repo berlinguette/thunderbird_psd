@@ -27,7 +27,7 @@ def test_save_new_results():
 
 
 def test_modify_results():
-    # Arrange: Prepare a new dataframe to saved
+    # Arrange: Prepare dataframe to be modified
     unchanged_row_vals = 122.0, 155.0, 184.0
     unchanged_row_label = "20220906-0115"
 
@@ -37,23 +37,27 @@ def test_modify_results():
         index=["20220906-0001", unchanged_row_label],
     )
 
+    # Save dataframe
     destination = ROOT / "io_test_files/report_stock.csv"
     save_results(df_original, destination)
 
-    # Update existing and add new entry
+    # Create new dataframe that modifies existing entry
+    # and also creates a new entry
     df_new = pd.DataFrame(
         [(112.0, 612.0, 332.0), (176.0, 591.0, 132.0)],
         columns=COLUMN_LABELS,
         index=["20220906-0001", "20220906-0420"],
     )
 
-    # Act: Save results and prepare for comparison
+    # Act: Modify old dataframe and prepare for comparison
     save_results(df_new, destination)
 
     df_modified = pd.read_csv(destination, index_col=0)
     df_unchanged_row = pd.DataFrame(
         [(unchanged_row_vals)], columns=COLUMN_LABELS, index=[unchanged_row_label]
     )
+
+    # Add unchanged row to new dataframe
     df_comparator = pd.concat([df_new, df_unchanged_row])
     df_comparator = df_comparator.sort_index()
 
