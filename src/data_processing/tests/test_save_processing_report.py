@@ -1,6 +1,5 @@
 import os
 from pathlib import Path
-from tkinter.tix import COLUMN
 
 import pandas as pd
 from data_processing.saving.io import save_results
