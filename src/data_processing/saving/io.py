@@ -4,8 +4,7 @@ from pathlib import Path
 import pandas as pd
 import tomli
 import tomli_w
-
-from cleaning.cleaning_configs import *
+from data_processing.cleaning.cleaning_configs import *
 
 
 def load_exp_info(exp_info_path: Path) -> dict:
@@ -53,10 +52,9 @@ def save_report(uid: str, signal_stats: dict, destination: Path) -> None:
             else:
                 saved_report[uid] = signal_stats
 
-            with open(destination, "wb") as f:
-                sorted_report = {key: saved_report[key]
-                                 for key in sorted(saved_report)}
-                tomli_w.dump(sorted_report, f)
+        with open(destination, "wb") as f:
+            sorted_report = {key: saved_report[key] for key in sorted(saved_report)}
+            tomli_w.dump(sorted_report, f)
 
     except FileNotFoundError:
         with open(destination, "w+b") as f:
