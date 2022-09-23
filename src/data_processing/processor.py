@@ -149,12 +149,12 @@ def process_directory(
     n_end = n_end + 1 if n_end is not None else -1
 
     message_info("Intiating directory processing...", logger)
-    column_labels = ["counts", "counts / sec", "FOM"]
+    column_labels = ["neutron_count", "count_rate [s^-1]", "FOM"]
     results = pd.DataFrame(columns=column_labels)
     for PARQ_PATH in PARQ_PATHS[n_start:n_end]:
         fom, counts, cps = process_file(PARQ_PATH, plot_destination, config_destination)
         df = pd.DataFrame(
-            [(counts, cps, fom)],
+            [(int(counts), round(cps, 3), round(fom, 3))],
             columns=column_labels,
             index=[PARQ_PATH.name.split(".")[0]],
         )
@@ -176,5 +176,5 @@ if __name__ == "__main__":
     # process_file(PARQ_PATH, PLOT_PATH, None)
 
     process_directory(
-        ROOT_DIR / "raw_data/parquet", n_end=2, plot_destination=PLOT_PATH
+        ROOT_DIR / "raw_data/parquet", n_end=4, plot_destination=PLOT_PATH
     )
