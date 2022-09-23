@@ -1,17 +1,20 @@
-from ipaddress import collapse_addresses
 import logging
 import re
 import time
 from pathlib import Path
 from typing import Optional
-from unittest.mock import patch
 
 import pandas as pd
 from logging_helpers.setup_logger import cleanup_logger, message_info, setup_logger
 
 from data_processing.cleaning.cleaner import clean_file
 from data_processing.processing.processor import process
-from data_processing.saving.io import dump_settings, save_parquet, save_report, save_results
+from data_processing.saving.io import (
+    dump_settings,
+    save_cleaning_report,
+    save_parquet,
+    save_results,
+)
 
 
 def process_file(
@@ -75,7 +78,7 @@ def process_file(
     )
 
     message_info("Saving processing report", logger)
-    save_report(
+    save_cleaning_report(
         uid,
         report,
         PARQ_DESTINATION / "report.toml"
@@ -118,7 +121,7 @@ def process_directory(
     """Executes data processing pipeline on raw parquets in a directory.
     See `process_file()` for output information. An output `.csv` is created/updated
     in a `processed_data` folder two directories up. This output contains the
-    counts, counts per second, and figure of merit (FOM) value for each buffer that 
+    counts, counts per second, and figure of merit (FOM) value for each buffer that
     was processed.
 
     Parameters
@@ -149,17 +152,15 @@ def process_directory(
     column_labels = ["counts", "counts / sec", "FOM"]
     results = pd.DataFrame(columns=column_labels)
     for PARQ_PATH in PARQ_PATHS[n_start:n_end]:
-        cps, counts, fom = process_file(
-            PARQ_PATH, plot_destination, config_destination)
+        cps, counts, fom = process_file(PARQ_PATH, plot_destination, config_destination)
         df = pd.DataFrame(
             [(counts, cps, fom)],
             columns=column_labels,
-            index=[PARQ_PATH.name.split(".")[0]]
+            index=[PARQ_PATH.name.split(".")[0]],
         )
         results = pd.concat([results, df])
 
-    save_results(results, directory.parent.parent /
-                 "processed_data/report.csv")
+    save_results(results, directory.parent.parent / "processed_data/report.csv")
 
     message_info("Completed directory processing!", logger)
     cleanup_logger(logger)
