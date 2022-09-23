@@ -152,7 +152,7 @@ def process_directory(
     column_labels = ["counts", "counts / sec", "FOM"]
     results = pd.DataFrame(columns=column_labels)
     for PARQ_PATH in PARQ_PATHS[n_start:n_end]:
-        cps, counts, fom = process_file(PARQ_PATH, plot_destination, config_destination)
+        fom, counts, cps = process_file(PARQ_PATH, plot_destination, config_destination)
         df = pd.DataFrame(
             [(counts, cps, fom)],
             columns=column_labels,
