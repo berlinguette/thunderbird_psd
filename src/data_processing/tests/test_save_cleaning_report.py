@@ -49,7 +49,7 @@ def test_modify_saved_report():
     # Act: Modify with new values
     save_cleaning_report(uid, signal_stats, modified_path)
 
-    # Assert
+    # Assert:
     with open(modified_path, "rb") as f:
         modified_report = tomli.load(f)
 
