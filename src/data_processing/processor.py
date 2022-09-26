@@ -99,7 +99,8 @@ def process_file(
 
     processing_time = time.perf_counter() - t1
 
-    message_info(f"Processed {uid} showing: FOM={fom:.3f} | CPS={cps:.3f}")
+    message_info(
+        f"Processed {uid} showing: Count={counts} neutrons | CPS={cps:.3f} neutrons/sec | FOM={fom:.3f}")
 
     message_info(
         f"--- Completed processing buffer {uid} in {processing_time:.3f} s ---", logger
