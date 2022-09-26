@@ -70,7 +70,7 @@ def process_file(
 
     message_info("Dumping settings", logger)
     dump_settings(
-        PARQ_DESTINATION / "settings.toml"
+        PARQ_DESTINATION / "cleaning_settings.toml"
         if report_destination is None
         else report_destination
     )
@@ -79,7 +79,7 @@ def process_file(
     save_cleaning_report(
         uid,
         report,
-        PARQ_DESTINATION / "report.toml"
+        PARQ_DESTINATION / "cleaning_report.toml"
         if report_destination is None
         else report_destination,
     )
