@@ -2,9 +2,17 @@ import datetime
 from pathlib import Path
 
 import pandas as pd
+import os
 import tomli
 import tomli_w
 from data_processing.cleaning.cleaning_configs import *
+
+def create_folder(folder_path: Path):
+    try:
+        os.mkdir(folder_path)
+    except FileExistsError:
+        raise FileExistsError("""The file you are trying to create already exists, clean
+        out the buffer before rerunning the script""")
 
 
 def load_exp_info(exp_info_path: Path) -> dict:

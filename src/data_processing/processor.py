@@ -14,6 +14,7 @@ from data_processing.saving.io import (
     save_cleaning_report,
     save_parquet,
     save_results,
+    create_folder
 )
 
 
@@ -100,7 +101,7 @@ def process_file(
     processing_time = time.perf_counter() - t1
 
     message_info(
-        f"Processed {uid} showing: Count={counts} neutrons | CPS={cps:.3f} neutrons/sec | FOM={fom:.3f}")
+        f"Processed {uid} showing: Count={counts} neutrons | CPS={cps:.3f} neutrons/sec | FOM={fom:.3f}", logger)
 
     message_info(
         f"--- Completed processing buffer {uid} in {processing_time:.3f} s ---", logger
@@ -147,6 +148,12 @@ def process_directory(
     PARQ_PATHS = [f for f in directory.iterdir()]
     n_end = n_end + 1 if n_end is not None else -1
 
+
+    create_folder(directory.parent.parent / "processed_data/cleaned_buffers")
+
+    if plot_destination is not None:
+        create_folder(plot_destination)
+
     message_info("Intiating directory processing...", logger)
     column_labels = ["neutron_count", "count_rate [s^-1]", "FOM"]
     results = pd.DataFrame(columns=column_labels)
@@ -168,14 +175,14 @@ def process_directory(
 
 
 if __name__ == "__main__":
-    ROOT_DIR = Path("../sample_datasets/20220906_AmBe/")
+    ROOT_DIR = Path("C:/Users/Neutron Computer/Documents/Data/20220922_AmBedistancetests/AmBe_100cm_1525V")
 
-    PARQ_PATH = ROOT_DIR / "raw_data/parquet/20220906-0005.parquet"
+    # PARQ_PATH = ROOT_DIR / "raw_data/parquet/20220906-0005.parquet"
 
     PLOT_PATH = ROOT_DIR / "processed_data/plots"
 
     # process_file(PARQ_PATH, PLOT_PATH, None)
 
     process_directory(
-        ROOT_DIR / "raw_data/parquet", n_end=4, plot_destination=PLOT_PATH
+        ROOT_DIR / "raw_data/parquet", plot_destination=None
     )

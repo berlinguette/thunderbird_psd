@@ -91,9 +91,13 @@ def clean_file(
 
     if plot_destination is not None:
         message_info("Plotting clean signals", logger)
-        exp_info_path = root_dir / "exp_info.toml"
-        exp_info = load_exp_info(exp_info_path)
-        sample_interval = exp_info["picoscope"]["sample_interval"]
+        try:
+            exp_info_path = root_dir / "exp_info.toml"
+            exp_info = load_exp_info(exp_info_path)
+            sample_interval = exp_info["picoscope"]["sample_interval"]
+        except FileNotFoundError:
+            sample_interval = 2  # Assume it's 2 ns
+        
         fig, _ = plot_signal(df_complete_triggers, sample_interval)
         save_plot(plot_destination / file_name, fig, f"{file_name}-cleaned_signals.png")
 
