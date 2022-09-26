@@ -34,13 +34,11 @@ def process_file(
         - tail/total integrals (q) vs amplitude
     - A parquet file post data cleaning
 
-    **NOTE:** This method assumes that `ROOT_DIR` is located in a directory that follows the parquet file
-    is stored **3** folders into the experiment root; e.g. `./root/raw_data/parquet/my.parquet`
-
     Parameters
     ----------
     parquet_path : Path
-        The path to the parquet file
+        The path to the parquet file. This method assumes that parquets are stored in a directory structure
+        with at least **3** levels: e.g. `./root/raw_data/parquet/my.parquet`
     plot_destination : Optional[Path]
         The location where plots will be stored. If `plot_destination` is not specified, no plots
         will be generated
@@ -126,7 +124,8 @@ def process_directory(
     Parameters
     ----------
     directory : Path
-        The path to the directory that contains the parquet files
+        The path to the directory that contains the parquet files. `directory` is assumed to
+        have a structure with at least **3** levels: e.g. `./root/raw_data/parquet/my.parquet`
     n_start : Optional[int]
         The starting index of parquets to use; default set to 1 since `exp_times.csv`
         does not correctly record elapsed time
@@ -151,7 +150,8 @@ def process_directory(
     column_labels = ["neutron_count", "count_rate [s^-1]", "FOM"]
     results = pd.DataFrame(columns=column_labels)
     for PARQ_PATH in PARQ_PATHS[n_start:n_end]:
-        fom, counts, cps = process_file(PARQ_PATH, plot_destination, config_destination)
+        fom, counts, cps = process_file(
+            PARQ_PATH, plot_destination, config_destination)
         df = pd.DataFrame(
             [(int(counts), round(cps, 3), round(fom, 3))],
             columns=column_labels,
@@ -159,7 +159,8 @@ def process_directory(
         )
         results = pd.concat([results, df])
 
-    save_results(results, directory.parent.parent / "processed_data/report.csv")
+    save_results(results, directory.parent.parent /
+                 "processed_data/report.csv")
 
     message_info("Completed directory processing!", logger)
     cleanup_logger(logger)
