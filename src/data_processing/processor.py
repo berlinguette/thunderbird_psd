@@ -24,7 +24,7 @@ def process_file(
 ) -> None:
     """Executes data processing pipeline and generates several pieces of data.
     - Report of data cleaning statistics
-    - (TODO:) Report of data processing statistics
+    - Report of data processing statistics
     - Settings used during processing
     - Plots:
         - Cleaned signals plot
@@ -101,8 +101,7 @@ def process_file(
 
     processing_time = time.perf_counter() - t1
 
-    # TODO: Update this
-    print(f"FOM={fom:.3f}; CPS={cps:.3f}")
+    message_info(f"Processed {uid} showing: FOM={fom:.3f} | CPS={cps:.3f}")
 
     message_info(
         f"--- Completed processing buffer {uid} in {processing_time:.3f} s ---", logger
