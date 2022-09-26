@@ -1,134 +1,211 @@
-import PySimpleGUI as sg
-from typing import Dict, Any, Tuple, Optional
 from pathlib import Path
-from ui.settings_window import settings_window
+from typing import Any, Dict, List, Optional, Tuple
 
-WINDOW_TITLE = 'Select Raw Data Folder'
-FOLDER_KEY = '-FOLDER-'
-SETTINGS_KEY = 'Settings'
+from PySide6.QtCore import Slot
+from PySide6.QtWidgets import (QAbstractItemView, QApplication, QDialog,
+                               QFileDialog, QFileSystemModel, QListView,
+                               QListWidget, QMainWindow, QPushButton,
+                               QTreeView, QVBoxLayout, QWidget)
 
+from ui.settings_window import SettingsWindow
 
-def _layout_window() -> sg.Window:
-    """Generates the window layout for the main converter GUI
-
-    Returns
-    -------
-    sg.Window
-        converter GUI window
-    """
-    left_col = [
-        [
-            sg.Text('Folder'),
-            sg.In(size=(25, 1), enable_events=True, key=FOLDER_KEY),
-            sg.FolderBrowse()
-        ],
-        [
-            sg.Button(SETTINGS_KEY)
-        ]
-    ]
-    layout = [[sg.Column(left_col, element_justification='c')]]
-    window = sg.Window(WINDOW_TITLE, layout, resizable=True)
-    return window
+WINDOW_TITLE = 'Select Experiment Folder'
 
 
-def _handle_event(
-    event: str,
-    values: Dict[str, Any],
-    state: Dict[str, Any]
-) -> Dict[str, Any]:
-    """Handles button events on GUI window, immutably updating state
+class ConverterGui(QMainWindow):
+    """The main GUI for the converter, 
+    used to change settings and choose experiment folders
 
     Parameters
     ----------
-    event : str
-        Event key
-    values : Dict[str, Any]
-        All window control values
-    state : Dict[str, Any]
-        Current state of the GUI window data. Includes any data needed to 
-        handle any event
-
-    Returns
-    -------
-    Dict[str, Any]
-        Updated window state. Since state is updated immutably, this is a new
-        dictionary object.
-    """
-    new_state = state
-    if event in (sg.WIN_CLOSED, 'Exit'):
-        new_state = {**state, 'done': True}
-
-    if event == FOLDER_KEY:
-        new_state = {**state, 'done': True, 'folder': values[FOLDER_KEY]}
-    
-    if event == SETTINGS_KEY:
-        window: sg.Window = state['window']
-        window.hide()
-        new_config = settings_window(state['config'], state['config_setup'])
-        new_state = {**state, 'config': new_config}
-        window.un_hide()
-    return new_state
-
-
-def _event_handling_loop(
-    window: sg.Window,
-    config: Dict,
-    config_setup: Dict[str, Any]
-) -> Tuple[Optional[str], Dict]:
-    """Repeatedly checks for window events and handles them.
-    Closes when a terminating event is handled
-
-    Parameters
-    ----------
-    window : sg.Window
-        Window to be checked
     config : Dict
-        Current conversion settings
+        Converter configuration data
     config_setup : Dict[str, Any]
-        Configuration setup data
-
-    Returns
-    -------
-    Tuple[Optional[str], Dict]
-        Chosen folder, conversion settings with any updates applied
+        Config setup data
     """
-    state = {
-        'done': False,
-        'folder': None,
-        'window': window,
-        'config': config,
-        'config_setup': config_setup
-    }
-    while not state['done']:
-        read_result = window.read()
-        if not isinstance(read_result, tuple):
-            continue
-        event: str
-        values: Dict[str, Any]
-        event, values = read_result
-        state = _handle_event(
-            event, values, state)
 
-    return state['folder'], state['config']
+    def __init__(self, config: Dict, config_setup: Dict[str, Any]):
+        super().__init__()
+        self._set_window_params()
+
+        # Models
+        self._start_conversion = False
+        self._config = config
+        self._config_setup = config_setup
+
+        # UI Elements
+        self.settings_button = QPushButton(
+            text="Settings"
+        )
+        self.folder_picker_button = QPushButton(
+            text="Choose Experiment Folder(s)"
+        )
+        self.start_button = QPushButton(
+            text="Start Conversion"
+            # TODO change size and text color
+        )
+        self.start_button.setStyleSheet(
+            "QPushButton {"
+            "color: green;"
+            "background-color: white;"
+            "font: bold 14px;"
+            "border-style: outset;"
+            "border-width: 1px;"
+            "border-radius: 5px;"
+            "border-color: grey;"
+            "min-width: 10em;"
+            "padding: 6px;"
+            "}"
+            "QPushButton:pressed {"
+            "border-style: inset"
+            "}"
+        )
+        self.start_button.setMinimumHeight(50)
+        self.folder_list = QListWidget()
+        self.settings_dialog = SettingsWindow(self._config, self._config_setup)
+
+        self._connect_signals()
+        self._layout_window()
+
+    def _connect_signals(self):
+        """Connects all UI element signals to appropriate slots
+        """
+        self.settings_button.clicked.connect(  # type: ignore
+            self.handle_button_clicked_settings
+        )
+        self.folder_picker_button.clicked.connect(  # type: ignore
+            self.handle_button_clicked_folder_picker
+        )
+        self.start_button.clicked.connect(  # type: ignore
+            self.handle_button_clicked_start
+        )
+        self.settings_dialog.finished.connect(  # type: ignore
+            self.handle_settings_closed)
+
+    def _set_window_params(self):
+        """Sets up all UI window parameters
+        """
+        self.setWindowTitle(WINDOW_TITLE)
+        self.setMinimumWidth(800)
+
+    def _layout_window(self):
+        """Generates window layout
+        """
+        layout = QVBoxLayout()
+        layout.addWidget(self.settings_button)
+        layout.addWidget(self.folder_picker_button)
+        layout.addWidget(self.folder_list)
+        layout.addWidget(self.start_button)
+
+        widget = QWidget()
+        widget.setLayout(layout)
+        self.setCentralWidget(widget)
+
+    @property
+    def start_conversion(self) -> bool:
+        """This property indicates whether the "Start" button has been pressed, 
+        and should not be changed
+        """
+        return self._start_conversion
+
+    @property
+    def config(self) -> Dict:
+        """This property gives the current conversion settings, and should not 
+        be changed.
+        """
+        return self._config
+
+    @Slot()
+    def handle_button_clicked_settings(self):
+        """Slot handling click events on the "Settings" button
+        """
+        self.settings_dialog.open()
+
+    @Slot(int)
+    def handle_settings_closed(self, result: int):
+        """Slot handling dialog close events on the "Settings" dialog
+
+        Parameters
+        ----------
+        result : int
+            Dialog status code, indicating how it was closed (i.e. cancel/OK)
+        """
+        if result == QDialog.Accepted:
+            self._config = self.settings_dialog.config
+
+    @Slot()
+    def handle_button_clicked_folder_picker(self):
+        """Slot handling click events on the experiment folder picker button
+        """
+        dialog = QFileDialog(self)
+        dialog.setWindowTitle('Choose Experiment Folder(s)')
+        dialog.setOption(QFileDialog.DontUseNativeDialog, True)
+        dialog.setFileMode(QFileDialog.Directory)
+
+        # hack to allow multi-folder selection from https://stackoverflow.com/q/28544425
+        # native Windows folder picker doesn't support multiple folders
+        # must use Qt version, but can't just set ExtendedSelection because
+        # it has multiple views, and each must be set separately
+        list_views = dialog.findChildren(QListView)
+        list_views.extend(dialog.findChildren(QTreeView))
+        for view in list_views:
+            if isinstance(view.model(), QFileSystemModel):
+                view.setSelectionMode(
+                    QAbstractItemView.ExtendedSelection)
+
+        if dialog.exec_() == QDialog.Accepted:
+            folders = [folder for folder in dialog.selectedFiles()
+                       if Path(folder).is_dir()]
+            self.folder_list.clear()
+            self.folder_list.addItems(folders)
+        dialog.deleteLater()
+
+    @Slot()
+    def handle_button_clicked_start(self):
+        """Slot handling click events on the "Start Conversion" button
+        """
+        self._start_conversion = True
+        self.close()
 
 
 def converter_gui(
     config: Dict,
     config_setup: Dict[str, Any]
-) -> Tuple[Dict, Optional[Path]]:
+) -> Tuple[Dict, Optional[List[Path]]]:
     """Opens a GUI window for user input, including settings changes and folder selection
 
     Returns
     -------
-    Tuple[Dict, Optional[Path]]
+    Tuple[Dict, Optional[List[Path]]]
         Tuple of:
             - updated settings (or original if no updates)
             - the chosen path, or None if the converter window is closed
     """
-    window = _layout_window()
-    folder, config = _event_handling_loop(window, config, config_setup)
+    app = QApplication([])
+    converter_gui = ConverterGui(config, config_setup)
+    converter_gui.show()
 
-    window.close()
-    if folder is not None:
-        folder = Path(folder)
-    return config, folder
+    app.exec_()
+
+    if converter_gui.start_conversion:
+        final_config = converter_gui.config
+        folders = [
+            Path(converter_gui.folder_list.item(folder).text())
+            for folder in range(converter_gui.folder_list.count())
+        ]
+    else:
+        final_config = config
+        folders = None
+
+    return final_config, folders  # stub TODO finish this
+
+
+if __name__ == "__main__":
+    from configuration.configuration import (get_configuration,
+                                             load_config_setup)
+
+    config_setup = load_config_setup()
+    config = get_configuration({}, config_setup)
+    config, folder = converter_gui(config, config_setup)
+    print(config)
+    print(folder)

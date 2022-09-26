@@ -82,7 +82,7 @@ def _generate_default_config(config_setup: Dict[str, Any]) -> Dict:
     return config
 
 
-def validate_config(config: Dict, config_setup: Dict[str, Any]) -> bool:
+def is_config_valid(config: Dict, config_setup: Dict[str, Any]) -> bool:
     """Validates that config data is valid
 
     Config data is valid if:
@@ -120,7 +120,12 @@ def validate_config(config: Dict, config_setup: Dict[str, Any]) -> bool:
         if setup_data is None:
             return False
 
-        allowed_types: List[str] = setup_data['config']['allowed_types']
+        try:
+            allowed_types: List[str] = setup_data['config']['allowed_types']
+        except KeyError:
+            # given config may have non-config keys (and is thus invalid)
+            # those can be found in setup data, but don't have 'config' entries
+            return False
         return any([
             is_valid_type(value, type_string) for type_string in allowed_types
         ])
@@ -249,7 +254,7 @@ def get_configuration(
     config = default_config
     if user_config_path is not None:
         new_config = load_config(user_config_path)
-        if validate_config(new_config, config_setup):
+        if is_config_valid(new_config, config_setup):
             config = override_config(config, new_config)
 
     # omitted args get None value, which would override config
@@ -271,7 +276,7 @@ if __name__ == "__main__":
     save_config(default_config, default_config_path)
 
     new_config_data = {'files_limit': 10}
-    config_valid = validate_config(new_config_data, config_setup)
+    config_valid = is_config_valid(new_config_data, config_setup)
     print(f"config valid? {config_valid}")
     if config_valid:
         config = override_config(default_config, new_config_data)

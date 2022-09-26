@@ -25,6 +25,7 @@ def setup_logger(logger: logging.Logger, log_file: Path):
     handler.setLevel(logging.DEBUG)
     handler.setFormatter(CustomFormatter())
 
+    cleanup_logger(logger)
     logger.addHandler(handler)
     
 
@@ -56,63 +57,65 @@ def cleanup_logger(logger: logging.Logger):
     for handler in logger.handlers:
         if isinstance(handler, logging.FileHandler):
             handler.close()
+            logger.removeHandler(handler)
 
 
-def message(
-    msg: str,
-    level: int,
-    logger: logging.Logger,
-    on_screen: bool = True,
-    in_log: bool = True
-):
-    """Send a message that can be logged and/or displayed on screen
-
-    These messages are compatible with tqdm. 
+class Messenger:
+    """Handles sending log messages that are compatible with tqdm
 
     Parameters
     ----------
-    msg : str
-        message to log/display
-    level : int
-        desired log level
     logger : logging.Logger
-        logger to use when logging this message
-    on_screen : bool, optional
-        whether to display the message on screen, by default True
+        logger used when sending log messages
     in_log : bool, optional
-        whether to log the message, by default True
+        whether messages should be saved to log file, by default True
+    on_screen : bool, optional
+        whether messages should be displayed in console, by default True
     """
-    if in_log:
-        logger.log(level, msg)
-    if on_screen:
-        tqdm.write(msg)
 
+    def __init__(
+        self,
+        logger: logging.Logger,
+        in_log: bool = True,
+        on_screen: bool = True
+    ):
+        self.logger = logger
+        self.in_log = in_log
+        self.on_screen = on_screen
 
-def message_debug(msg: str, logger: logging.Logger, **kwargs):
-    """Send a message that logs at the debug log level
+    def message(self, msg: str, level: int):
+        """Send a message that can be logged and/or displayed on screen
 
-    See message() for info on possible keyword arguments
+        These messages are compatible with tqdm. 
 
-    Parameters
-    ----------
-    msg : str
-        message to log/display
-    logger : logging.Logger
-        logger to use when logging this message
-    """
-    message(msg, logging.DEBUG, logger, **kwargs)
+        Parameters
+        ----------
+        msg : str
+            message to log/display
+        level : int
+            desired log level
+        """
+        if self.in_log:
+            self.logger.log(level, msg)
+        if self.on_screen:
+            tqdm.write(msg)
 
+    def debug(self, msg: str):
+        """Send a message that logs at the debug log level
 
-def message_info(msg: str, logger: logging.Logger, **kwargs):
-    """Send a message that logs at the info log level
+        Parameters
+        ----------
+        msg : str
+            message to log/display
+        """
+        self.message(msg, logging.DEBUG)
 
-    See message() for info on possible keyword arguments
+    def info(self, msg: str):
+        """Send a message that logs at the debug log level
 
-    Parameters
-    ----------
-    msg : str
-        message to log/display
-    logger : logging.Logger
-        logger to use when logging this message
-    """
-    message(msg, logging.INFO, logger, **kwargs)
+        Parameters
+        ----------
+        msg : str
+            message to log/display
+        """
+        self.message(msg, logging.INFO)

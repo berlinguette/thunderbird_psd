@@ -12,9 +12,8 @@ from scipy.io import loadmat
 from tqdm.contrib.concurrent import process_map
 
 from configuration.configuration import load_config_setup
-from logging_helpers.setup_logger import (cleanup_logger,
+from logging_helpers.setup_logger import (Messenger, cleanup_logger,
                                           get_conversion_logfile_path,
-                                          message_debug, message_info,
                                           setup_logger)
 from utilities.constants import BAR_FORMAT
 from utilities.get_limited_files import get_limited_files
@@ -24,7 +23,8 @@ if TYPE_CHECKING:
     from numpy import ndarray
 
 logger = logging.getLogger('parquetizer')
-
+messenger = Messenger(logger)
+log_only_messenger = Messenger(logger, on_screen=False)
 
 def _get_data_tuple(file_path: Path, label: str) -> Tuple[ndarray, str]:
     """Gets labelled data from a Matlab file
@@ -78,8 +78,9 @@ def parquetize_folder(
     # we're in sample_dataset/raw_data/mat, one folder deeper than usual
     setup_logger(new_logger,
                  get_conversion_logfile_path(directory.parent.parent.parent))
-    message_debug(f"Converting {end_folder_name}...",
-                  new_logger, on_screen=False)
+    new_messenger = Messenger(new_logger, on_screen=False)
+    new_messenger.debug(f"Converting {end_folder_name}...")
+    
 
     batch_number = f"b{end_folder_name.split('-')[1]}"
     file_names = map(lambda x: x.name, file_paths)
@@ -104,8 +105,7 @@ def parquetize_folder(
     df.columns = df.columns.astype(str)
 
     df.to_parquet(str(destination / f"{end_folder_name}.parquet"))
-    message_debug(f"Folder {end_folder_name} Completed",
-                  new_logger, on_screen=False)
+    new_messenger.debug(f"Folder {end_folder_name} Completed")
 
 
 def parquetize_directory(directory: Path, destination: Path, config: Dict):
@@ -150,10 +150,9 @@ def parquetize_directory(directory: Path, destination: Path, config: Dict):
     )
 
     exec_time = timer.stop_timer()
-    message_info(f'Processed {len(list(results))} folders', logger)
-    message_debug(
-        f"Elapsed Time: {timer.format_elapsed_time(exec_time)}",
-        logger, on_screen=False)
+    messenger.info(f'Processed {len(list(results))} folders')
+    log_only_messenger.debug(
+        f"Elapsed Time: {timer.format_elapsed_time(exec_time)}")
     cleanup_logger(logger)
 
 
