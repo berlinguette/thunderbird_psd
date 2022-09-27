@@ -68,6 +68,13 @@ def process(
     message_info("Fitting Figure of Merit", logger)
     counts, bins = np.histogram(psd_report.loc["tail / total"], N_BINS)
     params, _ = fit_fom(counts, bins)
+    
+    # Reorder params of instances when neutron counts > gamma counts
+    if params[0] < params[3]:
+        params = list(params) 
+        params[:3], params[3:] = params[3:], params[:3]
+        params = tuple(params)
+
     neutrons, gammas, f_gate, f_gamma = n_sigma_classifier(
         psd_report, params[3:], CLASSIFIER_WINDOW_N, N_BINS
     )
@@ -107,6 +114,7 @@ def process(
         save_plot(
             plot_path / buffer_id, classification, f"{buffer_id}-classification.png"
         )
+
 
     message_debug(
         f"Elapsed Time: {time.perf_counter() - t1:.3f} s", logger, on_screen=False
