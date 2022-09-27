@@ -3,20 +3,19 @@ import time
 from pathlib import Path
 from typing import Optional
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from data_processing.cleaning.cleaning_configs import *
-from data_processing.cleaning.data_cleaning import (
-    filter_incomplete_triggers,
-    filter_low_snr,
-    filter_multipeaks,
-    rms,
-    subtract_rms,
-)
+from data_processing.cleaning.data_cleaning import (filter_incomplete_triggers,
+                                                    filter_low_snr,
+                                                    filter_multipeaks, rms,
+                                                    subtract_rms)
 from data_processing.reporting.plotting import plot_signal
 from data_processing.reporting.reporting import generate_report, save_plot
 from data_processing.saving.io import load_exp_info
-from logging_helpers.setup_logger import message_debug, message_info, setup_logger
+from logging_helpers.setup_logger import (message_debug, message_info,
+                                          setup_logger)
 
 
 def clean_file(
@@ -100,6 +99,7 @@ def clean_file(
         
         fig, _ = plot_signal(df_complete_triggers, sample_interval)
         save_plot(plot_destination / file_name, fig, f"{file_name}-cleaned_signals.png")
+        plt.close(fig)
 
     message_info("Generating cleaning report", logger)
     report = generate_report(

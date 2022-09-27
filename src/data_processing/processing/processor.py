@@ -3,6 +3,7 @@ import time
 from pathlib import Path
 from typing import Optional
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from data_processing.processing.figure_of_merit import (FOM, fit_fom,
@@ -115,6 +116,7 @@ def process(
             plot_path / buffer_id, classification, f"{buffer_id}-classification.png"
         )
 
+        plt.close("all")
 
     message_debug(
         f"Elapsed Time: {time.perf_counter() - t1:.3f} s", logger, on_screen=False
