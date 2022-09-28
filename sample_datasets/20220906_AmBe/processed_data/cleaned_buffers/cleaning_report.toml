@@ -1,0 +1,26 @@
+[20220906-0005]
+last_updated = 2022-09-21 15:00:49.539820
+initial = 10000
+missing_or_nan = 494
+multipeaks = 0
+incomplete = 0
+low_snr = 0
+final = 250
+
+[20220906-0008]
+last_updated = 2022-09-21 14:57:57.688638
+initial = 10000
+missing_or_nan = 488
+multipeaks = 0
+incomplete = 0
+low_snr = 0
+final = 250
+
+[20220906-0012]
+last_updated = 2022-09-21 15:02:36.721278
+initial = 10000
+missing_or_nan = 505
+multipeaks = 0
+incomplete = 0
+low_snr = 0
+final = 250
