@@ -63,7 +63,7 @@ def process_file(
     uid = parquet_path.name.split(".")[0]
 
     logger = logging.getLogger(f"Data-Pipeline-{uid}")
-    setup_logger(logger, ROOT_DIR.parent.parent / "processing.log")
+    setup_logger(logger, PARQ_DESTINATION.parent / "processing.log")
     message_info(f"--- Starting processing for buffer {uid} ---", logger)
     t1 = time.perf_counter()
 
@@ -158,6 +158,7 @@ def process_directory(
     column_labels = ["neutron_count", "count_rate [s^-1]", "FOM"]
     results = pd.DataFrame(columns=column_labels)
     for PARQ_PATH in PARQ_PATHS[n_start:n_end]:
+        message_info(f"Processing {PARQ_PATH.name}")
         fom, counts, cps = process_file(
             PARQ_PATH, plot_destination, config_destination)
         df = pd.DataFrame(
@@ -175,14 +176,24 @@ def process_directory(
 
 
 if __name__ == "__main__":
-    ROOT_DIR = Path("C:/Users/Neutron Computer/Documents/Data/20220922_AmBedistancetests/AmBe_100cm_1525V")
 
+    BASE_PATH = Path("C:/Users/Neutron Computer/Documents/Data/20220922_AmBedistancetests/")
+    exlcusions = ["AmBe_0cm_1525V", "AmBe_30cm_1525V"]
+    for ROOT_DIR in BASE_PATH.iterdir():
+
+        if not ROOT_DIR.is_dir() or ROOT_DIR.name not in ["AmBe_20cm_1525V"]:
+            continue
+
+        
+        PLOT_PATH = ROOT_DIR / "processed_data/plots"
+
+
+        # 0 and 30 cm bad...
+        process_directory(
+            ROOT_DIR / "raw_data/parquet", plot_destination=PLOT_PATH
+        )
+
+    # ROOT_DIR = Path("C:/Users/Neutron Computer/Documents/Data/20220922_AmBedistancetests/AmBe_100cm_1525V")
     # PARQ_PATH = ROOT_DIR / "raw_data/parquet/20220906-0005.parquet"
-
-    PLOT_PATH = ROOT_DIR / "processed_data/plots"
-
     # process_file(PARQ_PATH, PLOT_PATH, None)
 
-    process_directory(
-        ROOT_DIR / "raw_data/parquet", plot_destination=None
-    )
