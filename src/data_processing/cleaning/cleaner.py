@@ -56,12 +56,12 @@ def clean_file(
     setup_logger(logger, root_dir.parent.parent / "processing.log")
     t1 = time.perf_counter()
 
-    messenger.info("Reading parquet file", logger)
+    messenger.info("Reading parquet file")
     df = pd.read_parquet(filepath)
     df.columns = df.columns.astype("int16")
     num_initial_signals = df.shape[0]
 
-    messenger.info("Dropping invalid data points", logger)
+    messenger.info("Dropping invalid data points")
     df = df.replace([np.inf, -np.inf], np.nan).dropna(how="any")
     num_missing_signals = num_initial_signals - df.shape[0]
 
