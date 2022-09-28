@@ -114,5 +114,5 @@ def clean_file(
         df_high_snr.shape[0],
     )
 
-    messenger.debug(f"Elapsed Time: {time.perf_counter() - t1:.3f} s", on_screen=False)
+    messenger.debug(f"Elapsed Time: {time.perf_counter() - t1:.3f} s")
     return df_high_snr, report, props
