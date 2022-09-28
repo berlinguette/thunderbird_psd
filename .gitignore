@@ -71,6 +71,7 @@ __pypackages__/
 # Environments
 .venv
 venv/
+.python-version
 
 # Cython debug symbols
 cython_debug/
@@ -99,3 +100,7 @@ sample_datasets/*/raw_data/mat/
 
 # Log files
 *.log
+
+### OS specific ###
+# Mac
+.DS_Store
