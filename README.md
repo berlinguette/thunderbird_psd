@@ -5,10 +5,10 @@ This repository includes code for processing, analysing, and visualising data fr
 <details>
     <summary>Installation</summary>
 
-Clone the repository into a new directory on your computer
-
+Clone the repository into a new directory on your computer.
+(The `--recursive` flag is needed to also clone the `sample_datasets` submodule.)
 ```
-git clone git@github.com:berlinguette/thunderbird_psd.git
+git clone --recursive git@github.com:berlinguette/thunderbird_psd.git
 ```
 
 Create a virtual environment and activate it
@@ -34,5 +34,15 @@ Install the packages in `requirements.txt`
 
 ```
 pip install -r requirements.txt
+```
+</details>
+
+<details>
+    <summary>Sample Datasets Update</summary>
+
+Get updates to the sample datasets
+
+```
+git submodule update
 ```
 </details>
