@@ -11,8 +11,10 @@ def create_folder(folder_path: Path):
     try:
         os.mkdir(folder_path)
     except FileExistsError:
-        raise FileExistsError("""The file you are trying to create already exists, clean
-        out the buffer before rerunning the script""")
+        raise FileExistsError(
+            f"""The file you are trying to create ({folder_path.name}) already exists.
+            Clean out the buffer before rerunning the script."""
+        )
 
 
 def load_exp_info(exp_info_path: Path) -> dict:
