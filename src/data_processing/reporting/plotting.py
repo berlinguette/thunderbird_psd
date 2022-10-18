@@ -118,8 +118,8 @@ def plot_classification(
 
     ax.set_xlabel("pulse amplitude ($V$)", fontsize=FONT_SIZE)
     ax.set_ylabel("tail / total (a.u.)", fontsize=FONT_SIZE)
-    ax.set_xlim(0, 2.5)
-    ax.set_ylim(-0, 0.5)
+    # ax.set_xlim(0, 2.5)
+    # ax.set_ylim(-0, 0.5)
     ax.legend()
 
     fig.tight_layout()
@@ -127,7 +127,7 @@ def plot_classification(
     return fig, ax
 
 
-def plot_classification_with_grouping(
+def plot_classification_with_grouping_OLD(
     neutrons: pd.DataFrame,
     gammas: pd.DataFrame,
     f_gamma: interpolate.interp1d,
@@ -156,4 +156,34 @@ def plot_classification_with_grouping(
         f"Neutron Classification at n={CLASSIFIER_WINDOW_N} and cutoff = {CUTOFF_VOLTAGE:.3f}V"
     )
     fig.tight_layout()
+    return fig, ax
+
+def plot_classification_with_grouping(neutrons: pd.DataFrame, gammas: pd.DataFrame, params: tuple, max_voltage: float, n: int) -> tuple:
+    fig, ax = plot_classification(neutrons, gammas)
+    voltage_space = np.linspace(0, max_voltage, CLASSIFICATION_PLOT_RES)
+
+    f_gamma = gaussian(voltage_space, *params)
+    mu, sigma, A = params
+    f_gate = gaussian(voltage_space, mu + n * sigma, sigma, A)
+
+    ax.plot(f_gamma[f_gamma.argmax():], voltage_space[f_gamma.argmax():], "r--")
+    ax.plot(f_gate[f_gate.argmax():], voltage_space[f_gate.argmax():], "r--")
+
+    ax.text(1.73, 0.48, s=f"n_neutron = {neutrons.shape[1]}")
+
+    ax.text(1.73, 0.46, s=f"n_gamma = {gammas.shape[1]}")
+
+    # ax.fill_betweenx(
+    #     voltage_space[f_gamma.argmax():],
+    #     f_gamma[:f_gate.argmax()],
+    #     f_gate[f_gamma.argmax():],
+    #     alpha=0.1,
+    #     color="orange",
+    # )
+    ax.vlines(CUTOFF_VOLTAGE, 0, 1, color="k", linestyles="--", linewidth=1.2)
+    ax.set_title(
+        f"Neutron Classification at n={CLASSIFIER_WINDOW_N} and cutoff = {CUTOFF_VOLTAGE:.3f}V"
+    )
+    fig.tight_layout()
+
     return fig, ax
