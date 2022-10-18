@@ -118,8 +118,8 @@ def plot_classification(
 
     ax.set_xlabel("pulse amplitude ($V$)", fontsize=FONT_SIZE)
     ax.set_ylabel("tail / total (a.u.)", fontsize=FONT_SIZE)
-    # ax.set_xlim(0, 2.5)
-    # ax.set_ylim(-0, 0.5)
+    ax.set_xlim(0, 2.5)
+    ax.set_ylim(-0, 0.5)
     ax.legend()
 
     fig.tight_layout()
