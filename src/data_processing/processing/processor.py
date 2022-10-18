@@ -6,7 +6,7 @@ from typing import Optional
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from data_processing.processing.figure_of_merit import FOM, fit_fom, n_sigma_classifier
+from data_processing.processing.figure_of_merit import FOM, fit_fom, n_sigma_classifier, n_sigma_classifier
 from data_processing.processing.peak_finding import get_bases
 from data_processing.processing.processing_configs import *
 from data_processing.processing.psd import generate_psd
@@ -25,6 +25,7 @@ from logging_helpers.setup_logger import (
     setup_logger,
 )
 
+N_SIGMA = 3
 
 def process(
     df: pd.DataFrame,
@@ -83,8 +84,8 @@ def process(
         params[:3], params[3:] = params[3:], params[:3]
         params = tuple(params)
 
-    neutrons, gammas, f_gate, f_gamma = n_sigma_classifier(
-        psd_report, params[3:], CLASSIFIER_WINDOW_N, N_BINS
+    neutrons, gammas = n_sigma_classifier(
+        psd_report, params[3:], CLASSIFIER_WINDOW_N
     )
 
     if plot_path is not None:
@@ -116,9 +117,14 @@ def process(
         )
         save_plot(plot_path / buffer_id, fom, f"{buffer_id}-fom.png")
 
-        classification, _ = plot_classification_with_grouping(
-            neutrons, gammas, f_gamma, f_gate, psd_report.loc["amplitude"].max()
+        classification, _ =  plot_classification_with_grouping(
+            neutrons, 
+            gammas, 
+            params[3:], 
+            psd_report.loc["amplitude"].max(), 
+            CLASSIFIER_WINDOW_N
         )
+
         save_plot(
             plot_path / buffer_id, classification, f"{buffer_id}-classification.png"
         )

@@ -65,7 +65,7 @@ def fit_fom(counts: list, bins: list, guesses: tuple = None) -> tuple[tuple, flo
     return abs(params), cov
 
 
-def n_sigma_classifier(
+def n_sigma_classifier_OLD(
     psd: pd.DataFrame, gauss_params: tuple, n: float, n_bins: int = 100
 ) -> tuple[pd.DataFrame, pd.DataFrame, interpolate.interp1d, interpolate.interp1d]:
     """Classifies the neutrons given a value :param:`n` sigma above the mean + stdev
@@ -101,3 +101,22 @@ def n_sigma_classifier(
     gammas = psd.T[~filt].T
 
     return neutrons, gammas, f_gate, f_gamma
+
+def n_sigma_classifier(
+    psd: pd.DataFrame, gauss_params: tuple, n: float
+) -> tuple:
+
+    mu, sigma, A = gauss_params
+
+    def neutron_filter(signal):
+        # amplitude and tail/total swapped because axis are swapped during graphing
+        gate_cond = signal["amplitude"] <= gaussian(signal["tail / total"], mu + n*sigma, sigma, A)
+        gamma_cond = signal["amplitude"] > gaussian(signal["tail / total"], *gauss_params)
+        return gate_cond and gamma_cond
+
+    filt = psd.apply(neutron_filter)
+
+    neutrons = psd.T[filt].T
+    gammas = psd.T[~filt].T
+
+    return neutrons, gammas
