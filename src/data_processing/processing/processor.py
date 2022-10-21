@@ -18,6 +18,7 @@ from data_processing.reporting.plotting import (
     plot_bounded_scatter,
     plot_classification_with_grouping,
     plot_fom,
+    plot_histo
 )
 from data_processing.reporting.reporting import save_plot
 from logging_helpers.setup_logger import (
@@ -84,6 +85,8 @@ def process(
         params[:3], params[3:] = params[3:], params[:3]
         params = tuple(params)
 
+    print(psd_report)
+    
     neutrons, gammas = n_sigma_classifier(
         psd_report, params[3:], CLASSIFIER_WINDOW_N
     )
@@ -129,7 +132,6 @@ def process(
             plot_path / buffer_id, classification, f"{buffer_id}-classification.png"
         )
 
-        plt.close("all")
 
     messenger.debug(f"Elapsed Time: {time.perf_counter() - t1:.3f} s")
     return FOM(*params[0:2], *params[3:-1]), neutrons.shape[1]

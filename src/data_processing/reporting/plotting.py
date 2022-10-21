@@ -3,11 +3,11 @@ import numpy as np
 import pandas as pd
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
-from processing.figure_of_merit import FOM, gaussian
-from processing.processing_configs import CLASSIFIER_WINDOW_N, CUTOFF_VOLTAGE
+from data_processing.processing.figure_of_merit import FOM, gaussian
+from data_processing.processing.processing_configs import CLASSIFIER_WINDOW_N, CUTOFF_VOLTAGE
 from scipy import interpolate
 
-from reporting.plot_configs import *
+from data_processing.reporting.plot_configs import *
 
 
 def plot_signal(data: pd.DataFrame, sample_interval: float = 2) -> tuple[Figure, Axes]:
@@ -172,14 +172,16 @@ def plot_classification_with_grouping(neutrons: pd.DataFrame, gammas: pd.DataFra
     ax.text(1.73, 0.48, s=f"n_neutron = {neutrons.shape[1]}")
 
     ax.text(1.73, 0.46, s=f"n_gamma = {gammas.shape[1]}")
-
-    # ax.fill_betweenx(
-    #     voltage_space[f_gamma.argmax():],
-    #     f_gamma[:f_gate.argmax()],
-    #     f_gate[f_gamma.argmax():],
-    #     alpha=0.1,
-    #     color="orange",
-    # )
+    
+    filt = f_gamma[f_gamma.argmax():] < f_gate[f_gamma.argmax():]
+    ax.fill_betweenx(
+        voltage_space[f_gamma.argmax():],
+        f_gamma[f_gamma.argmax():],
+        f_gate[f_gamma.argmax():],
+        where=filt,
+        alpha=0.1,
+        color="orange",
+    )
     ax.vlines(CUTOFF_VOLTAGE, 0, 1, color="k", linestyles="--", linewidth=1.2)
     ax.set_title(
         f"Neutron Classification at n={CLASSIFIER_WINDOW_N} and cutoff = {CUTOFF_VOLTAGE:.3f}V"
