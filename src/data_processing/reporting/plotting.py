@@ -158,7 +158,14 @@ def plot_classification_with_grouping_OLD(
     fig.tight_layout()
     return fig, ax
 
-def plot_classification_with_grouping(neutrons: pd.DataFrame, gammas: pd.DataFrame, params: tuple, max_voltage: float, n: int) -> tuple:
+def plot_classification_with_grouping(
+    neutrons: pd.DataFrame, 
+    gammas: pd.DataFrame, 
+    params: tuple, 
+    max_voltage: float, 
+    cutoff_voltage: float,
+    n: int
+) -> tuple:
     fig, ax = plot_classification(neutrons, gammas)
     voltage_space = np.linspace(0, max_voltage, CLASSIFICATION_PLOT_RES)
 
@@ -182,9 +189,9 @@ def plot_classification_with_grouping(neutrons: pd.DataFrame, gammas: pd.DataFra
         alpha=0.1,
         color="orange",
     )
-    ax.vlines(CUTOFF_VOLTAGE, 0, 1, color="k", linestyles="--", linewidth=1.2)
+    ax.vlines(cutoff_voltage, 0, 1, color="k", linestyles="--", linewidth=1.2)
     ax.set_title(
-        f"Neutron Classification at n={CLASSIFIER_WINDOW_N} and cutoff = {CUTOFF_VOLTAGE:.3f}V"
+        f"Neutron Classification at n={n} and cutoff = {cutoff_voltage:.3f}V"
     )
     fig.tight_layout()
 
