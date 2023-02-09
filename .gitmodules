@@ -1,0 +1,3 @@
+[submodule "sample_datasets"]
+	path = sample_datasets
+	url = https://github.com/berlinguette/thunderbird_sample-datasets.git
