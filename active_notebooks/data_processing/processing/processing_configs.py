@@ -10,3 +10,7 @@ OPTIMIZER_BOUNDS = (0.1, 0.35)
 N_BINS = 100
 
 CLASSIFIER_WINDOW_N = 5
+
+# TODO get L0 from Californium source analysis
+# for now, using value from "UBC Background 20221214-19 Update"
+DEFAULT_LOWER_ENERGY_BOUND = 0.1966
