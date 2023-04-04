@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
-from arc_paths import get_parq_root, get_signals_root
-from dataframe_validation import STARTING_COL_NAMES, STARTING_COL_TYPES, PsdDfColumn
+from data_processing.arc_paths import get_parq_root, get_signals_root
+from data_processing.dataframe_validation import STARTING_COL_NAMES, STARTING_COL_TYPES, PsdDfColumn
 
 def load_psd(experiment_name: str) -> pd.DataFrame:
     psd_folder = get_parq_root(experiment_name)
