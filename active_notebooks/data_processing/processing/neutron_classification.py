@@ -2,7 +2,7 @@ from typing import Callable
 
 import numpy as np
 import pandas as pd
-from active_notebooks.data_processing.dataframe_validation import DataframeColumn
+from data_processing.dataframe_validation import DataframeColumn
 from data_processing.processing.processing_configs import \
     DEFAULT_LOWER_ENERGY_BOUND
 from scipy.signal import savgol_filter
