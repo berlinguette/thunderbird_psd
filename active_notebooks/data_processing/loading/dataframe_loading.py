@@ -16,8 +16,8 @@ def load_psd(experiment_name: str) -> pd.DataFrame:
     psd_col = (energy_col - short_col) / energy_col
     psd_df[DataframeColumn.PSD] = psd_col
     
-    psd_df = psd_df.dropna()
     psd_df = psd_df[psd_col.between(0,0.5)]
+    psd_df = psd_df.dropna()
     
     return psd_df
 
