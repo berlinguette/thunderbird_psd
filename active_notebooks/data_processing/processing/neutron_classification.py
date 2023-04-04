@@ -2,10 +2,12 @@ from typing import Callable
 
 import numpy as np
 import pandas as pd
+from active_notebooks.data_processing.dataframe_validation import DataframeColumn
 from data_processing.processing.processing_configs import \
     DEFAULT_LOWER_ENERGY_BOUND
 from scipy.signal import savgol_filter
 from scipy.interpolate import interp1d
+from data_processing.dataframe_validation import get_df_col
 
 def generate_nasa_neutron_window(
     slice_fit_df: pd.DataFrame,
@@ -37,7 +39,7 @@ def classify(
     psd_report: pd.DataFrame, 
     lb_fit_fn: Callable[[np.ndarray], np.ndarray], 
     ub_fit_fn: Callable[[np.ndarray], np.ndarray], 
-    label: str, 
+    label: DataframeColumn = DataframeColumn.NEUTRON_CLASS,
     le_cutoff: float = DEFAULT_LOWER_ENERGY_BOUND,
     window_adj_offset: int = 0
 ) -> pd.DataFrame:
@@ -63,12 +65,14 @@ def classify(
     psd_report: DataFrame
         Original DataFrame with new column for neutron classification
     """
-    lb_fits = lb_fit_fn(psd_report["CALIB_ENERGY"].astype(float)) # type: ignore
-    ub_fits = ub_fit_fn(psd_report["CALIB_ENERGY"].astype(float)) # type: ignore
-    within_psd_bounds = psd_report["tail / total"].between(
+    energy_col = get_df_col(psd_report, DataframeColumn.CALIB_ENERGY)
+    psd_col = get_df_col(psd_report, DataframeColumn.PSD)
+    lb_fits = lb_fit_fn(energy_col.astype(float)) # type: ignore
+    ub_fits = ub_fit_fn(energy_col.astype(float)) # type: ignore
+    within_psd_bounds = psd_col.between(
         lb_fits + window_adj_offset, ub_fits
     )
-    within_eng_bounds = psd_report["CALIB_ENERGY"] >= le_cutoff
-    psd_report[label] = within_psd_bounds & within_eng_bounds
+    within_eng_bounds = energy_col >= le_cutoff
+    psd_report[label.value] = within_psd_bounds & within_eng_bounds
     
     return psd_report

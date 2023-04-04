@@ -1,9 +1,10 @@
 from enum import Enum
 from typing import Final
 from numpy import int64
+from pandas import DataFrame
 
 
-class PsdDfColumn(Enum):
+class DataframeColumn(Enum):
     CALIB_ENERGY = "CALIB_ENERGY"
     ENERGYSHORT = "ENERGYSHORT"
     ENERGY = "ENERGY"
@@ -12,18 +13,22 @@ class PsdDfColumn(Enum):
     TIME_HOURS = "TIMETAG_HOURS"
     EVENT_TIME = "EVENT_TIME"
     EVENT_TIME_PS = "EVENT_TIME_PS"
+    NEUTRON_CLASS = "NASA"
 
 
 STARTING_COLUMNS: Final = [
-    PsdDfColumn.CALIB_ENERGY,
-    PsdDfColumn.ENERGYSHORT,
-    PsdDfColumn.ENERGY,
-    PsdDfColumn.TIMETAG
+    DataframeColumn.CALIB_ENERGY,
+    DataframeColumn.ENERGYSHORT,
+    DataframeColumn.ENERGY,
+    DataframeColumn.TIMETAG
 ]
 STARTING_COL_NAMES: Final = [e.value for e in STARTING_COLUMNS]
 STARTING_COL_TYPES: Final = {
-    PsdDfColumn.CALIB_ENERGY: float,
-    PsdDfColumn.ENERGYSHORT: int,
-    PsdDfColumn.ENERGY: int,
-    PsdDfColumn.TIMETAG: int64
+    DataframeColumn.CALIB_ENERGY: float,
+    DataframeColumn.ENERGYSHORT: int,
+    DataframeColumn.ENERGY: int,
+    DataframeColumn.TIMETAG: int64
 }
+
+def get_df_col(df: DataFrame, col: DataframeColumn):
+    return df[col.value]

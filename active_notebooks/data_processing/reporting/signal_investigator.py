@@ -4,7 +4,7 @@ from dataclasses import dataclass, field, fields
 from datetime import datetime
 from typing import Generic, TypeVar, Protocol, Any
 from abc import abstractmethod
-from dataframe_validation import PsdDfColumn
+from dataframe_validation import DataframeColumn, get_df_col
 from matplotlib.figure import Figure
 from matplotlib.axes import Axes
 import matplotlib.pyplot as plt
@@ -34,7 +34,7 @@ class Comparable(Protocol):
     
 
 class QueryRange(Generic[C]):
-    def __init__(self, col: PsdDfColumn) -> None:
+    def __init__(self, col: DataframeColumn) -> None:
         self._start: C | None = None
         self._end: C | None = None
         self._col = col
@@ -110,11 +110,11 @@ class QueryRange(Generic[C]):
 @dataclass
 class Query:
     psd: QueryRange = field(
-        default_factory=lambda: QueryRange[float](PsdDfColumn.PSD))
+        default_factory=lambda: QueryRange[float](DataframeColumn.PSD))
     energy: QueryRange = field(
-        default_factory=lambda: QueryRange[float](PsdDfColumn.ENERGY))
+        default_factory=lambda: QueryRange[float](DataframeColumn.ENERGY))
     time: QueryRange = field(
-        default_factory=lambda: QueryRange[datetime](PsdDfColumn.EVENT_TIME))
+        default_factory=lambda: QueryRange[datetime](DataframeColumn.EVENT_TIME))
     
     def perform_query(self, df: pd.DataFrame) -> pd.DataFrame:
         query_result = df
@@ -141,10 +141,10 @@ class SignalInvestigator:
         fig, ax = plt.subplots(figsize=(FIG_DIM_X, FIG_DIM_Y))
         
         for index, row in query_result.iterrows():
-            n_psd = row[PsdDfColumn.PSD.value]
-            n_eng = row[PsdDfColumn.ENERGY.value]
-            n_time = row[PsdDfColumn.EVENT_TIME.value]
-            n_ps_remain = row[PsdDfColumn.EVENT_TIME_PS.value]
+            n_psd = row[DataframeColumn.PSD.value]
+            n_eng = row[DataframeColumn.ENERGY.value]
+            n_time = row[DataframeColumn.EVENT_TIME.value]
+            n_ps_remain = row[DataframeColumn.EVENT_TIME_PS.value]
             
             series_name = (f"Time {n_time} +{n_ps_remain}ps, ",
                            f"PSD {n_psd:.4f}, E {n_eng:.4f} MeVee")

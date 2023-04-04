@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from data_processing.arc_paths import get_parq_root, get_signals_root
-from data_processing.dataframe_validation import STARTING_COL_NAMES, STARTING_COL_TYPES, PsdDfColumn
+from data_processing.dataframe_validation import STARTING_COL_NAMES, STARTING_COL_TYPES, DataframeColumn
 
 def load_psd(experiment_name: str) -> pd.DataFrame:
     psd_folder = get_parq_root(experiment_name)
@@ -11,10 +11,10 @@ def load_psd(experiment_name: str) -> pd.DataFrame:
     psd_df = psd_df.astype(STARTING_COL_TYPES)
 
     # Calculate PSD value as new column "tail / total"
-    energy_col = psd_df[PsdDfColumn.ENERGY.value]
-    short_col = psd_df[PsdDfColumn.ENERGYSHORT.value]
+    energy_col = psd_df[DataframeColumn.ENERGY.value]
+    short_col = psd_df[DataframeColumn.ENERGYSHORT.value]
     psd_col = (energy_col - short_col) / energy_col
-    psd_df[PsdDfColumn.PSD] = psd_col
+    psd_df[DataframeColumn.PSD] = psd_col
     
     psd_df = psd_df.dropna()
     psd_df = psd_df[psd_col.between(0,0.5)]
