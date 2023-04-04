@@ -23,12 +23,13 @@ STARTING_COLUMNS: Final = [
     DataframeColumn.TIMETAG
 ]
 STARTING_COL_NAMES: Final = [e.value for e in STARTING_COLUMNS]
-STARTING_COL_TYPES: Final = {
+col_types = {
     DataframeColumn.CALIB_ENERGY: float,
     DataframeColumn.ENERGYSHORT: int,
     DataframeColumn.ENERGY: int,
     DataframeColumn.TIMETAG: int64
 }
+STARTING_COL_TYPES: Final = {k.value: v for k, v in col_types}
 
 def get_df_col(df: DataFrame, col: DataframeColumn):
     return df[col.value]
