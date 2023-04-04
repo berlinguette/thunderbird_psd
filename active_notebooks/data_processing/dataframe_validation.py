@@ -29,7 +29,7 @@ col_types = {
     DataframeColumn.ENERGY: int,
     DataframeColumn.TIMETAG: int64
 }
-STARTING_COL_TYPES: Final = {k.value: v for k, v in col_types}
+STARTING_COL_TYPES: Final = {k.value: v for k, v in col_types.values()}
 
 def get_df_col(df: DataFrame, col: DataframeColumn):
     return df[col.value]
