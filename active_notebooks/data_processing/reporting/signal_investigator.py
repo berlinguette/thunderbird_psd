@@ -91,40 +91,46 @@ class QueryRange(Generic[C]):
         return self._col.value
 
     def perform_range_query(self, df: pd.DataFrame) -> pd.DataFrame:
-        start = self._start
-        end = self._end
         query_col = get_df_col(df, self._col)
+        
+        if self._start is not None:
+            if self._end is not None:
+                    if self._start == self._end:
+                        return df[query_col == self._start]
+                    else:
+                        return df[
+                            (query_col >= self._start) & 
+                            (query_col < self._end)
+                        ]
+            else:
+                return df[query_col >= self._start]
+        else:
+            if self._end is not None:
+                return df[query_col < self._end]
+            else:
+                return df            
+        
+
+class DatetimeQueryRange(QueryRange[datetime]):
+    def perform_range_query(self, df: pd.DataFrame) -> pd.DataFrame:
+        query_col = get_df_col(df, self._col)
+        
+        start = self._start if self._start is None else self._start.isoformat()
+        end = self._end if self._end is None else self._end.isoformat()
         
         if start is not None:
             if end is not None:
-                    if start == end:
-                        return df[query_col == start]
-                    else:
-                        return df[(query_col >= start) & (query_col < end)]
+                if start == end:
+                    return df[query_col == start]
+                else:
+                    return df[(query_col >= start) & (query_col < end)]
             else:
                 return df[query_col >= start]
         else:
             if end is not None:
                 return df[query_col < end]
             else:
-                return df            
-
-        # query_elements = []
-
-        # if self._start is not None:
-        #     element = f"'{self._col.value}' >= @start"
-        #     query_elements.append(element)
-        # if self._end is not None:
-        #     element = f"'{self._col.value}' < @end"
-        #     query_elements.append(element)
-
-        # if len(query_elements) == 0:
-        #     return df
-        # elif len(query_elements) == 1:
-        #     query = query_elements[0]
-        # else:
-        #     query = ' & '.join(query_elements)
-        # return df.query(query)
+                return df
 
 
 @dataclass
@@ -136,7 +142,7 @@ class Query:
         default_factory=lambda: QueryRange[float](
             DataframeColumn.CALIB_ENERGY))
     time: QueryRange = field(
-        default_factory=lambda: QueryRange[datetime](
+        default_factory=lambda: DatetimeQueryRange(
             DataframeColumn.EVENT_TIME))
 
     def perform_query(self, df: pd.DataFrame) -> pd.DataFrame:

@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import Final
 from numpy import int64
-from pandas import DataFrame
+from pandas import DataFrame, Series
 
 
 class DataframeColumn(Enum):
@@ -31,5 +31,5 @@ col_types = {
 }
 STARTING_COL_TYPES: Final = {k.value: v for k, v in col_types.items()}
 
-def get_df_col(df: DataFrame, col: DataframeColumn):
+def get_df_col(df: DataFrame, col: DataframeColumn) -> Series:
     return df[col.value]
