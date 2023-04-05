@@ -96,7 +96,10 @@ class QueryRange(Generic[C]):
         
         if start is not None:
             if end is not None:
-                return df[(query_col >= start) & (query_col < end)]
+                    if start == end:
+                        return df[query_col == start]
+                    else:
+                        return df[(query_col >= start) & (query_col < end)]
             else:
                 return df[query_col >= start]
         else:
@@ -126,11 +129,14 @@ class QueryRange(Generic[C]):
 @dataclass
 class Query:
     psd: QueryRange = field(
-        default_factory=lambda: QueryRange[float](DataframeColumn.PSD))
+        default_factory=lambda: QueryRange[float](
+            DataframeColumn.PSD))
     energy: QueryRange = field(
-        default_factory=lambda: QueryRange[float](DataframeColumn.ENERGY))
+        default_factory=lambda: QueryRange[float](
+            DataframeColumn.CALIB_ENERGY))
     time: QueryRange = field(
-        default_factory=lambda: QueryRange[datetime](DataframeColumn.EVENT_TIME))
+        default_factory=lambda: QueryRange[datetime](
+            DataframeColumn.EVENT_TIME))
 
     def perform_query(self, df: pd.DataFrame) -> pd.DataFrame:
         query_result = df
@@ -158,7 +164,7 @@ class SignalInvestigator:
 
         for index, row in query_result.iterrows():
             n_psd = row[DataframeColumn.PSD.value]
-            n_eng = row[DataframeColumn.ENERGY.value]
+            n_eng = row[DataframeColumn.CALIB_ENERGY.value]
             n_time = row[DataframeColumn.EVENT_TIME.value]
             n_ps_remain = row[DataframeColumn.EVENT_TIME_PS.value]
 
