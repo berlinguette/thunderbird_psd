@@ -5,7 +5,7 @@ from typing import Any, Generic, Protocol, TypeVar
 
 import matplotlib.pyplot as plt
 import pandas as pd
-from active_notebooks.data_processing.reporting.plotting import plot_bounded_scatter
+from data_processing.reporting.plotting import plot_bounded_scatter
 from data_processing.dataframe_validation import DataframeColumn, get_df_col
 from data_processing.processing.dataframe_manipulation import \
     generate_neutron_signals
