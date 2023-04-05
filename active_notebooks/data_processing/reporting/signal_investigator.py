@@ -78,7 +78,7 @@ class QueryRange(Generic[C]):
     @range.setter
     def range(self, value: tuple[C | None, C | None]):
         start, end = value
-        if start is not None and end is not None and end > start:
+        if start is not None and end is not None and start > end:
             self._start = end
             self._end = start
         else:
