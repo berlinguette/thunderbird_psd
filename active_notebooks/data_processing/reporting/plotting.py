@@ -13,23 +13,26 @@ from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 from scipy import interpolate
 from typing import Callable
+from data_processing.dataframe_validation import DataframeColumn, get_df_col
 
 
 def plot_tail_vs_total(
     df: pd.DataFrame,
     experiment_display_name: str
 ) -> tuple[Figure, Axes]:
-    y_resolution = HISTOGRAM_RES*FIG_DIM_Y//FIG_DIM_X
-    max_energy = df['CALIB_ENERGY'].max()
+    y_resolution = _get_histogram_y_resolution()
+    max_energy = get_df_col(df, DataframeColumn.CALIB_ENERGY).max()
     dataset_size = df.shape[0]
 
     fig, ax = plt.subplots(figsize=(FIG_DIM_X, FIG_DIM_Y))
 
     cmap = mpl.colormaps['gnuplot']  # type: ignore
+    energy_col = get_df_col(df, DataframeColumn.ENERGY)
+    short_col = get_df_col(df, DataframeColumn.ENERGYSHORT)
 
     ax.hist2d(
-        df['ENERGY'],
-        df['ENERGY'] - df['ENERGYSHORT'],
+        energy_col,
+        energy_col - short_col,
         bins=(HISTOGRAM_RES, y_resolution),
         norm=mpl.colors.LogNorm(),
         range=[[0, max_energy + .05], [0, 0.50]],
@@ -46,6 +49,61 @@ def plot_tail_vs_total(
 
     return fig, ax
 
+def plot_psd_histogram(
+    df: pd.DataFrame,
+    colormap_name: str = 'gnuplot',
+    **kwargs
+) -> tuple[Figure, Axes]:
+    y_resolution = _get_histogram_y_resolution()
+    max_energy = get_df_col(df, DataframeColumn.CALIB_ENERGY).max()
+
+    fig, ax = plt.subplots(figsize=(FIG_DIM_X, FIG_DIM_Y))
+    
+    energy_col = get_df_col(df, DataframeColumn.CALIB_ENERGY)
+    psd_col = get_df_col(df, DataframeColumn.PSD)
+    
+    cmap = mpl.colormaps[colormap_name]  # type: ignore
+    
+    ax.hist2d(
+        energy_col,
+        psd_col,
+        bins=(HISTOGRAM_RES, y_resolution),
+        range=[[0, max_energy + .05], [0, 0.50]],
+        cmap=cmap,
+        **kwargs
+    )
+    
+    ax.set_ylim(0, 0.5)
+    ax.set_xlim(0, max_energy + .05)
+    
+    ax.set_xlabel("Energy (MeVee)", fontsize=AXIS_FONT_SIZE)
+    ax.set_ylabel("PSD", fontsize=AXIS_FONT_SIZE)
+    ax.tick_params(axis='both', which='major', labelsize=AXIS_TICK_FONT_SIZE)
+    ax.tick_params(axis='both', which='minor', labelsize=AXIS_TICK_FONT_SIZE)
+    
+    return fig, ax
+    
+
+def add_fit_window_to_plot(
+    axes: Axes,
+    neutron_lb_fit: Callable,
+    neutron_ub_fit: Callable,
+    upper_energy_bound: float,
+    lower_energy_bound: float = DEFAULT_LOWER_ENERGY_BOUND,
+) -> Axes:
+    energy_space = np.linspace(0, upper_energy_bound + 0.5, 200)
+    axes.plot(energy_space, neutron_lb_fit(energy_space), 'r--')
+    axes.plot(energy_space, neutron_ub_fit(energy_space), 'r--')
+    # ax.vlines(all_slice_xs[0],
+    #           neutron_lb_fit(all_slice_xs[0]),
+    #           neutron_ub_fit(all_slice_xs[0]),
+    #           'r', ls='--')
+    axes.vlines(lower_energy_bound, 
+              neutron_lb_fit(lower_energy_bound), 
+              neutron_ub_fit(lower_energy_bound), 
+              'r', ls="--") # type: ignore
+    return axes
+    
 
 def plot_classification(
     df: pd.DataFrame,
@@ -54,53 +112,68 @@ def plot_classification(
     experiment_display_name: str,
     lower_energy_bound: float = DEFAULT_LOWER_ENERGY_BOUND
 ) -> tuple[Figure, Axes]:
-    plot_width = 10
-    plot_height = 9
-    x_resolution = 256
     count_limit = 5
 
-    y_resolution = HISTOGRAM_RES*FIG_DIM_Y//FIG_DIM_X
-    max_energy = df['CALIB_ENERGY'].max()
+    # y_resolution = _get_histogram_y_resolution()
+    max_energy = get_df_col(df, DataframeColumn.CALIB_ENERGY).max()
 
-    fig, ax = plt.subplots(figsize=(plot_width, plot_height))
-    g_vs_n = df['NASA'].map({True: 1, False: -1})
+    # fig, ax = plt.subplots(figsize=(FIG_DIM_X, FIG_DIM_Y))
+    
+    class_col = get_df_col(df, DataframeColumn.NEUTRON_CLASS)
+    # energy_col = get_df_col(df, DataframeColumn.CALIB_ENERGY)
+    # psd_col = get_df_col(df, DataframeColumn.PSD)
+    
+    g_vs_n = class_col.map({True: 1, False: -1})
+    # cmap = mpl.colormaps['RdBu_r']  # type: ignore
 
-    cmap = mpl.colormaps['RdBu_r']  # type: ignore
-
-    ax.hist2d(
-        df['CALIB_ENERGY'],
-        df['tail / total'],
+    # ax.hist2d(
+    #     energy_col,
+    #     psd_col,
+    #     weights=g_vs_n,
+    #     bins=(HISTOGRAM_RES, y_resolution),
+    #     range=[[0, max_energy + .05], [0, 0.50]],
+    #     cmap=cmap,
+    #     vmin=-count_limit,
+    #     vmax=count_limit,
+    # )
+    
+    fig, ax = plot_psd_histogram(
+        df,
+        colormap_name='RdBu_r',
         weights=g_vs_n,
-        bins=(x_resolution, y_resolution),
-        range=[[0, max_energy + .05], [0, 0.50]],
-        cmap=cmap,
         vmin=-count_limit,
-        vmax=count_limit,
+        vmax=count_limit
     )
 
-    energy_space = np.linspace(0, max_energy + 0.5, 200)
-    ax.plot(energy_space, neutron_lb_fit(energy_space), 'r--')
-    ax.plot(energy_space, neutron_ub_fit(energy_space), 'r--')
-    # ax.vlines(all_slice_xs[0],
-    #           neutron_lb_fit(all_slice_xs[0]),
-    #           neutron_ub_fit(all_slice_xs[0]),
-    #           'r', ls='--')
-    ax.vlines(lower_energy_bound, 
-              neutron_lb_fit(lower_energy_bound), 
-              neutron_ub_fit(lower_energy_bound), 
-              'r', ls="--") # type: ignore
+    # energy_space = np.linspace(0, max_energy + 0.5, 200)
+    # ax.plot(energy_space, neutron_lb_fit(energy_space), 'r--')
+    # ax.plot(energy_space, neutron_ub_fit(energy_space), 'r--')
+    # # ax.vlines(all_slice_xs[0],
+    # #           neutron_lb_fit(all_slice_xs[0]),
+    # #           neutron_ub_fit(all_slice_xs[0]),
+    # #           'r', ls='--')
+    # ax.vlines(lower_energy_bound, 
+    #           neutron_lb_fit(lower_energy_bound), 
+    #           neutron_ub_fit(lower_energy_bound), 
+    #           'r', ls="--") # type: ignore
+    ax = add_fit_window_to_plot(
+        ax,
+        neutron_lb_fit,
+        neutron_ub_fit,
+        max_energy
+    )
 
-    ax.set_ylim(0, 0.5)
-    ax.set_xlim(0, max_energy + .05)
+    # ax.set_ylim(0, 0.5)
+    # ax.set_xlim(0, max_energy + .05)
     n_neutrons = df[df["NASA"]].shape[0]
     fig.suptitle(
         f"Neutron Classification: {experiment_display_name}", 
         fontsize=SUPTITLE_FONT_SIZE)
     ax.set_title(f"Neutron count = {n_neutrons}", fontsize=TITLE_FONT_SIZE)
-    ax.set_xlabel("Energy (MeVee)", fontsize=AXIS_FONT_SIZE)
-    ax.set_ylabel("PSD", fontsize=AXIS_FONT_SIZE)
-    ax.tick_params(axis='both', which='major', labelsize=AXIS_TICK_FONT_SIZE)
-    ax.tick_params(axis='both', which='minor', labelsize=AXIS_TICK_FONT_SIZE)
+    # ax.set_xlabel("Energy (MeVee)", fontsize=AXIS_FONT_SIZE)
+    # ax.set_ylabel("PSD", fontsize=AXIS_FONT_SIZE)
+    # ax.tick_params(axis='both', which='major', labelsize=AXIS_TICK_FONT_SIZE)
+    # ax.tick_params(axis='both', which='minor', labelsize=AXIS_TICK_FONT_SIZE)
     event_colors = [mpl.patches.Patch(facecolor=cmap(1.)), # type: ignore
                     mpl.patches.Patch(facecolor=cmap(0.))] # type: ignore
     ax.legend(event_colors, ["Neutrons", "Gamma"])
@@ -321,3 +394,10 @@ def plot_scatter(
 #     fig.tight_layout()
 
 #     return fig, ax
+
+def _get_histogram_y_resolution(
+    x_resolution: int = HISTOGRAM_RES,
+    plot_width: int = FIG_DIM_X,
+    plot_height: int = FIG_DIM_Y
+) -> int:
+    return x_resolution*plot_width//plot_height
