@@ -49,22 +49,24 @@ def plot_tail_vs_total(
 
     return fig, ax
 
+
 def plot_psd_histogram(
     df: pd.DataFrame,
     colormap_name: str = 'gnuplot',
+    colorbar: bool = False,
     **kwargs
 ) -> tuple[Figure, Axes]:
     y_resolution = _get_histogram_y_resolution()
     max_energy = get_df_col(df, DataframeColumn.CALIB_ENERGY).max()
 
     fig, ax = plt.subplots(figsize=(FIG_DIM_X, FIG_DIM_Y))
-    
+
     energy_col = get_df_col(df, DataframeColumn.CALIB_ENERGY)
     psd_col = get_df_col(df, DataframeColumn.PSD)
-    
+
     cmap = mpl.colormaps[colormap_name]  # type: ignore
-    
-    ax.hist2d(
+
+    _, _, _, image = ax.hist2d(
         energy_col,
         psd_col,
         bins=(HISTOGRAM_RES, y_resolution),
@@ -73,16 +75,19 @@ def plot_psd_histogram(
         **kwargs
     )
     
+    if colorbar:
+        fig.colorbar(image, ax=ax)
+
     ax.set_ylim(0, 0.5)
     ax.set_xlim(0, max_energy + .05)
-    
+
     ax.set_xlabel("Energy (MeVee)", fontsize=AXIS_FONT_SIZE)
     ax.set_ylabel("PSD", fontsize=AXIS_FONT_SIZE)
     ax.tick_params(axis='both', which='major', labelsize=AXIS_TICK_FONT_SIZE)
     ax.tick_params(axis='both', which='minor', labelsize=AXIS_TICK_FONT_SIZE)
-    
+
     return fig, ax
-    
+
 
 def add_fit_window_to_plot(
     axes: Axes,
@@ -98,12 +103,12 @@ def add_fit_window_to_plot(
     #           neutron_lb_fit(all_slice_xs[0]),
     #           neutron_ub_fit(all_slice_xs[0]),
     #           'r', ls='--')
-    axes.vlines(lower_energy_bound, 
-              neutron_lb_fit(lower_energy_bound), 
-              neutron_ub_fit(lower_energy_bound), 
-              'r', ls="--") # type: ignore
+    axes.vlines(lower_energy_bound,
+                neutron_lb_fit(lower_energy_bound),
+                neutron_ub_fit(lower_energy_bound),
+                'r', ls="--")  # type: ignore
     return axes
-    
+
 
 def plot_classification(
     df: pd.DataFrame,
@@ -118,11 +123,11 @@ def plot_classification(
     max_energy = get_df_col(df, DataframeColumn.CALIB_ENERGY).max()
 
     # fig, ax = plt.subplots(figsize=(FIG_DIM_X, FIG_DIM_Y))
-    
+
     class_col = get_df_col(df, DataframeColumn.NEUTRON_CLASS)
     # energy_col = get_df_col(df, DataframeColumn.CALIB_ENERGY)
     # psd_col = get_df_col(df, DataframeColumn.PSD)
-    
+
     g_vs_n = class_col.map({True: 1, False: -1})
     # cmap = mpl.colormaps['RdBu_r']  # type: ignore
 
@@ -136,7 +141,7 @@ def plot_classification(
     #     vmin=-count_limit,
     #     vmax=count_limit,
     # )
-    
+
     fig, ax = plot_psd_histogram(
         df,
         colormap_name='RdBu_r',
@@ -152,9 +157,9 @@ def plot_classification(
     # #           neutron_lb_fit(all_slice_xs[0]),
     # #           neutron_ub_fit(all_slice_xs[0]),
     # #           'r', ls='--')
-    # ax.vlines(lower_energy_bound, 
-    #           neutron_lb_fit(lower_energy_bound), 
-    #           neutron_ub_fit(lower_energy_bound), 
+    # ax.vlines(lower_energy_bound,
+    #           neutron_lb_fit(lower_energy_bound),
+    #           neutron_ub_fit(lower_energy_bound),
     #           'r', ls="--") # type: ignore
     ax = add_fit_window_to_plot(
         ax,
@@ -167,15 +172,15 @@ def plot_classification(
     # ax.set_xlim(0, max_energy + .05)
     n_neutrons = df[df["NASA"]].shape[0]
     fig.suptitle(
-        f"Neutron Classification: {experiment_display_name}", 
+        f"Neutron Classification: {experiment_display_name}",
         fontsize=SUPTITLE_FONT_SIZE)
     ax.set_title(f"Neutron count = {n_neutrons}", fontsize=TITLE_FONT_SIZE)
     # ax.set_xlabel("Energy (MeVee)", fontsize=AXIS_FONT_SIZE)
     # ax.set_ylabel("PSD", fontsize=AXIS_FONT_SIZE)
     # ax.tick_params(axis='both', which='major', labelsize=AXIS_TICK_FONT_SIZE)
     # ax.tick_params(axis='both', which='minor', labelsize=AXIS_TICK_FONT_SIZE)
-    event_colors = [mpl.patches.Patch(facecolor=cmap(1.)), # type: ignore
-                    mpl.patches.Patch(facecolor=cmap(0.))] # type: ignore
+    event_colors = [mpl.patches.Patch(facecolor=cmap(1.)),  # type: ignore
+                    mpl.patches.Patch(facecolor=cmap(0.))]  # type: ignore
     ax.legend(event_colors, ["Neutrons", "Gamma"])
 
     return fig, ax
@@ -185,7 +190,7 @@ def plot_classification(
 #     neutron_events_df: pd.DataFrame,
 # ) -> tuple[Figure, Axes]:
 #     neutron_signals_df = generate_neutron_signals(neutron_events_df)
-    
+
 #     series_names = []
 
 #     fig, ax = plt.subplots(figsize=(FIG_DIM_X,FIG_DIM_Y))
@@ -199,11 +204,11 @@ def plot_classification(
 #                        f"PSD {n_psd:.4f}, E {n_eng:.4f} MeVee")
 #         series_names.append(series_name)
 #         ax.plot(0-neutron_signals_df[index]) # type: ignore
-        
+
 #     x_start, x_end = ax.get_xlim()
 #     ax.xaxis.set_ticks(np.arange(x_start, x_end, 10)) # type: ignore
 #     ax.legend(series_names)
-    
+
 #     return fig, ax
 
 # def plot_signal(data: pd.DataFrame, sample_interval: float = 2) -> tuple[Figure, Axes]:
