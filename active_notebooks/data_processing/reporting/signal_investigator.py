@@ -96,12 +96,12 @@ class QueryRange(Generic[C]):
         
         if start is not None:
             if end is not None:
-                return df[(query_col > start) & (query_col <= end)]
+                return df[(query_col >= start) & (query_col < end)]
             else:
-                return df[query_col > start]
+                return df[query_col >= start]
         else:
             if end is not None:
-                return df[query_col <= end]
+                return df[query_col < end]
             else:
                 return df            
 
