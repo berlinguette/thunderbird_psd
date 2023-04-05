@@ -3,6 +3,7 @@ import pandas as pd
 from scipy.optimize import curve_fit
 from data_processing.processing.figure_of_merit import bimodal, FOM
 from multiprocessing.pool import Pool
+from data_processing.dataframe_validation import DataframeColumn, get_df_col
 
 BimodalParams = tuple[float, float, float, float, float, float]
 GaussianParams = tuple[float, float, float]
@@ -168,3 +169,13 @@ def scan_histogram_slices(
     err_df = pd.DataFrame(slice_err, columns=columns)
 
     return df, err_df
+
+
+def get_psd_energy_histogram(
+    df: pd.DataFrame, 
+    resolution: int = 512
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    x = get_df_col(df, DataframeColumn.CALIB_ENERGY)
+    y = get_df_col(df, DataframeColumn.PSD)
+    Z, xe, ye = np.histogram2d(x, y, resolution)
+    return Z, xe, ye
