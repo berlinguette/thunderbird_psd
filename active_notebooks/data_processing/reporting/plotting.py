@@ -67,7 +67,7 @@ def plot_psd_histogram(
     min_energy, max_energy = _get_range_with_margins(
         (energy_col.min(), energy_col.max()))
     min_psd, max_psd = _get_range_with_margins(
-        psd_col.min(), psd_col.max())
+        (psd_col.min(), psd_col.max()))
     
     cmap = mpl.colormaps[colormap_name]  # type: ignore
 
