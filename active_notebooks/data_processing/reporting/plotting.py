@@ -64,14 +64,11 @@ def plot_psd_histogram(
     energy_col = get_df_col(df, DataframeColumn.CALIB_ENERGY)
     psd_col = get_df_col(df, DataframeColumn.PSD)
     
-    # min_energy = energy_col.min() * 0.99
-    min_energy = _get_marginal_value(energy_col.min(), True)
-    # min_energy = min_energy if min_energy >= 0.2 else 0
-    max_energy = _get_marginal_value(energy_col.max(), False)
-    min_psd = _get_marginal_value(psd_col.min(), True)
-    # min_psd = min_psd if min_psd >= 0.2 else 0
-    max_psd = _get_marginal_value(psd_col.max(), False)
-
+    min_energy, max_energy = _get_range_with_margins(
+        (energy_col.min(), energy_col.max()))
+    min_psd, max_psd = _get_range_with_margins(
+        psd_col.min(), psd_col.max())
+    
     cmap = mpl.colormaps[colormap_name]  # type: ignore
 
     _, _, _, image = ax.hist2d(
@@ -417,8 +414,15 @@ def _get_histogram_y_resolution(
     return x_resolution*plot_width//plot_height
 
 
-def _get_marginal_value(value: float, lower_side: bool, margin_multiplier: float = 0.05) -> float:
-    margin_width = margin_multiplier * (10**floor(log10(value)))
-    if lower_side:
-        margin_width = -margin_width
-    return value + margin_width
+def _get_range_with_margins(
+    value: tuple[float, float], 
+    margin_multiplier: float = 0.01
+) -> tuple[float, float]:
+    start = min(value)
+    end = max(value)
+    width = end - start
+    if width == 0:
+        margin = start * margin_multiplier 
+    else:
+        margin = width * margin_multiplier
+    return (start - margin, end + margin)
