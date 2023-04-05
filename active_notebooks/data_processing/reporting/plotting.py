@@ -14,6 +14,7 @@ from matplotlib.figure import Figure
 from scipy import interpolate
 from typing import Callable
 from data_processing.dataframe_validation import DataframeColumn, get_df_col
+from math import floor, log10
 
 
 def plot_tail_vs_total(
@@ -57,12 +58,19 @@ def plot_psd_histogram(
     **kwargs
 ) -> tuple[Figure, Axes]:
     y_resolution = _get_histogram_y_resolution()
-    max_energy = get_df_col(df, DataframeColumn.CALIB_ENERGY).max()
-
+    
     fig, ax = plt.subplots(figsize=(FIG_DIM_X, FIG_DIM_Y))
 
     energy_col = get_df_col(df, DataframeColumn.CALIB_ENERGY)
     psd_col = get_df_col(df, DataframeColumn.PSD)
+    
+    # min_energy = energy_col.min() * 0.99
+    min_energy = _get_marginal_value(energy_col.min(), True)
+    min_energy = min_energy if min_energy >= 0.2 else 0
+    max_energy = _get_marginal_value(energy_col.max(), False)
+    min_psd = _get_marginal_value(psd_col.min(), True)
+    min_psd = min_psd if min_psd >= 0.2 else 0
+    max_psd = _get_marginal_value(psd_col.max(), False)
 
     cmap = mpl.colormaps[colormap_name]  # type: ignore
 
@@ -70,7 +78,8 @@ def plot_psd_histogram(
         energy_col,
         psd_col,
         bins=(HISTOGRAM_RES, y_resolution),
-        range=[[0, max_energy + .05], [0, 0.50]],
+        # range=[[0, max_energy * 1.01], [0, 0.50]],
+        range=[[min_energy, max_energy], [min_psd, max_psd]],
         cmap=cmap,
         **kwargs
     )
@@ -406,3 +415,10 @@ def _get_histogram_y_resolution(
     plot_height: int = FIG_DIM_Y
 ) -> int:
     return x_resolution*plot_width//plot_height
+
+
+def _get_marginal_value(value: float, lower_side: bool, margin_multiplier: float = 0.05) -> float:
+    margin_width = margin_multiplier * (10**floor(log10(value)))
+    if lower_side:
+        margin_width = -margin_width
+    return value + margin_width
