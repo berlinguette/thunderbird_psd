@@ -87,8 +87,8 @@ def plot_psd_histogram(
     if colorbar:
         fig.colorbar(image, ax=ax)
 
-    ax.set_ylim(0, 0.5)
-    ax.set_xlim(0, max_energy + .05)
+    ax.set_ylim(min_psd, max_psd)
+    ax.set_xlim(min_energy, max_energy)
 
     ax.set_xlabel("Energy (MeVee)", fontsize=AXIS_FONT_SIZE)
     ax.set_ylabel("PSD", fontsize=AXIS_FONT_SIZE)
