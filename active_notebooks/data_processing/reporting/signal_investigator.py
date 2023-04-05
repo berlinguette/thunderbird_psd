@@ -96,10 +96,10 @@ class QueryRange(Generic[C]):
         query_elements = []
 
         if self._start is not None:
-            element = f"{self._col.value} >= @start"
+            element = f"'{self._col.value}' >= @start"
             query_elements.append(element)
         if self._end is not None:
-            element = f"{self._col.value} < @end"
+            element = f"'{self._col.value}' < @end"
             query_elements.append(element)
 
         if len(query_elements) == 0:
