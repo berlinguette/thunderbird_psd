@@ -5,6 +5,7 @@ from typing import Any, Generic, Protocol, TypeVar
 
 import matplotlib.pyplot as plt
 import pandas as pd
+from active_notebooks.data_processing.reporting.plotting import plot_bounded_scatter
 from data_processing.dataframe_validation import DataframeColumn, get_df_col
 from data_processing.processing.dataframe_manipulation import \
     generate_neutron_signals
@@ -186,4 +187,16 @@ class SignalInvestigator:
         else:
             options = {}
         return plot_psd_histogram(query_result, colorbar=True, **options)
+    
+    def visualize_scatter(self) -> tuple[Figure, Axes]:
+        query_results = self.perform_query()
         
+        energy_col = get_df_col(query_results, DataframeColumn.CALIB_ENERGY)
+        psd_col = get_df_col(query_results, DataframeColumn.PSD)
+        
+        return plot_bounded_scatter(
+            energy_col,
+            psd_col,
+            "Energy (MeVee)",
+            "PSD"
+        )

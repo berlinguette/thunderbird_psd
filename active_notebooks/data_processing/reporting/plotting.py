@@ -283,22 +283,27 @@ def plot_scatter(
     return fig, ax
 
 
-# def plot_bounded_scatter(
-#     x: list,
-#     y: list,
-#     xlabel: str,
-#     ylabel: str,
-#     xbounds: tuple = None,
-#     ybounds: tuple = None,
-# ) -> tuple[Figure, Axes]:
-#     """Returns a generic scatter plot"""
-#     fig, ax = plot_scatter(x, y)
-#     ax.set_xlabel(xlabel)
-#     ax.set_ylabel(ylabel)
-
-#     ax.set_xlim(xbounds)
-#     ax.set_ylim(ybounds)
-#     return fig, ax
+def plot_bounded_scatter(
+    x: list,
+    y: list,
+    xlabel: str,
+    ylabel: str,
+    xbounds: tuple[float, float] | None = None,
+    ybounds: tuple[float, float] | None = None,
+) -> tuple[Figure, Axes]:
+    """Returns a generic scatter plot"""
+    fig, ax = plot_scatter(x, y)
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    
+    if xbounds is None:
+        xbounds = _get_range_with_margins((min(x), max(x)))
+    if ybounds is None:
+        ybounds = _get_range_with_margins((min(y), max(y)))
+    ax.set_xlim(xbounds)
+    ax.set_ylim(*ybounds)
+    
+    return fig, ax
 
 
 # def plot_classification(
