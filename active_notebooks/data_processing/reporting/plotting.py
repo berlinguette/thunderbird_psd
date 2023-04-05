@@ -66,10 +66,10 @@ def plot_psd_histogram(
     
     # min_energy = energy_col.min() * 0.99
     min_energy = _get_marginal_value(energy_col.min(), True)
-    min_energy = min_energy if min_energy >= 0.2 else 0
+    # min_energy = min_energy if min_energy >= 0.2 else 0
     max_energy = _get_marginal_value(energy_col.max(), False)
     min_psd = _get_marginal_value(psd_col.min(), True)
-    min_psd = min_psd if min_psd >= 0.2 else 0
+    # min_psd = min_psd if min_psd >= 0.2 else 0
     max_psd = _get_marginal_value(psd_col.max(), False)
 
     cmap = mpl.colormaps[colormap_name]  # type: ignore
