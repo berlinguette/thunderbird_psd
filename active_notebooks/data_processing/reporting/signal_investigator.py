@@ -156,6 +156,10 @@ class SignalInvestigator:
 
     def perform_query(self) -> pd.DataFrame:
         return self.query.perform_query(self._neutron_event_df)
+    
+    def count_results(self) -> int:
+        query_result = self.perform_query()
+        return query_result.shape[0]
 
     def visualize_signals(self) -> tuple[Figure, Axes]:
         query_result = self.perform_query()
