@@ -179,7 +179,11 @@ class SignalInvestigator:
 
         return fig, ax
 
-    def visualize_histogram(self) -> tuple[Figure, Axes]:
+    def visualize_histogram(self, log_scale: bool = True) -> tuple[Figure, Axes]:
         query_result = self.perform_query()
-        return plot_psd_histogram(query_result, colorbar=True, norm=LogNorm())
+        if log_scale:
+            options = {'norm': LogNorm()}
+        else:
+            options = {}
+        return plot_psd_histogram(query_result, colorbar=True, **options)
         
