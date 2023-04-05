@@ -5,7 +5,7 @@ from typing import Any, Generic, Protocol, TypeVar
 
 import matplotlib.pyplot as plt
 import pandas as pd
-from data_processing.dataframe_validation import DataframeColumn
+from data_processing.dataframe_validation import DataframeColumn, get_df_col
 from data_processing.processing.dataframe_manipulation import \
     generate_neutron_signals
 from data_processing.reporting.plot_configs import *
@@ -92,23 +92,35 @@ class QueryRange(Generic[C]):
     def perform_range_query(self, df: pd.DataFrame) -> pd.DataFrame:
         start = self._start
         end = self._end
-
-        query_elements = []
-
-        if self._start is not None:
-            element = f"'{self._col.value}' >= @start"
-            query_elements.append(element)
-        if self._end is not None:
-            element = f"'{self._col.value}' < @end"
-            query_elements.append(element)
-
-        if len(query_elements) == 0:
-            return df
-        elif len(query_elements) == 1:
-            query = query_elements[0]
+        query_col = get_df_col(df, self._col)
+        
+        if start is not None:
+            if end is not None:
+                return df[(query_col > start) & (query_col <= end)]
+            else:
+                return df[query_col > start]
         else:
-            query = ' & '.join(query_elements)
-        return df.query(query)
+            if end is not None:
+                return df[query_col <= end]
+            else:
+                return df            
+
+        # query_elements = []
+
+        # if self._start is not None:
+        #     element = f"'{self._col.value}' >= @start"
+        #     query_elements.append(element)
+        # if self._end is not None:
+        #     element = f"'{self._col.value}' < @end"
+        #     query_elements.append(element)
+
+        # if len(query_elements) == 0:
+        #     return df
+        # elif len(query_elements) == 1:
+        #     query = query_elements[0]
+        # else:
+        #     query = ' & '.join(query_elements)
+        # return df.query(query)
 
 
 @dataclass
