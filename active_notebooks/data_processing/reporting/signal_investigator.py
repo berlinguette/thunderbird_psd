@@ -9,8 +9,10 @@ from data_processing.dataframe_validation import DataframeColumn
 from data_processing.processing.dataframe_manipulation import \
     generate_neutron_signals
 from data_processing.reporting.plot_configs import *
+from data_processing.reporting.plotting import plot_psd_histogram
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
+from matplotlib.colors import LogNorm
 from numpy import arange
 
 C = TypeVar("C", bound="Comparable")
@@ -136,7 +138,7 @@ class SignalInvestigator:
     def perform_query(self) -> pd.DataFrame:
         return self.query.perform_query(self._neutron_event_df)
 
-    def visualize_query(self) -> tuple[Figure, Axes]:
+    def visualize_signals(self) -> tuple[Figure, Axes]:
         query_result = self.perform_query()
         series_names = []
 
@@ -158,3 +160,8 @@ class SignalInvestigator:
         ax.legend(series_names)
 
         return fig, ax
+
+    def visualize_histogram(self) -> tuple[Figure, Axes]:
+        query_result = self.perform_query()
+        return plot_psd_histogram(query_result, colorbar=True, norm=LogNorm())
+        
