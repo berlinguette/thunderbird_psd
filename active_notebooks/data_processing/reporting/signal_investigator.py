@@ -89,6 +89,10 @@ class QueryRange(Generic[C]):
     @property
     def column(self) -> str:
         return self._col.value
+    
+    def reset_range(self):
+        self._start = None
+        self._end = None
 
     def perform_range_query(self, df: pd.DataFrame) -> pd.DataFrame:
         query_col = get_df_col(df, self._col)
@@ -144,6 +148,12 @@ class Query:
     time: QueryRange = field(
         default_factory=lambda: DatetimeQueryRange(
             DataframeColumn.EVENT_TIME))
+    
+    def reset_query(self):
+        query_fields = fields(self)
+        for query_field in query_fields:
+            query_range: QueryRange = getattr(self, query_field.name)
+            query_range.reset_range()
 
     def perform_query(self, df: pd.DataFrame) -> pd.DataFrame:
         query_result = df
