@@ -55,6 +55,7 @@ def plot_psd_histogram(
     df: pd.DataFrame,
     colormap_name: str = 'gnuplot',
     colorbar: bool = False,
+    energy_start_zero: bool = False,
     **kwargs
 ) -> tuple[Figure, Axes]:
     y_resolution = _get_histogram_y_resolution()
@@ -68,6 +69,8 @@ def plot_psd_histogram(
         (energy_col.min(), energy_col.max()))
     min_psd, max_psd = _get_range_with_margins(
         (psd_col.min(), psd_col.max()))
+    if energy_start_zero:
+        min_energy = 0
     
     cmap = mpl.colormaps[colormap_name]  # type: ignore
 
