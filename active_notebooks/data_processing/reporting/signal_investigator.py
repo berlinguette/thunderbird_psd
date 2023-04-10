@@ -198,7 +198,7 @@ class Query:
         return Query(psd=self.psd.reset_range(),
                      energy=self.energy.reset_range(),
                      time=self.time.reset_range())
-        
+
     def perform_query(self, df: pd.DataFrame) -> pd.DataFrame:
         query_result = df
         query_fields = fields(self)
@@ -221,7 +221,9 @@ class SignalInvestigator:
         query_result = self.perform_query()
         return query_result.shape[0]
 
-    def visualize_signals(self) -> tuple[Figure, Axes]:
+    def visualize_signals(
+        self, max_legend_count: int = 10
+    ) -> tuple[Figure, Axes]:
         query_result = self.perform_query()
         series_names = []
 
@@ -240,7 +242,8 @@ class SignalInvestigator:
 
         x_start, x_end = ax.get_xlim()
         ax.xaxis.set_ticks(arange(x_start, x_end, 10))  # type: ignore
-        ax.legend(series_names)
+        if len(series_names) <= max_legend_count:
+            ax.legend(series_names)
 
         return fig, ax
 
@@ -272,7 +275,7 @@ class SignalInvestigator:
             s=SCATTER_MARKER_SIZE_LARGE,
             # marker=?
         )
-    
+
     @lru_cache
     def _query_helper(self, query: Query) -> pd.DataFrame:
         return query.perform_query(self._neutron_event_df)
