@@ -213,6 +213,9 @@ class SignalInvestigator:
         self._neutron_event_df = neutron_events_df
         self._neutron_signals_df = generate_neutron_signals(neutron_events_df)
         self.query = Query()
+        
+    def update_query(self, **kwargs):
+        self.query = self.query.update_query(**kwargs)
 
     def perform_query(self) -> pd.DataFrame:
         return self._query_helper(self.query)
