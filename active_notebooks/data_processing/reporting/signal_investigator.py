@@ -260,8 +260,8 @@ class SignalInvestigator:
 
         return fig, ax
 
-    def visualize_psd(self) -> tuple[Figure, Axes]:
-        if self.count_results() >= 100:
+    def visualize_psd(self, scatter_max: int = 1000) -> tuple[Figure, Axes]:
+        if self.count_results() >= scatter_max:
             return self.visualize_histogram()
         else:
             return self.visualize_scatter()
