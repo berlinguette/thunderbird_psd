@@ -12,24 +12,33 @@ from data_processing.reporting.plot_configs import *
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 from scipy import interpolate
-from typing import Callable
+from typing import Callable, Iterable
 from data_processing.dataframe_validation import DataframeColumn, get_df_col
 from math import floor, log10
 
 
 def plot_tail_vs_total(
     df: pd.DataFrame,
-    experiment_display_name: str
+    experiment_display_name: str,
+    **kwargs
 ) -> tuple[Figure, Axes]:
-    y_resolution = _get_histogram_y_resolution()
+    figsize = kwargs.get('figsize', (FIG_DIM_X, FIG_DIM_Y))
+    x_resolution = kwargs.get('x_resolution', HISTOGRAM_RES)
+    cmap = kwargs.get('cmap',
+                      mpl.colormaps['gnuplot'])  # type: ignore
+
+    y_resolution = _get_histogram_y_resolution(
+        x_resolution=x_resolution,
+        plot_width=figsize[0],
+        plot_height=figsize[1]
+    )
     max_energy = get_df_col(df, DataframeColumn.CALIB_ENERGY).max()
     dataset_size = df.shape[0]
 
-    fig, ax = plt.subplots(figsize=(FIG_DIM_X, FIG_DIM_Y))
-
-    cmap = mpl.colormaps['gnuplot']  # type: ignore
     energy_col = get_df_col(df, DataframeColumn.ENERGY)
     short_col = get_df_col(df, DataframeColumn.ENERGYSHORT)
+
+    fig, ax = plt.subplots(figsize=figsize)
 
     ax.hist2d(
         energy_col,
@@ -58,20 +67,26 @@ def plot_psd_histogram(
     energy_start_zero: bool = False,
     **kwargs
 ) -> tuple[Figure, Axes]:
-    y_resolution = _get_histogram_y_resolution()
-    
-    fig, ax = plt.subplots(figsize=(FIG_DIM_X, FIG_DIM_Y))
+    figsize = kwargs.get('figsize', (FIG_DIM_X, FIG_DIM_Y))
+    x_resolution = kwargs.get('x_resolution', HISTOGRAM_RES)
+    y_resolution = _get_histogram_y_resolution(
+        x_resolution=x_resolution,
+        plot_width=figsize[0],
+        plot_height=figsize[1]
+    )
+
+    fig, ax = plt.subplots(figsize=figsize)
 
     energy_col = get_df_col(df, DataframeColumn.CALIB_ENERGY)
     psd_col = get_df_col(df, DataframeColumn.PSD)
-    
+
     min_energy, max_energy = _get_range_with_margins(
         (energy_col.min(), energy_col.max()))
     min_psd, max_psd = _get_range_with_margins(
         (psd_col.min(), psd_col.max()))
     if energy_start_zero:
         min_energy = 0
-    
+
     cmap = mpl.colormaps[colormap_name]  # type: ignore
 
     _, _, _, image = ax.hist2d(
@@ -83,7 +98,7 @@ def plot_psd_histogram(
         cmap=cmap,
         **kwargs
     )
-    
+
     if colorbar:
         fig.colorbar(image, ax=ax)
 
@@ -124,10 +139,9 @@ def plot_classification(
     neutron_lb_fit: Callable,
     neutron_ub_fit: Callable,
     experiment_display_name: str,
-    lower_energy_bound: float = DEFAULT_LOWER_ENERGY_BOUND
+    count_limit: int = 5,
+    **kwargs
 ) -> tuple[Figure, Axes]:
-    count_limit = 5
-
     # y_resolution = _get_histogram_y_resolution()
     max_energy = get_df_col(df, DataframeColumn.CALIB_ENERGY).max()
 
@@ -156,7 +170,9 @@ def plot_classification(
         colormap_name='RdBu_r',
         weights=g_vs_n,
         vmin=-count_limit,
-        vmax=count_limit
+        vmax=count_limit,
+        energy_start_zero=True,
+        **kwargs
     )
 
     # energy_space = np.linspace(0, max_energy + 0.5, 200)
@@ -275,37 +291,43 @@ def plot_fom(
 
 
 def plot_scatter(
-    x: list,
-    y: list,
+    x: list | pd.Series,
+    y: list | pd.Series,
+    **kwargs
 ) -> tuple[Figure, Axes]:
-    fig, ax = plt.subplots(figsize=(FIG_DIM_X, FIG_DIM_X))
+    figsize = kwargs.get('figsize', (FIG_DIM_X, FIG_DIM_Y))
+    marker = kwargs.get('marker', SCATTER_MARKER_DOT)
+    marker_size = kwargs.get('s', SCATTER_MARKER_SIZE_SMALL)
+
+    fig, ax = plt.subplots(figsize=figsize)
     ax.scatter(x, y,
-               marker=SCATTER_MARKER_DOT,  # type: ignore
-               s=SCATTER_MARKER_SIZE_SMALL)
+               marker=marker,  # type: ignore
+               s=marker_size)
     fig.tight_layout()
     return fig, ax
 
 
 def plot_bounded_scatter(
-    x: list,
-    y: list,
+    x: list | pd.Series,
+    y: list | pd.Series,
     xlabel: str,
     ylabel: str,
     xbounds: tuple[float, float] | None = None,
     ybounds: tuple[float, float] | None = None,
+    **kwargs
 ) -> tuple[Figure, Axes]:
     """Returns a generic scatter plot"""
-    fig, ax = plot_scatter(x, y)
+    fig, ax = plot_scatter(x, y, **kwargs)
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
-    
+
     if xbounds is None:
         xbounds = _get_range_with_margins((min(x), max(x)))
     if ybounds is None:
         ybounds = _get_range_with_margins((min(y), max(y)))
     ax.set_xlim(xbounds)
     ax.set_ylim(*ybounds)
-    
+
     return fig, ax
 
 
@@ -423,14 +445,14 @@ def _get_histogram_y_resolution(
 
 
 def _get_range_with_margins(
-    value: tuple[float, float], 
+    value: tuple[float, float],
     margin_multiplier: float = 0.01
 ) -> tuple[float, float]:
     start = min(value)
     end = max(value)
     width = end - start
     if width == 0:
-        margin = start * margin_multiplier 
+        margin = start * margin_multiplier
     else:
         margin = width * margin_multiplier
     return (start - margin, end + margin)
