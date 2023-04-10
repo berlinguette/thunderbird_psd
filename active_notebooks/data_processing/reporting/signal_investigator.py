@@ -1,7 +1,9 @@
 from abc import abstractmethod
 from dataclasses import dataclass, field, fields
 from datetime import datetime
+from functools import lru_cache
 from typing import Any, Generic, Protocol, TypeVar
+from typing_extensions import Self
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -16,17 +18,24 @@ from matplotlib.figure import Figure
 from matplotlib.colors import LogNorm
 from numpy import arange
 
-C = TypeVar("C", bound="Comparable")
+QueryFloatInput = tuple[float | None, float | None]
+QueryDatetimeInput = tuple[datetime | None, datetime | None]
+
+C = TypeVar("C", bound="QueryBoundary")
 
 
-class Comparable(Protocol):
+class QueryBoundary(Protocol):
+    @abstractmethod
+    def __hash__(self) -> int:
+        ...
+
     @abstractmethod
     def __eq__(self, __value: Any) -> bool:
-        pass
+        ...
 
     @abstractmethod
     def __lt__(self: C, __value: C) -> bool:
-        pass
+        ...
 
     def __gt__(self: C, __value: C) -> bool:
         return (not self < __value) and self != __value
@@ -39,89 +48,114 @@ class Comparable(Protocol):
 
 
 class QueryRange(Generic[C]):
-    def __init__(self, col: DataframeColumn) -> None:
-        self._start: C | None = None
-        self._end: C | None = None
+    def __init__(
+        self,
+        col: DataframeColumn,
+        start: C | None = None,
+        end: C | None = None
+    ) -> None:
+        self._start, self._end = self._reorder(start, end)
         self._col = col
 
     @property
     def start(self) -> C | None:
         return self._start
 
-    @start.setter
-    def start(self, value: C | None):
-        if (value is not None and
-            self._start is not None and
-            self._end is not None and
-                value > self._end):
-            self._start, self._end = self._end, value
-        else:
-            self._start = value
+    def set_start(self, value: C | None) -> Self:
+        return QueryRange[C](self._col, start=value, end=self._end)
+
+    # @start.setter
+    # def start(self, value: C | None):
+    #     if (value is not None and
+    #         self._start is not None and
+    #         self._end is not None and
+    #             value > self._end):
+    #         self._start, self._end = self._end, value
+    #     else:
+    #         self._start = value
 
     @property
     def end(self) -> C | None:
         return self._end
 
-    @end.setter
-    def end(self, value: C | None):
-        if (value is not None and
-            self._start is not None and
-            self._end is not None and
-                value < self._start):
-            self._start, self._end = value, self._start
-        else:
-            self._end = value
+    def set_end(self, value: C | None) -> Self:
+        return QueryRange[C](self._col, start=self._start, end=value)
+
+    # @end.setter
+    # def end(self, value: C | None):
+    #     if (value is not None and
+    #         self._start is not None and
+    #         self._end is not None and
+    #             value < self._start):
+    #         self._start, self._end = value, self._start
+    #     else:
+    #         self._end = value
 
     @property
     def range(self) -> tuple[C | None, C | None]:
         return self._start, self._end
 
-    @range.setter
-    def range(self, value: tuple[C | None, C | None]):
+    def set_range(self, value: tuple[C | None, C | None]) -> Self:
         start, end = value
-        if start is not None and end is not None and start > end:
-            self._start = end
-            self._end = start
-        else:
-            self._start = start
-            self._end = end
+        return QueryRange[C](self._col, start=start, end=end)
+
+    # @range.setter
+    # def range(self, value: tuple[C | None, C | None]):
+    #     start, end = value
+    #     if start is not None and end is not None and start > end:
+    #         self._start = end
+    #         self._end = start
+    #     else:
+    #         self._start = start
+    #         self._end = end
 
     @property
     def column(self) -> str:
         return self._col.value
-    
-    def reset_range(self):
-        self._start = None
-        self._end = None
+
+    def reset_range(self) -> Self:
+        return QueryRange[C](self._col)
 
     def perform_range_query(self, df: pd.DataFrame) -> pd.DataFrame:
         query_col = get_df_col(df, self._col)
-        
+
         if self._start is not None:
             if self._end is not None:
-                    if self._start == self._end:
-                        return df[query_col == self._start]
-                    else:
-                        return df[
-                            (query_col >= self._start) & 
-                            (query_col < self._end)
-                        ]
+                if self._start == self._end:
+                    return df[query_col == self._start]
+                else:
+                    return df[
+                        (query_col >= self._start) &
+                        (query_col < self._end)
+                    ]
             else:
                 return df[query_col >= self._start]
         else:
             if self._end is not None:
                 return df[query_col < self._end]
             else:
-                return df            
-        
+                return df
+
+    @staticmethod
+    def _reorder(x: C | None, y: C | None) -> tuple[C | None, C | None]:
+        if x is None or y is None:
+            return x, y
+        else:
+            lo = x if x <= y else y
+            hi = y if x <= y else x
+            return lo, hi
+
+    def __hash__(self) -> int:
+        return hash((self._col, self._start, self._end))
+
 
 class DatetimeQueryRange(QueryRange[datetime]):
     def perform_range_query(self, df: pd.DataFrame) -> pd.DataFrame:
         query_col = get_df_col(df, self._col)
-        
+
         start = self._start if self._start is None else self._start.isoformat()
         end = self._end if self._end is None else self._end.isoformat()
-        
+
         if start is not None:
             if end is not None:
                 if start == end:
@@ -137,7 +171,7 @@ class DatetimeQueryRange(QueryRange[datetime]):
                 return df
 
 
-@dataclass
+@dataclass(frozen=True)
 class Query:
     psd: QueryRange = field(
         default_factory=lambda: QueryRange[float](
@@ -148,13 +182,23 @@ class Query:
     time: QueryRange = field(
         default_factory=lambda: DatetimeQueryRange(
             DataframeColumn.EVENT_TIME))
-    
-    def reset_query(self):
-        query_fields = fields(self)
-        for query_field in query_fields:
-            query_range: QueryRange = getattr(self, query_field.name)
-            query_range.reset_range()
 
+    def update_query(self,
+                     psd: QueryFloatInput | None,
+                     energy: QueryFloatInput | None,
+                     time: QueryDatetimeInput | None):
+        update_params = {
+            'psd': psd if psd is not None else self.psd,
+            'energy': energy if energy is not None else self.energy,
+            'time': time if time is not None else self.time
+        }
+        return Query(**update_params)
+
+    def reset_query(self):
+        return Query(psd=self.psd.reset_range(),
+                     energy=self.energy.reset_range(),
+                     time=self.time.reset_range())
+        
     def perform_query(self, df: pd.DataFrame) -> pd.DataFrame:
         query_result = df
         query_fields = fields(self)
@@ -171,8 +215,8 @@ class SignalInvestigator:
         self.query = Query()
 
     def perform_query(self) -> pd.DataFrame:
-        return self.query.perform_query(self._neutron_event_df)
-    
+        return self._query_helper(self.query)
+
     def count_results(self) -> int:
         query_result = self.perform_query()
         return query_result.shape[0]
@@ -200,6 +244,12 @@ class SignalInvestigator:
 
         return fig, ax
 
+    def visualize_psd(self) -> tuple[Figure, Axes]:
+        if self.count_results() >= 100:
+            return self.visualize_histogram()
+        else:
+            return self.visualize_scatter()
+
     def visualize_histogram(self, log_scale: bool = True) -> tuple[Figure, Axes]:
         query_result = self.perform_query()
         if log_scale:
@@ -207,16 +257,22 @@ class SignalInvestigator:
         else:
             options = {}
         return plot_psd_histogram(query_result, colorbar=True, **options)
-    
+
     def visualize_scatter(self) -> tuple[Figure, Axes]:
         query_results = self.perform_query()
-        
+
         energy_col = get_df_col(query_results, DataframeColumn.CALIB_ENERGY)
         psd_col = get_df_col(query_results, DataframeColumn.PSD)
-        
+
         return plot_bounded_scatter(
             energy_col,
             psd_col,
             "Energy (MeVee)",
-            "PSD"
+            "PSD",
+            s=SCATTER_MARKER_SIZE_LARGE,
+            # marker=?
         )
+    
+    @lru_cache
+    def _query_helper(self, query: Query) -> pd.DataFrame:
+        return query.perform_query(self._neutron_event_df)
