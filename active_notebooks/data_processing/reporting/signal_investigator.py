@@ -22,6 +22,8 @@ QueryFloatInput = tuple[float | None, float | None]
 QueryDatetimeInput = tuple[datetime | None, datetime | None]
 
 C = TypeVar("C", bound="QueryBoundary")
+QueryEdge = C | None
+QueryInput = tuple[QueryEdge, QueryEdge]
 
 
 class QueryBoundary(Protocol):
@@ -51,17 +53,17 @@ class QueryRange(Generic[C]):
     def __init__(
         self,
         col: DataframeColumn,
-        start: C | None = None,
-        end: C | None = None
+        start: QueryEdge = None,
+        end: QueryEdge = None
     ) -> None:
         self._start, self._end = self._reorder(start, end)
         self._col = col
 
     @property
-    def start(self) -> C | None:
+    def start(self) -> QueryEdge:
         return self._start
 
-    def set_start(self, value: C | None) -> Self:
+    def set_start(self, value: QueryEdge) -> Self:
         return QueryRange[C](self._col, start=value, end=self._end)
 
     # @start.setter
@@ -75,10 +77,10 @@ class QueryRange(Generic[C]):
     #         self._start = value
 
     @property
-    def end(self) -> C | None:
+    def end(self) -> QueryEdge:
         return self._end
 
-    def set_end(self, value: C | None) -> Self:
+    def set_end(self, value: QueryEdge) -> Self:
         return QueryRange[C](self._col, start=self._start, end=value)
 
     # @end.setter
@@ -92,10 +94,10 @@ class QueryRange(Generic[C]):
     #         self._end = value
 
     @property
-    def range(self) -> tuple[C | None, C | None]:
+    def range(self) -> QueryInput:
         return self._start, self._end
 
-    def set_range(self, value: tuple[C | None, C | None]) -> Self:
+    def set_range(self, value: QueryInput) -> Self:
         start, end = value
         return QueryRange[C](self._col, start=start, end=end)
 
@@ -187,10 +189,18 @@ class Query:
                      psd: QueryFloatInput | None = None,
                      energy: QueryFloatInput | None = None,
                      time: QueryDatetimeInput | None = None):
+        
+        def update_query_range(query_range: QueryRange[C], 
+                               update_value: QueryInput | None) -> QueryRange[C]:
+            if update_value is None:
+                return query_range
+            else:
+                return query_range.set_range(update_value)
+            
         update_params = {
-            'psd': psd if psd is not None else self.psd,
-            'energy': energy if energy is not None else self.energy,
-            'time': time if time is not None else self.time
+            'psd': update_query_range(self.psd, psd),
+            'energy': update_query_range(self.energy, energy),
+            'time': update_query_range(self.time, time)
         }
         return Query(**update_params)
 
