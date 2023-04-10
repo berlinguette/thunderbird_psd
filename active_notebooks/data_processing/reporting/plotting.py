@@ -152,7 +152,7 @@ def plot_classification(
     # psd_col = get_df_col(df, DataframeColumn.PSD)
 
     g_vs_n = class_col.map({True: 1, False: -1})
-    # cmap = mpl.colormaps['RdBu_r']  # type: ignore
+    cmap = mpl.colormaps['RdBu_r']  # type: ignore
 
     # ax.hist2d(
     #     energy_col,
