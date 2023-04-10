@@ -184,9 +184,9 @@ class Query:
             DataframeColumn.EVENT_TIME))
 
     def update_query(self,
-                     psd: QueryFloatInput | None,
-                     energy: QueryFloatInput | None,
-                     time: QueryDatetimeInput | None):
+                     psd: QueryFloatInput | None = None,
+                     energy: QueryFloatInput | None = None,
+                     time: QueryDatetimeInput | None = None):
         update_params = {
             'psd': psd if psd is not None else self.psd,
             'energy': energy if energy is not None else self.energy,
