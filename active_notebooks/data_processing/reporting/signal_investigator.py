@@ -251,10 +251,10 @@ class SignalInvestigator:
             series_name = (f"Time {n_time} +{n_ps_remain}ps, ",
                            f"PSD {n_psd:.4f}, E {n_eng:.4f} MeVee")
             series_names.append(series_name)
-            ax.plot(0-self._neutron_signals_df[index])  # type: ignore
+            ax.plot(range(1,201), 0-self._neutron_signals_df[index])  # type: ignore
 
         x_start, x_end = ax.get_xlim()
-        ax.xaxis.set_ticks(arange(x_start, x_end, 10))  # type: ignore
+        ax.xaxis.set_ticks(arange(x_start, x_end, 25))  # type: ignore
         if len(series_names) <= max_legend_count:
             ax.legend(series_names)
 
