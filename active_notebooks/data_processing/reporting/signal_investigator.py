@@ -251,10 +251,17 @@ class SignalInvestigator:
             series_name = (f"Time {n_time} +{n_ps_remain}ps, ",
                            f"PSD {n_psd:.4f}, E {n_eng:.4f} MeVee")
             series_names.append(series_name)
-            ax.plot(range(1,201), 0-self._neutron_signals_df[index])  # type: ignore
+            ax.plot(range(1,201), (0-self._neutron_signals_df[index])/1000)  # type: ignore
 
         x_start, x_end = ax.get_xlim()
-        ax.xaxis.set_ticks(arange(x_start, x_end, 25))  # type: ignore
+        ax.set_xticks(arange(x_start, x_end + 1, 25))  # type: ignore
+        ax.set_xlabel("Sample index", fontsize=AXIS_FONT_SIZE)
+        ax.set_ylabel("Sample amplitude (ADC channels x 1000, inv.)",
+                      fontsize=AXIS_FONT_SIZE)
+        ax.tick_params(axis='both', which='major', 
+                       labelsize=AXIS_TICK_FONT_SIZE)
+        
+        
         if len(series_names) <= max_legend_count:
             ax.legend(series_names)
 
