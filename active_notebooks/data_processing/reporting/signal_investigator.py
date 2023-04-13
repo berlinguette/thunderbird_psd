@@ -254,9 +254,10 @@ class SignalInvestigator:
             series_names.append(series_name)
             
             amplitudes = self._neutron_signals_df[index]
-            if current_count := len(amplitudes) > samples_count:
+            current_count = len(amplitudes)
+            if current_count > samples_count:
                 samples_count = current_count
-            ax.plot(range(1,current_count+1), 
+            ax.plot(list(range(1,current_count+1)), 
                     (0-amplitudes)/1000)  # type: ignore
 
         ax.set_xticks(arange(0, samples_count + 1, 25))  # type: ignore
