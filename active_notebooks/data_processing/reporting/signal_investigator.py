@@ -242,6 +242,7 @@ class SignalInvestigator:
 
         fig, ax = plt.subplots(figsize=(FIG_DIM_X, FIG_DIM_Y))
 
+        samples_count = 0
         for index, row in query_result.iterrows():
             n_psd = row[DataframeColumn.PSD.value]
             n_eng = row[DataframeColumn.CALIB_ENERGY.value]
@@ -251,10 +252,14 @@ class SignalInvestigator:
             series_name = (f"Time {n_time} +{n_ps_remain}ps, ",
                            f"PSD {n_psd:.4f}, E {n_eng:.4f} MeVee")
             series_names.append(series_name)
-            ax.plot(range(1,201), (0-self._neutron_signals_df[index])/1000)  # type: ignore
+            
+            amplitudes = self._neutron_signals_df[index]
+            if current_count := len(amplitudes) > samples_count:
+                samples_count = current_count
+            ax.plot(range(1,current_count+1), 
+                    (0-amplitudes)/1000)  # type: ignore
 
-        x_start, x_end = ax.get_xlim()
-        ax.set_xticks(arange(x_start, x_end + 1, 25))  # type: ignore
+        ax.set_xticks(arange(0, samples_count + 1, 25))  # type: ignore
         ax.set_xlabel("Sample index", fontsize=AXIS_FONT_SIZE)
         ax.set_ylabel("Sample amplitude (ADC channels x 1000, inv.)",
                       fontsize=AXIS_FONT_SIZE)
