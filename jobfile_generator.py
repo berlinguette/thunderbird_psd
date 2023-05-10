@@ -1,55 +1,68 @@
-from pathlib import Path
-import click
 import re
+from pathlib import Path
+
+import click
+
 from jobfile_generator.pbs_credentials import PbsCreds
 
 pbs_creds = PbsCreds()  # type: ignore VSCode, .env will populate params
 
+
 @click.command()
 def generate_jobfile():
     walltime_valid = False
-    walltime_str = '02:00:00'
+    walltime_str = "02:00:00"
     while not walltime_valid:
-        walltime = click.prompt("How much processing time do you need (as '?h?m')", default='2h', prompt_suffix='?')
-        walltime = walltime.lower().replace(' ', '')
-        
+        walltime = click.prompt(
+            "How much processing time do you need (as '?h?m')",
+            default="2h",
+            prompt_suffix="?",
+        )
+        walltime = walltime.lower().replace(" ", "")
+
         try:
-            wall_hours = _parse_walltime(walltime, r'(\d+)h', 'Hours')
+            wall_hours = _parse_walltime(walltime, r"(\d+)h", "Hours")
         except (ValueError, IndexError):
             continue
-        
+
         try:
-            wall_minutes = _parse_walltime(walltime, r'(\d+)m', 'Minutes')
+            wall_minutes = _parse_walltime(walltime, r"(\d+)m", "Minutes")
         except (ValueError, IndexError):
             continue
-        
+
         if wall_hours == 0 and wall_minutes == 0:
             click.echo("Please enter your time in the correct format ('?h?m').")
             continue
-        
+
         walltime_str = f"{wall_hours:02}:{wall_minutes:02}:00"
         walltime_valid = True
-    
-    cpus = click.prompt("How many CPUs do you want", default=8, prompt_suffix='?')
-    memory = click.prompt("How much memory do you want (in GB)", default=64, prompt_suffix='?')
-    notify = click.confirm("Do you want conversion status notifications by email", default=True, prompt_suffix='?')
+
+    cpus = click.prompt("How many CPUs do you want", default=8, prompt_suffix="?")
+    memory = click.prompt(
+        "How much memory do you want (in GB)", default=64, prompt_suffix="?"
+    )
+    notify = click.confirm(
+        "Do you want conversion status notifications by email",
+        default=True,
+        prompt_suffix="?",
+    )
     if notify:
-        email = click.prompt("What email address should we use", prompt_suffix='?')
+        email = click.prompt("What email address should we use", prompt_suffix="?")
     else:
         email = None
-    
+
     pbs_file_lines = _generate_file_lines(walltime_str, cpus, memory, notify, email)
     # This needs to be run from repo root to work properly
-    jobfile_path = Path(__file__).parent / 'thunderbird_psd.pbs'
-    with open(jobfile_path, 'w') as jobfile:
+    jobfile_path = Path(__file__).parent / "thunderbird_psd.pbs"
+    with open(jobfile_path, "w") as jobfile:
         jobfile.writelines(pbs_file_lines)
-    
+
     click.echo(f"Jobfile created at {jobfile_path}")
 
 
 def _parse_walltime(walltime: str, regex_string: str, time_section: str):
     time_section = time_section.capitalize()
-    
+
     match = re.search(regex_string, walltime)
     if match:
         try:
@@ -59,11 +72,13 @@ def _parse_walltime(walltime: str, regex_string: str, time_section: str):
             raise
     else:
         walltime_section = 0
-        
+
     return walltime_section
 
 
-def _generate_file_lines(walltime_str: str, cpus: int, memory: int, notify: bool, email: str | None = None):
+def _generate_file_lines(
+    walltime_str: str, cpus: int, memory: int, notify: bool, email: str | None = None
+):
     if notify and email is not None:
         notify_line = "#PBS -m abe"
         email_line = f"#PBS -M {email}"
@@ -71,7 +86,7 @@ def _generate_file_lines(walltime_str: str, cpus: int, memory: int, notify: bool
         notify_line = None
         email_line = None
     alloc_code = pbs_creds.alloc_code
-    
+
     pbs_file_lines: list[str | None] = [
         "#!/bin/bash",
         "",
@@ -131,6 +146,7 @@ def _generate_file_lines(walltime_str: str, cpus: int, memory: int, notify: bool
         "jupyter notebook --no-browser --port=${PORT} --ip=0.0.0.0 --notebook-dir=$PBS_O_WORKDIR,",
     ]
     return [f"{line}\n" for line in pbs_file_lines if line is not None]
+
 
 if __name__ == "__main__":
     generate_jobfile()
