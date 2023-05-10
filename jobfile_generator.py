@@ -1,10 +1,9 @@
+from pathlib import Path
 import click
 import re
-from root_path import ROOT_PATH
 from jobfile_generator.pbs_credentials import PbsCreds
 
 pbs_creds = PbsCreds()  # type: ignore VSCode, .env will populate params
-
 
 @click.command()
 def generate_jobfile():
@@ -15,12 +14,12 @@ def generate_jobfile():
         walltime = walltime.lower().replace(' ', '')
         
         try:
-            wall_hours = _parse_walltime(walltime, r'(\d.)h', 'Hours')
+            wall_hours = _parse_walltime(walltime, r'(\d+)h', 'Hours')
         except (ValueError, IndexError):
             continue
         
         try:
-            wall_minutes = _parse_walltime(walltime, r'(\d.)m', 'Minutes')
+            wall_minutes = _parse_walltime(walltime, r'(\d+)m', 'Minutes')
         except (ValueError, IndexError):
             continue
         
@@ -40,7 +39,8 @@ def generate_jobfile():
         email = None
     
     pbs_file_lines = _generate_file_lines(walltime_str, cpus, memory, notify, email)
-    jobfile_path = ROOT_PATH.parent / 'thunderbird_psd.pbs'
+    # This needs to be run from repo root to work properly
+    jobfile_path = Path(__file__).parent / 'thunderbird_psd.pbs'
     with open(jobfile_path, 'w') as jobfile:
         jobfile.writelines(pbs_file_lines)
     
