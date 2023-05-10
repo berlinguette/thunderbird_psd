@@ -69,6 +69,7 @@ __pypackages__/
 
 
 # Environments
+.env
 .venv
 venv/
 .python-version
