@@ -36,12 +36,18 @@ def generate_jobfile():
 
 
 def get_formatted_walltime() -> str:
+    default_hours = 2
+    default_minutes = 0
+    walltime = f"{default_hours:02}:{default_minutes:02}:00"
+    prompt_default_hours = f"{default_hours}h" if default_hours > 0 else ""
+    prompt_default_minutes = f"{default_minutes}m" if default_minutes > 0 else ""
+    prompt_default = prompt_default_hours + prompt_default_minutes
+    
     valid = False
-    walltime = "02:00:00"
     while not valid:
         prompt_result = click.prompt(
             "How much processing time do you need (as '?h?m')",
-            default="2h",
+            default=prompt_default,
             prompt_suffix="?",
         )
         prompt_result = prompt_result.lower().replace(" ", "")
