@@ -10,32 +10,7 @@ pbs_creds = PbsCreds()  # type: ignore VSCode, .env will populate params
 
 @click.command()
 def generate_jobfile():
-    walltime_valid = False
-    walltime_str = "02:00:00"
-    while not walltime_valid:
-        walltime = click.prompt(
-            "How much processing time do you need (as '?h?m')",
-            default="2h",
-            prompt_suffix="?",
-        )
-        walltime = walltime.lower().replace(" ", "")
-
-        try:
-            wall_hours = _parse_walltime(walltime, r"(\d+)h", "Hours")
-        except (ValueError, IndexError):
-            continue
-
-        try:
-            wall_minutes = _parse_walltime(walltime, r"(\d+)m", "Minutes")
-        except (ValueError, IndexError):
-            continue
-
-        if wall_hours == 0 and wall_minutes == 0:
-            click.echo("Please enter your time in the correct format ('?h?m').")
-            continue
-
-        walltime_str = f"{wall_hours:02}:{wall_minutes:02}:00"
-        walltime_valid = True
+    walltime = get_formatted_walltime()
 
     cpus = click.prompt("How many CPUs do you want", default=8, prompt_suffix="?")
     memory = click.prompt(
@@ -51,13 +26,43 @@ def generate_jobfile():
     else:
         email = None
 
-    pbs_file_lines = _generate_file_lines(walltime_str, cpus, memory, notify, email)
+    pbs_file_lines = _generate_file_lines(walltime, cpus, memory, notify, email)
     # This needs to be run from repo root to work properly
     jobfile_path = Path(__file__).parent / "thunderbird_psd.pbs"
     with open(jobfile_path, "w") as jobfile:
         jobfile.writelines(pbs_file_lines)
 
     click.echo(f"Jobfile created at {jobfile_path}")
+
+
+def get_formatted_walltime() -> str:
+    valid = False
+    walltime = "02:00:00"
+    while not valid:
+        prompt_result = click.prompt(
+            "How much processing time do you need (as '?h?m')",
+            default="2h",
+            prompt_suffix="?",
+        )
+        prompt_result = prompt_result.lower().replace(" ", "")
+
+        try:
+            wall_hours = _parse_walltime(prompt_result, r"(\d+)h", "Hours")
+        except (ValueError, IndexError):
+            continue
+
+        try:
+            wall_minutes = _parse_walltime(prompt_result, r"(\d+)m", "Minutes")
+        except (ValueError, IndexError):
+            continue
+
+        if wall_hours == 0 and wall_minutes == 0:
+            click.echo("Please enter your time in the correct format ('?h?m').")
+            continue
+
+        walltime = f"{wall_hours:02}:{wall_minutes:02}:00"
+        valid = True
+    return walltime
 
 
 def _parse_walltime(walltime: str, regex_string: str, time_section: str):
