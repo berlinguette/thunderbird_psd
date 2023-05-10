@@ -57,7 +57,7 @@ def get_formatted_walltime() -> str:
             continue
 
         if wall_hours == 0 and wall_minutes == 0:
-            click.echo("Please enter your time in the correct format ('?h?m').")
+            click.echo("Please enter a non-zero time in the correct format ('?h?m').")
             continue
 
         walltime = f"{wall_hours:02}:{wall_minutes:02}:00"
