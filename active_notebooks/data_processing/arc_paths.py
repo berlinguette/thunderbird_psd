@@ -1,10 +1,12 @@
 from pathlib import Path
+from dotenv import dotenv_values
 
-alloc_code = 'st-cberling-1'
-PROJECT_FOLDER = Path('/arc/project') / alloc_code
-SCRATCH_FOLDER = Path('/scratch') / alloc_code
-INPUT_DATA_FOLDER = PROJECT_FOLDER / 'input_data'
-OUTPUT_DATA_FOLDER = SCRATCH_FOLDER / 'output_data'
+
+config = {**dotenv_values('.env')}
+maybe_input = config.get("INPUT_DATA_FOLDERS")
+maybe_output = config.get("OUTPUT_DATA_FOLDER")
+INPUT_DATA_FOLDER = Path(maybe_input if maybe_input is not None else "fix_input")
+OUTPUT_DATA_FOLDER = Path(maybe_output if maybe_output is not None else "fix_output")
 
 def get_parq_root(experiment_name: str) -> Path:
     return INPUT_DATA_FOLDER.joinpath(experiment_name, 
