@@ -12,7 +12,7 @@ def get_parq_root(experiment_name: str) -> Path:
                                       'processed_data/unfiltered/psd')
 
 def get_report_root(experiment_name: str) -> Path:
-    report_root = OUTPUT_DATA_FOLDER / 'analysis' / experiment_name
+    report_root = OUTPUT_DATA_FOLDER / experiment_name
     report_root.mkdir(parents=True, exist_ok=True)
     return report_root
 
