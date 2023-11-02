@@ -165,8 +165,6 @@ def scan_histogram_slices(
         chunksize=chunksize)
     zipped_results = zip(*results)
     slice_params, slice_err = zipped_results
-    if any([param is None for param in slice_params]):
-        return None
     
     slice_params = sorted(list(slice_params), key=lambda x: x[0])
     slice_err = sorted(list(slice_err), key=lambda x: x[0])
