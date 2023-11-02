@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from typing import Optional
 from scipy.optimize import curve_fit
 from data_processing.processing.figure_of_merit import bimodal, FOM
 from multiprocessing.pool import Pool
@@ -87,8 +88,11 @@ class SliceFitter:
             for i_range, bound in self.bounds:
                 if i in range(*i_range):
                     fit_bounds = bound
-
-        gamma_params, neutron_params, cov = get_bimodal_fit(self.bins, slice, fit_bounds)
+        try:
+            gamma_params, neutron_params, cov = get_bimodal_fit(self.bins, slice, fit_bounds)
+        except RuntimeError as err:
+            print(f"Slice {i} fit failed: {err}")
+            return None
 
         fom = FOM(*gamma_params[:-1], *neutron_params[:-1])
 
@@ -106,7 +110,7 @@ def scan_histogram_slices(
     end_idx: int | None = None,
     cores: int = 4,
     use_chunks: bool = False
-) -> tuple[pd.DataFrame, pd.DataFrame]:
+) -> Optional[tuple[pd.DataFrame, pd.DataFrame]]:
     """Determines bimodal fit and FOM for every energy slice 
     in a 2D PSD/Energy histogram
     
@@ -159,6 +163,8 @@ def scan_histogram_slices(
         SliceFitter(bins, default_bounds, bounds), 
         enumerate(energy_slices), 
         chunksize=chunksize)
+    if any([result is None for result in results]):
+        return None
     slice_params, slice_err = zip(*results)
     
     slice_params = sorted(list(slice_params), key=lambda x: x[0])
