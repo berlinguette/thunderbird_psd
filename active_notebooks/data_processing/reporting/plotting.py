@@ -123,7 +123,7 @@ def graph_psd_histogram(
     data_x = data["x"]
     data_y = data["y"]
 
-    min_energy, max_energy = _get_range_with_margins(data_x.min(), data_x.max())
+    min_energy, max_energy = _get_range_with_margins((data_x.min(), data_x.max()))
     if energy_start_zero:
         min_energy = 0
     min_psd, max_psd = _get_range_with_margins((data_y.min(), data_y.max()))
