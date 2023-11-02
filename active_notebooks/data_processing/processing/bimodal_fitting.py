@@ -163,6 +163,7 @@ def scan_histogram_slices(
         SliceFitter(bins, default_bounds, bounds), 
         enumerate(energy_slices), 
         chunksize=chunksize)
+    print(results)
     if any([result is None for result in results]):
         return None
     slice_params, slice_err = zip(*results)
