@@ -90,9 +90,9 @@ class SliceFitter:
                     fit_bounds = bound
         try:
             gamma_params, neutron_params, cov = get_bimodal_fit(self.bins, slice, fit_bounds)
-        except RuntimeError as err:
-            print(f"Slice {i} fit failed: {err}")
-            return None, None
+        except RuntimeError:
+            bad_param_values = (None, None, None, None, None, None)
+            return (i, *bad_param_values, None), (i, *bad_param_values)
 
         fom = FOM(*gamma_params[:-1], *neutron_params[:-1])
 
