@@ -92,7 +92,7 @@ class SliceFitter:
             gamma_params, neutron_params, cov = get_bimodal_fit(self.bins, slice, fit_bounds)
         except RuntimeError as err:
             print(f"Slice {i} fit failed: {err}")
-            return None
+            return None, None
 
         fom = FOM(*gamma_params[:-1], *neutron_params[:-1])
 
@@ -163,10 +163,10 @@ def scan_histogram_slices(
         SliceFitter(bins, default_bounds, bounds), 
         enumerate(energy_slices), 
         chunksize=chunksize)
-    print([len(result) if result is not None else "None" for result in results])
-    if any([result is None for result in results]):
+    zipped_results = zip(*results)
+    slice_params, slice_err = zipped_results
+    if any([param is None for param in slice_params]):
         return None
-    slice_params, slice_err = zip(*results)
     
     slice_params = sorted(list(slice_params), key=lambda x: x[0])
     slice_err = sorted(list(slice_err), key=lambda x: x[0])
