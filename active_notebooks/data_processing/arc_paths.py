@@ -1,7 +1,6 @@
 from pathlib import Path
-from dotenv import dotenv_values
+from data_processing.dot_env import config
 
-config = {**dotenv_values('.env')}
 maybe_input = config.get("INPUT_DATA_FOLDER")
 maybe_output = config.get("OUTPUT_DATA_FOLDER")
 INPUT_DATA_FOLDER = Path(maybe_input if maybe_input is not None else "fix_input")

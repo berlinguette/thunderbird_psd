@@ -73,6 +73,7 @@ __pypackages__/
 .venv
 venv/
 .python-version
+dot_env.py
 
 # Cython debug symbols
 cython_debug/
