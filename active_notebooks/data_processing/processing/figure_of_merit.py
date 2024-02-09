@@ -4,14 +4,16 @@ from scipy import interpolate, signal
 from scipy.optimize import curve_fit
 
 
-def gaussian(x: list, mu: float, sigma: float, A: float) -> list:
+def gaussian(x: np.ndarray, mu: float, sigma: float, A: float) -> np.ndarray:
     """Returns a Gaussian distribution"""
     return A * np.exp(-((x - mu) ** 2 / (2 * (sigma**2))))
 
 
 def bimodal(
-    x: list, mu1: float, sigma1: float, A1: float, mu2: float, sigma2: float, A2: float
-) -> list:
+    x: np.ndarray, 
+    mu1: float, sigma1: float, A1: float, 
+    mu2: float, sigma2: float, A2: float
+) -> np.ndarray:
     """Returns a bimodal Gaussian distribution"""
     return gaussian(x, mu1, sigma1, A1) + gaussian(x, mu2, sigma2, A2)
 

@@ -24,10 +24,11 @@ def generate_report(
     return report
 
 
-def save_plot(destination: Path, fig: Figure, label: str | Path) -> None:
+def save_plot(destination: Path, fig: Figure, label: str | Path, 
+              extension: str | None = None) -> None:
     destination.mkdir(exist_ok=True)
+    save_path = destination / label
+    if extension is not None:
+        save_path = Path(str(save_path) + extension)
 
-    fig.savefig(
-        destination / label
-    )
-
+    fig.savefig(str(save_path))
