@@ -58,6 +58,8 @@ Get output in `3-Output/ID-XXX`
 
 [Ryan Oldford, B.CS](https://github.com/ROldford)
 
-Ben Luginbuhl
+[Ben Luginbuhl](https://github.com/bluginbuhl)
+
+Alvin Hendricks
 
 Sergey Issinski
