@@ -1,38 +1,55 @@
-# Thunderbird PSD
+# Thunderbird Data Analysis 
 
-This repository includes code for processing, analysing, and visualising data from the Thunderbird scintillation detector. The primary purpose is for neutron and gamma-ray differentiation using pulse-shape discrimination (PSD).
+This repository includes code for processing, analysing, and visualising data from the Thunderbird reactor. The primary purpose is to determine neutron count rates from EJ309 data, and process reactor data for comparison with count rates.
 
-<details>
-    <summary>Installation</summary>
+## Installation
 
-Clone the repository into a new directory on your computer
+Clone this repository: 
 
 ```
 git clone git@github.com:berlinguette/thunderbird_psd.git
 ```
 
-Create a virtual environment and activate it
+Create a virtual environment:
 
 ```
 cd thunderbird_psd
 python3 -m venv .venv --prompt=tbird_psd
 ```
 
-on Windows:
+Activate your virtual environment:
+- On Windows:
 
 ```
 .\.venv\Scripts\activate
 ```
 
-on Linux/MacOS:
+- On Linux/MacOS:
 
 ```
 source .venv/bin/activate
 ```
 
-Install the packages in `requirements.txt`
+Install required packages:
+
 
 ```
 pip install -r requirements.txt
 ```
-</details>
+
+## Usage
+
+TODO
+
+Open Jupyter Notebook
+Find main notebook in `active_notebooks`
+Use `Run All`
+Get output in `3-Output/ID-XXX`
+
+## Contributors
+
+[Ryan Oldford, B.CS](https://github.com/ROldford)
+
+Ben Luginbuhl
+
+Sergey Issinski
