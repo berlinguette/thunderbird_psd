@@ -37,6 +37,14 @@ Install required packages:
 pip install -r requirements.txt
 ```
 
+Set up notebook cleaning filters:
+
+```
+git config filter.strip-notebook-output.clean 'jupyter nbconvert --ClearOutputPreprocessor.enabled=True --to=notebook --stdin --stdout --log-level=ERROR'
+git config filter.strip-notebook-output.required true
+git add --renormalize .
+```
+
 ## Usage
 
 TODO
