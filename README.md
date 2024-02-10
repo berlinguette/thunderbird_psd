@@ -60,6 +60,6 @@ Get output in `3-Output/ID-XXX`
 
 [Ben Luginbuhl](https://github.com/bluginbuhl)
 
-Alvin Hendricks
+[Alvin Hendricks](https://github.com/A5H-git)
 
 Sergey Issinski
