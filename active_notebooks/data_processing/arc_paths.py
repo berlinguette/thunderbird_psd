@@ -19,3 +19,6 @@ def get_report_root(experiment_name: str) -> Path:
 
 def get_signals_root(experiment_name: str) -> Path:
     return get_exp_root(experiment_name) / 'processed_data/unfiltered/signals'
+
+def get_reactor_data_root(experiment_name: str) -> Path:
+    return get_exp_root(experiment_name) / 'reactor_data'
