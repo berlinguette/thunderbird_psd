@@ -49,7 +49,12 @@ git add --renormalize .
 
 TODO
 
-Open Jupyter Notebook
+Open Jupyter Lab
+
+```bash
+jupyter lab
+```
+
 Find main notebook in `active_notebooks`
 Use `Run All`
 Get output in `3-Output/ID-XXX`
