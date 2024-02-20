@@ -41,9 +41,13 @@ Set up notebook cleaning filters:
 
 ```bash
 git config filter.strip-notebook-output.clean 'jupyter nbconvert --ClearOutputPreprocessor.enabled=True --to=notebook --stdin --stdout --log-level=ERROR'
+git config filter.strip-notebook-output.smudge cat
 git config filter.strip-notebook-output.required true
 git add --renormalize .
 ```
+
+Note: VS Code Git integration will not work properly once these filters are set up.
+Git command line should be used instead.
 
 ## Usage
 
