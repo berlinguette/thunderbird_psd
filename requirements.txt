@@ -13,3 +13,4 @@ jupyterlab-lsp~=5.0.3
 python-lsp-server[all]~=1.10.0
 nbconvert~=6.5.0
 pint~=0.23
+python-dotenv~=1.0.0
