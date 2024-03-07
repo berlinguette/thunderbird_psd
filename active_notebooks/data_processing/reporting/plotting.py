@@ -119,7 +119,10 @@ def graph_psd_histogram(
     colorbar = graph_kwargs.get("colorbar", False)
     axis_font_size = graph_kwargs.get("axis_font_size", AXIS_FONT_SIZE)
     axis_tick_font_size = graph_kwargs.get("axis_tick_font_size", AXIS_TICK_FONT_SIZE)
-    cmin = graph_kwargs.get("cmin", 0)
+    cmin = graph_kwargs.get("cmin")
+    weights = graph_kwargs.get("weights", None)
+    vmin = graph_kwargs.get('vmin')
+    vmax = graph_kwargs.get('vmax')
 
     data_x = data["x"]
     data_y = data["y"]
@@ -135,7 +138,10 @@ def graph_psd_histogram(
         bins=(x_resolution, y_resolution),
         range=[[min_energy, max_energy], [min_psd, max_psd]],
         cmap=cmap,
-        cmin=cmin
+        cmin=cmin,
+        weights=weights,
+        vmin=vmin,
+        vmax=vmax
     )
 
     if colorbar:
@@ -250,6 +256,7 @@ def plot_classification(
     neutron_lb_fit: Callable,
     neutron_ub_fit: Callable,
     experiment_display_name: str,
+    colormap_name: str = "RdBu_r",
     count_limit: int = 5,
     **kwargs,
 ) -> tuple[Figure, Axes]:
@@ -263,7 +270,7 @@ def plot_classification(
     # psd_col = get_df_col(df, DataframeColumn.PSD)
 
     g_vs_n = class_col.map({True: 1, False: -1})
-    cmap = mpl.colormaps["RdBu_r"]  # type: ignore
+    cmap = mpl.colormaps[colormap_name]  # type: ignore
 
     # ax.hist2d(
     #     energy_col,
@@ -278,7 +285,7 @@ def plot_classification(
 
     fig, ax = plot_psd_histogram(
         df,
-        colormap_name="RdBu_r",
+        colormap_name=colormap_name,
         weights=g_vs_n,
         vmin=-count_limit,
         vmax=count_limit,
