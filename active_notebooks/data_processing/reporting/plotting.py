@@ -119,6 +119,7 @@ def graph_psd_histogram(
     colorbar = graph_kwargs.get("colorbar", False)
     axis_font_size = graph_kwargs.get("axis_font_size", AXIS_FONT_SIZE)
     axis_tick_font_size = graph_kwargs.get("axis_tick_font_size", AXIS_TICK_FONT_SIZE)
+    cmin = graph_kwargs.get("cmin", 0)
 
     data_x = data["x"]
     data_y = data["y"]
@@ -134,6 +135,7 @@ def graph_psd_histogram(
         bins=(x_resolution, y_resolution),
         range=[[min_energy, max_energy], [min_psd, max_psd]],
         cmap=cmap,
+        cmin=cmin
     )
 
     if colorbar:
@@ -393,7 +395,7 @@ def plot_fom(
 
     fig.tight_layout()
 
-    return fig, ax
+    return fig, axplot
 
 
 def plot_scatter(
