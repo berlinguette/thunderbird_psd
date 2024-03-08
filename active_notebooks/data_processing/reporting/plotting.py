@@ -402,7 +402,7 @@ def plot_fom(
 
     fig.tight_layout()
 
-    return fig, axplot
+    return fig, ax
 
 
 def plot_scatter(
