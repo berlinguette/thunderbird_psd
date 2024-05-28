@@ -27,7 +27,14 @@ def split_params(
     upper_gaussian_params: GaussianParams
         Parameters of the upper gaussian (i.e. higher mu value)
     """
-    params = tuple([abs(param) for param in params])
+    params = (
+        abs(params[0]),
+        abs(params[1]),
+        abs(params[2]),
+        abs(params[3]),
+        abs(params[4]),
+        abs(params[5])
+    )
     return params[0:3], params[3:]
 
 def get_bimodal_fit(
