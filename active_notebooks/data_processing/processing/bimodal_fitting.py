@@ -185,9 +185,21 @@ def scan_histogram_slices(
 
 def get_psd_energy_histogram(
     df: pd.DataFrame, 
-    resolution: int = 512
+    energy_width: float = 15.0,
+    psd_bin_count: int = 100,
+    psd_min: float = 0.0,
+    psd_max: float = 0.5
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     x = get_df_col(df, DataframeColumn.CALIB_ENERGY)
     y = get_df_col(df, DataframeColumn.PSD)
-    Z, xe, ye = np.histogram2d(x, y, resolution)
+    
+    within_psd = y.between(psd_min, psd_max)
+    y = y[within_psd == True].copy()
+    x = x[within_psd == True].copy()
+    
+    x_bins: np.ndarray = np.linspace(0, x.max(), int(x.max()/energy_width)+1)
+    print(f"Energy width = {x_bins} keVee")
+    y_bins: np.ndarray = np.linspace(psd_min, psd_max, psd_bin_count+1)
+    
+    Z, xe, ye = np.histogram2d(x, y, bins=[x_bins, y_bins])
     return Z, xe, ye
