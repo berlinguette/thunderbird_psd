@@ -14,6 +14,7 @@ class DataframeColumn(Enum):
     EVENT_TIME = "EVENT_TIME"
     EVENT_TIME_PS = "EVENT_TIME_PS"
     NEUTRON_CLASS = "NASA"
+    NEW_N_CLASS = "IS_NEUTRON"
 
 
 STARTING_COLUMNS: Final = [
