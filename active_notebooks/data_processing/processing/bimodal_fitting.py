@@ -220,7 +220,7 @@ def get_psd_energy_histogram(
     x = x[within_psd == True].copy()
 
     x_bins: np.ndarray = np.linspace(0, x.max(), int(x.max() / energy_width) + 1)
-    print(f"Energy width = {x_bins} keVee")
+    print(f"Energy width = {x_bins[1]-x_bins[0]} keVee")
     y_bins: np.ndarray = np.linspace(psd_min, psd_max, psd_bin_count + 1)
 
     Z, xe, ye = np.histogram2d(x, y, bins=[x_bins, y_bins])
