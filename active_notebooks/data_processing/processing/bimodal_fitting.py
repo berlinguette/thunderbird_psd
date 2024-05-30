@@ -173,9 +173,9 @@ def _unpack_slice_fit_pool_results(
 
 
 def scan_histogram_slices(
-    psd_bin_centers: np.ndarray,
     histogram: np.ndarray,
     energy_bin_edges: np.ndarray,
+    psd_bin_edges: np.ndarray,
     default_bounds: BimodalBounds,
     bounds: Sequence[tuple[tuple[int, int], BimodalBounds]] | None = None,
     start_idx: int = 0,
@@ -188,10 +188,16 @@ def scan_histogram_slices(
 
     Parameters
     ----------
-    bins: ndarray
-        Midpoint of each PSD bin in the histogram
     histogram: ndarray
-        2D PSD/Energy histogram
+        2D PSD/Energy histogram.
+        The histogram shape should be [N, M], where N is the number of energy bins, and M is the number of PSD bins.
+        This matches the output of Numpy's histogram2d function.
+    energy_bin_edges: ndarray
+        Edge values for each energy bin in the histogram.
+        For N energy bins, there must be N+1 edges.
+    psd_bin_edges: ndarray
+        Edge values for each PSD bin in the histogram.
+        For M PSD bins, there must be M+1 edges.
     default_bounds: BimodalBounds
         Default lower and upper bounds of fit parameters
     bounds: list[tuple[tuple[int, int], BimodalBounds]] | None, default None
@@ -223,7 +229,12 @@ def scan_histogram_slices(
         2 * cores, 4
     )  # based on https://jupyter-tutorial.readthedocs.io/en/stable/performance/multiprocessing.html
 
-    energy_slices = list(histogram[:, start_idx:end_idx].T)
+    psd_bin_left_edges = psd_bin_edges[:-1]
+    psd_bin_right_edges = psd_bin_edges[1:]
+    psd_bin_centers = psd_bin_right_edges - psd_bin_left_edges
+    energy_bin_edges_limited = energy_bin_edges[start_idx:end_idx+1]
+
+    energy_slices = list(histogram[start_idx:end_idx, :])
 
     if use_chunks:
         chunksize, extra = divmod(len(energy_slices), pool_size * 4)
@@ -234,7 +245,7 @@ def scan_histogram_slices(
 
     pool = Pool(pool_size)
     results = pool.imap_unordered(
-        SliceFitter(psd_bin_centers, energy_bin_edges, default_bounds, bounds),
+        SliceFitter(psd_bin_centers, energy_bin_edges_limited, default_bounds, bounds),
         enumerate(energy_slices),
         chunksize=chunksize,
     )
