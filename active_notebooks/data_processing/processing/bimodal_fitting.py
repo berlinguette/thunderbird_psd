@@ -5,7 +5,13 @@ import numpy as np
 import pandas as pd
 from data_processing.dataframe_validation import DataframeColumn, get_df_col
 from data_processing.processing.figure_of_merit import FOM, bimodal
-from data_processing.types import BimodalBounds, BimodalParams, GaussianParams
+from data_processing.types import (
+    BimodalBounds,
+    BimodalParams,
+    FitErrorResult,
+    FitResult,
+    GaussianParams,
+)
 from scipy.optimize import curve_fit
 
 
@@ -79,7 +85,7 @@ class SliceFitter:
         self.default_bounds = default_bounds
         self.bounds = bounds
 
-    def __call__(self, numbered_slice):
+    def __call__(self, numbered_slice) -> tuple[FitResult, FitErrorResult]:
         i, slice = numbered_slice
         slice_left_edge = self.energy_bin_edges[i]
         slice_right_edge = self.energy_bin_edges[i + 1]
@@ -94,26 +100,25 @@ class SliceFitter:
                 self.psd_bin_midpoints, slice, fit_bounds
             )
         except RuntimeError:
-            bad_param_values = (None, None, None, None, None, None)
-            return (i, *bad_param_values, None, slice_left_edge, slice_right_edge), (
-                i,
-                *bad_param_values,
-                slice_left_edge,
-                slice_right_edge,
+            fit_result = FitResult(
+                i, None, None, slice_left_edge, slice_right_edge, None
             )
+            fit_error_result = FitErrorResult(
+                i, None, None, slice_left_edge, slice_right_edge
+            )
+            return fit_result, fit_error_result
 
         fom = FOM(*gamma_params[:-1], *neutron_params[:-1])
 
-        perr = np.sqrt(np.diag(cov))
+        perr: BimodalParams = BimodalParams(*np.sqrt(np.diag(cov)))
 
-        return (
-            i,
-            *gamma_params,
-            *neutron_params,
-            slice_left_edge,
-            slice_right_edge,
-            fom,
-        ), (i, *perr, slice_left_edge, slice_right_edge)
+        fit_result = FitResult(
+            i, gamma_params, neutron_params, slice_left_edge, slice_right_edge, fom
+        )
+        fit_error_result = FitErrorResult(
+            i, *split_params(perr), slice_left_edge, slice_right_edge
+        )
+        return fit_result, fit_error_result
 
 
 def scan_histogram_slices(
