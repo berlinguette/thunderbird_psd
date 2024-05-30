@@ -1,4 +1,4 @@
-from multiprocessing.pool import Pool
+from multiprocessing.pool import IMapIterator, Pool
 from typing import Sequence
 
 import numpy as np
@@ -11,6 +11,8 @@ from data_processing.types import (
     FitErrorResult,
     FitResult,
     GaussianParams,
+    UnpackedFitErrorResult,
+    UnpackedFitResult,
 )
 from scipy.optimize import curve_fit
 
@@ -65,6 +67,7 @@ def get_bimodal_fit(
         bounds=bounds,
     )
 
+    params = BimodalParams(*params)
     gamma_params, neutron_params = split_params(params)
 
     return gamma_params, neutron_params, cov
@@ -119,6 +122,54 @@ class SliceFitter:
             i, *split_params(perr), slice_left_edge, slice_right_edge
         )
         return fit_result, fit_error_result
+
+
+def _unpack_slice_fit_pool_results(
+    results: IMapIterator,
+) -> tuple[list[UnpackedFitResult], list[UnpackedFitErrorResult]]:
+    zipped_results = zip(*results)
+    slice_params_from_zip: tuple[FitResult]
+    slice_err_from_zip: tuple[FitErrorResult]
+    slice_params_from_zip, slice_err_from_zip = zipped_results
+
+    slice_params_sorted: list[FitResult] = sorted(
+        list(slice_params_from_zip), key=lambda x: x[0]
+    )
+    slice_err_sorted: list[FitErrorResult] = sorted(
+        list(slice_err_from_zip), key=lambda x: x[0]
+    )
+
+    slice_params_unpacked: list[UnpackedFitResult] = [
+        (
+            params.index,
+            params.gamma_params.mu if params.gamma_params is not None else None,
+            params.gamma_params.sigma if params.gamma_params is not None else None,
+            params.gamma_params.a if params.gamma_params is not None else None,
+            params.neutron_params.mu if params.neutron_params is not None else None,
+            params.neutron_params.sigma if params.neutron_params is not None else None,
+            params.neutron_params.a if params.neutron_params is not None else None,
+            params.slice_left_edge,
+            params.slice_right_edge,
+            params.fom,
+        )
+        for params in slice_params_sorted
+    ]
+    slice_err_unpacked: list[UnpackedFitErrorResult] = [
+        (
+            err.index,
+            err.gamma_params.mu if err.gamma_params is not None else None,
+            err.gamma_params.sigma if err.gamma_params is not None else None,
+            err.gamma_params.a if err.gamma_params is not None else None,
+            err.neutron_params.mu if err.neutron_params is not None else None,
+            err.neutron_params.sigma if err.neutron_params is not None else None,
+            err.neutron_params.a if err.neutron_params is not None else None,
+            err.slice_left_edge,
+            err.slice_right_edge,
+        )
+        for err in slice_err_sorted
+    ]
+
+    return slice_params_unpacked, slice_err_unpacked
 
 
 def scan_histogram_slices(
@@ -187,11 +238,7 @@ def scan_histogram_slices(
         enumerate(energy_slices),
         chunksize=chunksize,
     )
-    zipped_results = zip(*results)
-    slice_params, slice_err = zipped_results
-
-    slice_params = sorted(list(slice_params), key=lambda x: x[0])
-    slice_err = sorted(list(slice_err), key=lambda x: x[0])
+    slice_params, slice_err = _unpack_slice_fit_pool_results(results)
 
     columns = [
         "i",

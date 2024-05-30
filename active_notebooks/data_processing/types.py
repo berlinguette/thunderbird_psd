@@ -23,6 +23,7 @@ class GaussianParams(NamedTuple):
 
 BimodalBounds = tuple[BimodalParams, BimodalParams]
 
+
 class FitResult(NamedTuple):
     index: int
     gamma_params: GaussianParams | None
@@ -30,13 +31,39 @@ class FitResult(NamedTuple):
     slice_left_edge: float
     slice_right_edge: float
     fom: float | None
-    
+
+
 class FitErrorResult(NamedTuple):
     index: int
     gamma_params: GaussianParams | None
     neutron_params: GaussianParams | None
     slice_left_edge: float
     slice_right_edge: float
+
+
+UnpackedFitResult = tuple[
+    int,
+    float | None,
+    float | None,
+    float | None,
+    float | None,
+    float | None,
+    float | None,
+    float,
+    float,
+    float | None,
+]
+UnpackedFitErrorResult = tuple[
+    int,
+    float | None,
+    float | None,
+    float | None,
+    float | None,
+    float | None,
+    float | None,
+    float,
+    float,
+]
 
 VectorLike = TypeVar("VectorLike", float, Series, NDArray)
 WindowBorderFunction = Callable[[VectorLike], VectorLike]
@@ -47,6 +74,7 @@ class WindowBorders(NamedTuple):
     right: float | None
     bottom: WindowBorderFunction | None
     top: WindowBorderFunction | None
+
 
 Kwargs = dict[str, Any]
 GraphData = dict[Literal["x"] | Literal["y"], Series]
