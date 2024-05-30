@@ -88,16 +88,20 @@ class SliceFitter:
     # https://www.stevenengelhardt.com/2013/01/16/python-multiprocessing-module-and-closures/
     def __init__(
         self, 
-        bins: np.ndarray, 
+        psd_bin_midpoints: np.ndarray, 
+        energy_bin_edges: np.ndarray,
         default_bounds: BimodalBounds,
-        bounds: list[tuple[tuple[int, int], BimodalBounds]] | None = None
+        bounds: Sequence[tuple[tuple[int, int], BimodalBounds]] | None = None
     ):
-        self.bins = bins
+        self.psd_bin_midpoints = psd_bin_midpoints
+        self.energy_bin_edges = energy_bin_edges
         self.default_bounds = default_bounds
         self.bounds = bounds
         
     def __call__(self, numbered_slice):
         i, slice = numbered_slice
+        slice_left_edge = self.energy_bin_edges[i]
+        slice_right_edge = self.energy_bin_edges[i+1]
         fit_bounds = self.default_bounds
 
         if self.bounds is not None:
@@ -105,35 +109,38 @@ class SliceFitter:
                 if i in range(*i_range):
                     fit_bounds = bound
         try:
-            gamma_params, neutron_params, cov = get_bimodal_fit(self.bins, slice, fit_bounds)
+            gamma_params, neutron_params, cov = get_bimodal_fit(
+                self.psd_bin_midpoints, slice, fit_bounds
+            )
         except RuntimeError:
             bad_param_values = (None, None, None, None, None, None)
-            return (i, *bad_param_values, None), (i, *bad_param_values)
+            return (i, *bad_param_values, None, slice_left_edge, slice_right_edge), (i, *bad_param_values, slice_left_edge, slice_right_edge)
 
         fom = FOM(*gamma_params[:-1], *neutron_params[:-1])
 
         perr = np.sqrt(np.diag(cov))
 
-        return (i, *gamma_params, *neutron_params, fom), (i, *perr)
+        return (i, *gamma_params, *neutron_params, slice_left_edge, slice_right_edge, fom), (i, *perr, slice_left_edge, slice_right_edge)
 
 
 def scan_histogram_slices(
-    bins: np.ndarray, 
+    psd_bin_centers: np.ndarray, 
     histogram: np.ndarray, 
+    energy_bin_edges: np.ndarray, 
     default_bounds: BimodalBounds,
-    bounds: list[tuple[tuple[int, int], BimodalBounds]] | None = None, 
+    bounds: Sequence[tuple[tuple[int, int], BimodalBounds]] | None = None, 
     start_idx: int = 0, 
     end_idx: int | None = None,
     cores: int = 4,
     use_chunks: bool = False
-) -> Optional[tuple[pd.DataFrame, pd.DataFrame]]:
+) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Determines bimodal fit and FOM for every energy slice 
     in a 2D PSD/Energy histogram
     
     Parameters
     ----------
     bins: ndarray
-        Lower bounds of each PSD bin in the histogram
+        Midpoint of each PSD bin in the histogram
     histogram: ndarray
         2D PSD/Energy histogram
     default_bounds: BimodalBounds
@@ -176,7 +183,7 @@ def scan_histogram_slices(
     
     pool = Pool(pool_size)
     results = pool.imap_unordered(
-        SliceFitter(bins, default_bounds, bounds), 
+        SliceFitter(psd_bin_centers, energy_bin_edges, default_bounds, bounds), 
         enumerate(energy_slices), 
         chunksize=chunksize)
     zipped_results = zip(*results)
@@ -185,7 +192,7 @@ def scan_histogram_slices(
     slice_params = sorted(list(slice_params), key=lambda x: x[0])
     slice_err = sorted(list(slice_err), key=lambda x: x[0])
 
-    columns = ['i', 'mu1', 'sigma1', 'a1', 'mu2', 'sigma2', 'a2']
+    columns = ['i', 'mu1', 'sigma1', 'a1', 'mu2', 'sigma2', 'a2', 'slice_energy_min', 'slice_energy_max']
     df = pd.DataFrame(slice_params, columns=columns + ['fom'])
     err_df = pd.DataFrame(slice_err, columns=columns)
 
