@@ -10,7 +10,6 @@ from scipy.signal import savgol_filter
 
 def generate_nasa_neutron_window(
     slice_fit_df: pd.DataFrame,
-    slice_xs: np.ndarray,
     window_offset: float = 0.2,
     sigma: float = 5,
     lower_energy_bound: float = 0.1966,
@@ -21,6 +20,7 @@ def generate_nasa_neutron_window(
         window_length=21,
         polyorder=3,
     )  # reduce noise
+    slice_xs = _get_energy_midpoints(slice_fit_df)
     neutron_lb_fit: WindowBorderFunction = interp1d(
         slice_xs,
         neutron_lb,
@@ -40,15 +40,11 @@ def generate_nasa_neutron_window(
 
 def generate_new_neutron_window(
     slice_fit_df: pd.DataFrame,
-    energy_bin_edges: np.ndarray,
     sigma: float = 3,
     fom_energy_guess: float = 0.2,
 ) -> WindowBorders:
-    energy_bin_left_edges = energy_bin_edges[:-1]
-    energy_bin_right_edges = energy_bin_edges[1:]
-    energy_bin_midpoints = np.ndarray(
-        [(lb + ub) / 2 for lb, ub in zip(energy_bin_left_edges, energy_bin_right_edges)]
-    )
+    energy_bin_left_edges = pd['slice_energy_min']
+    energy_bin_midpoints = _get_energy_midpoints(slice_fit_df)
     left_border = _generate_new_window_left_border(
         slice_fit_df, energy_bin_midpoints, fom_energy_guess=fom_energy_guess
     )
@@ -176,3 +172,11 @@ def _is_within_bounds(
         else:
             within_bounds = value_col == value_col
     return within_bounds
+
+
+def _get_energy_midpoints(df: pd.DataFrame) -> pd.Series:
+    slice_energy_min = df['slice_energy_min']
+    slice_energy_max = df['slice_energy_max']
+    intervals = pd.Series(pd.arrays.IntervalArray.from_arrays(slice_energy_min, slice_energy_max), index=df.index)
+    midpoints = pd.Series(intervals.array.mid, index=df.index)
+    return midpoints
