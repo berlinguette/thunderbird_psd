@@ -23,7 +23,7 @@ class GaussianParams(NamedTuple):
 
 BimodalBounds = tuple[BimodalParams, BimodalParams]
 
-VectorLike = TypeVar("VectorLike", float, Series[float], NDArray)
+VectorLike = TypeVar("VectorLike", float, Series, NDArray)
 WindowBorderFunction = Callable[[VectorLike], VectorLike]
 
 
