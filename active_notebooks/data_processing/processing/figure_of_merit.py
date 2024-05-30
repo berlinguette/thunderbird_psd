@@ -30,7 +30,7 @@ def FOM(mu1: float, sigma1: float, mu2: float, sigma2: float) -> float:
 
 def guess_bimodal_params(
     counts: np.ndarray, bins: np.ndarray, widths: list = [3, 5, 10, 20]
-) -> float:
+) -> BimodalParams:
     """Returns a guess starting condition for :func:`scipy.optimize.curvefit`"""
     idxs = signal.find_peaks_cwt(counts, widths)  # May need adjusting?
 
