@@ -24,8 +24,9 @@ def generate_nasa_neutron_window(
     slice_fit_df: pd.DataFrame,
     slice_xs: np.ndarray,
     window_offset: float = 0.2,
-    sigma: float = 5
-) -> tuple[WindowBorderFunction, WindowBorderFunction]:
+    sigma: float = 5,
+    lower_energy_bound: float = 0.1966
+) -> WindowBorders:
     # Define lower and upper bounds (neutron_lb_fit, neutron_ub_fit)
     neutron_lb = savgol_filter(
         slice_fit_df["mu1"] + sigma * slice_fit_df["sigma1"], 
@@ -42,16 +43,14 @@ def generate_nasa_neutron_window(
         # as observed in NASA paper graphs
         return neutron_lb_fit(x) + window_offset
     
-    return neutron_lb_fit, neutron_ub_fit
+    return WindowBorders(left=lower_energy_bound, bottom=neutron_lb_fit, top=neutron_ub_fit, right=None)
 
 
 def classify(
     psd_report: pd.DataFrame, 
-    lb_fit_fn: Callable[[np.ndarray], np.ndarray], 
-    ub_fit_fn: Callable[[np.ndarray], np.ndarray], 
+    borders: WindowBorders,
     label: DataframeColumn = DataframeColumn.NEUTRON_CLASS,
-    le_cutoff: float = DEFAULT_LOWER_ENERGY_BOUND,
-    window_adj_offset: int = 0
+    # window_adj_offset: int = 0
 ) -> pd.DataFrame:
     """Classify signals as neutron or non-neutron for a given count window
     Classification creates a new column of boolean values, where True indicates a neutron classified signal.
@@ -61,14 +60,10 @@ def classify(
     psd_report: DataFrame
         DataFrame containing signal PSD data. 
         It must have the "tail / total" (for PSD value) and "CALIB_ENERGY" (for calibrated energy) columns.
-    lb_fit_fn: Callable[[ndarray], ndarray]
-        A function describing the window's lower bounds
-    ub_fit_fn: Callable[[ndarray], ndarray]
-        A function describing the window's upper bounds
+    borders: WindowBorders
+        The borders for the neutron window
     label: str
         Column label to use for signal classification results
-    le_cutoff: float, default L0 (previously determined lower energy cutoff)
-        Lower energy cutoff (AKA the left boundary of the neutron window)
         
     Returns
     -------
@@ -77,12 +72,34 @@ def classify(
     """
     energy_col = get_df_col(psd_report, DataframeColumn.CALIB_ENERGY)
     psd_col = get_df_col(psd_report, DataframeColumn.PSD)
-    lb_fits = lb_fit_fn(energy_col.astype(float)) # type: ignore
-    ub_fits = ub_fit_fn(energy_col.astype(float)) # type: ignore
-    within_psd_bounds = psd_col.between(
-        lb_fits + window_adj_offset, ub_fits
-    )
-    within_eng_bounds = energy_col >= le_cutoff
-    psd_report[label.value] = within_psd_bounds & within_eng_bounds
+    
+    bottom_border_fn = borders.bottom
+    top_border_fn = borders.top
+    bottom_border = bottom_border_fn(energy_col.astype(float)) if bottom_border_fn is not None else None
+    top_border = top_border_fn(energy_col.astype(float)) if top_border_fn is not None else None
+    within_psd_bounds = _is_within_bounds(psd_col, bottom_border, top_border)
+    
+    left_border = borders.left
+    right_border = borders.right
+    within_energy_bounds = _is_within_bounds(energy_col, left_border, right_border)
+    
+    psd_report[label.value] = within_psd_bounds & within_energy_bounds
     
     return psd_report
+
+def _is_within_bounds(
+    value_col: pd.Series, 
+    lower_bound: float|pd.Series|None, 
+    upper_bound: float|pd.Series|None
+) -> pd.Series[bool]:
+    if lower_bound is not None:
+        if upper_bound is not None:
+            within_bounds = value_col.between(lower_bound, upper_bound)
+        else:
+            within_bounds = value_col >= lower_bound
+    else:
+        if upper_bound is not None:
+            within_bounds = value_col <= upper_bound
+        else:
+            within_bounds = value_col == value_col
+    return within_bounds
