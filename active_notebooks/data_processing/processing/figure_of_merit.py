@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 from scipy import interpolate, signal
 from scipy.optimize import curve_fit
+from bimodal_fitting import BimodalParams
 
 
 def gaussian(x: np.ndarray, mu: float, sigma: float, A: float) -> np.ndarray:
@@ -41,7 +42,7 @@ def guess_bimodal_params(
 
     sigma1, sigma2 = 0.02, 0.02
 
-    return (
+    return BimodalParams(
         bins[:-1][pk_idx1],
         sigma1,
         counts[pk_idx1],
@@ -51,7 +52,7 @@ def guess_bimodal_params(
     )
 
 
-def fit_fom(counts: list, bins: list, guesses: tuple = None) -> tuple[tuple, float]:
+def fit_fom(counts: np.ndarray, bins: np.ndarray, guesses: BimodalParams|None = None) -> tuple[tuple, float]:
     """Attempts to fit two Gaussians to the Figure of Merit"""
 
     if guesses is None:

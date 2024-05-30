@@ -1,14 +1,29 @@
 import numpy as np
 import pandas as pd
-from typing import Optional
+from typing import NamedTuple, Sequence
 from scipy.optimize import curve_fit
 from data_processing.processing.figure_of_merit import bimodal, FOM
 from multiprocessing.pool import Pool
 from data_processing.dataframe_validation import DataframeColumn, get_df_col
 
-BimodalParams = tuple[float, float, float, float, float, float]
-GaussianParams = tuple[float, float, float]
+
+class BimodalParams(NamedTuple):
+    mu1: float
+    sigma1: float
+    a1: float
+    mu2: float
+    sigma2: float
+    a2: float
+    
+
+class GaussianParams(NamedTuple):
+    mu: float
+    sigma: float
+    a: float
+    
+
 BimodalBounds = tuple[BimodalParams, BimodalParams]
+    
 
 def split_params(
     params: BimodalParams
@@ -27,15 +42,9 @@ def split_params(
     upper_gaussian_params: GaussianParams
         Parameters of the upper gaussian (i.e. higher mu value)
     """
-    params = (
-        abs(params[0]),
-        abs(params[1]),
-        abs(params[2]),
-        abs(params[3]),
-        abs(params[4]),
-        abs(params[5])
-    )
-    return params[0:3], params[3:]
+    lower_gauss = GaussianParams(abs(params.mu1), abs(params.sigma1), abs(params.a1))
+    upper_gauss = GaussianParams(abs(params.mu2), abs(params.sigma2), abs(params.a2))
+    return lower_gauss, upper_gauss
 
 def get_bimodal_fit(
     bins: np.ndarray, 
