@@ -1,6 +1,7 @@
-from typing import Callable
+from typing import Callable, NamedTuple, TypeVar
 
 import numpy as np
+from numpy.typing import NDArray
 import pandas as pd
 from data_processing.dataframe_validation import DataframeColumn
 from data_processing.processing.processing_configs import \
@@ -9,25 +10,34 @@ from scipy.signal import savgol_filter
 from scipy.interpolate import interp1d
 from data_processing.dataframe_validation import get_df_col
 
+
+V = TypeVar('V', float, pd.Series[float], NDArray)
+WindowBorderFunction = Callable[[V], V]
+class WindowBorders(NamedTuple):
+    left: float | None
+    right: float | None
+    bottom: WindowBorderFunction | None
+    top: WindowBorderFunction | None
+
+
 def generate_nasa_neutron_window(
     slice_fit_df: pd.DataFrame,
     slice_xs: np.ndarray,
     window_offset: float = 0.2,
     sigma: float = 5
-) -> tuple[Callable[[float], float], 
-           Callable[[float], float]]:
+) -> tuple[WindowBorderFunction, WindowBorderFunction]:
     # Define lower and upper bounds (neutron_lb_fit, neutron_ub_fit)
     neutron_lb = savgol_filter(
         slice_fit_df["mu1"] + sigma * slice_fit_df["sigma1"], 
         window_length=21, 
         polyorder=3)  # reduce noise
-    neutron_lb_fit: Callable[[float], float] = interp1d(
+    neutron_lb_fit: WindowBorderFunction = interp1d(
         slice_xs, 
         neutron_lb, 
         fill_value=(neutron_lb[0], neutron_lb[-1]),  # type: ignore
         bounds_error=False)  # now it's a function!
 
-    def neutron_ub_fit(x: float) -> float:
+    def neutron_ub_fit(x: pd.Series[float]) -> pd.Series[float]:
         # upper bound is just a fixed PSD offset from lower bound
         # as observed in NASA paper graphs
         return neutron_lb_fit(x) + window_offset
