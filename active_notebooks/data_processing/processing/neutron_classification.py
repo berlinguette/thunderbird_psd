@@ -164,7 +164,7 @@ def _is_within_bounds(
     value_col: pd.Series,
     lower_bound: float | pd.Series | None,
     upper_bound: float | pd.Series | None,
-) -> pd.Series[bool]:
+) -> pd.Series:
     if lower_bound is not None:
         if upper_bound is not None:
             within_bounds = value_col.between(lower_bound, upper_bound)
