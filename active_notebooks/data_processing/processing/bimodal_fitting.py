@@ -207,7 +207,7 @@ def scan_histogram_slices(
 
 def get_psd_energy_histogram(
     df: pd.DataFrame,
-    energy_width: float = 15.0,
+    energy_width: float = 0.0150,
     psd_bin_count: int = 100,
     psd_min: float = 0.0,
     psd_max: float = 0.5,
