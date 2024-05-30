@@ -1,10 +1,11 @@
+from multiprocessing.pool import Pool
+from typing import NamedTuple, Sequence
+
 import numpy as np
 import pandas as pd
-from typing import NamedTuple, Sequence
-from scipy.optimize import curve_fit
-from data_processing.processing.figure_of_merit import bimodal, FOM
-from multiprocessing.pool import Pool
 from data_processing.dataframe_validation import DataframeColumn, get_df_col
+from data_processing.processing.figure_of_merit import FOM, bimodal
+from scipy.optimize import curve_fit
 
 
 class BimodalParams(NamedTuple):
@@ -14,27 +15,25 @@ class BimodalParams(NamedTuple):
     mu2: float
     sigma2: float
     a2: float
-    
+
 
 class GaussianParams(NamedTuple):
     mu: float
     sigma: float
     a: float
-    
+
 
 BimodalBounds = tuple[BimodalParams, BimodalParams]
-    
 
-def split_params(
-    params: BimodalParams
-) -> tuple[GaussianParams, GaussianParams]:
+
+def split_params(params: BimodalParams) -> tuple[GaussianParams, GaussianParams]:
     """Separates bimodal function parameters into 2 sets, one per component gaussian
-    
+
     Parameters
     ----------
     params: BimodalParams
         parameters of a bimodal function
-        
+
     Returns
     -------
     lower_gaussian_params: GaussianParams
@@ -46,13 +45,12 @@ def split_params(
     upper_gauss = GaussianParams(abs(params.mu2), abs(params.sigma2), abs(params.a2))
     return lower_gauss, upper_gauss
 
+
 def get_bimodal_fit(
-    bins: np.ndarray, 
-    histogram_slice: np.ndarray, 
-    bounds: BimodalBounds
+    bins: np.ndarray, histogram_slice: np.ndarray, bounds: BimodalBounds
 ) -> tuple[GaussianParams, GaussianParams, np.ndarray]:
     """Fits a histogram slice to a bimodal distribution
-    
+
     Parameters
     ----------
     bins: ndarray
@@ -61,7 +59,7 @@ def get_bimodal_fit(
         Slice of the 2D PSD/Energy histogram taken for a specific energy (i.e. PSD vs Counts)
     bounds: BimodalBounds
         Lower and upper bounds of fit parameters for this slice
-        
+
     Returns
     -------
     gamma_params: GaussianParams
@@ -77,9 +75,9 @@ def get_bimodal_fit(
         histogram_slice,
         bounds=bounds,
     )
-    
+
     gamma_params, neutron_params = split_params(params)
-    
+
     return gamma_params, neutron_params, cov
 
 
@@ -87,21 +85,21 @@ class SliceFitter:
     # based on work by Steven EngelHardt
     # https://www.stevenengelhardt.com/2013/01/16/python-multiprocessing-module-and-closures/
     def __init__(
-        self, 
-        psd_bin_midpoints: np.ndarray, 
+        self,
+        psd_bin_midpoints: np.ndarray,
         energy_bin_edges: np.ndarray,
         default_bounds: BimodalBounds,
-        bounds: Sequence[tuple[tuple[int, int], BimodalBounds]] | None = None
+        bounds: Sequence[tuple[tuple[int, int], BimodalBounds]] | None = None,
     ):
         self.psd_bin_midpoints = psd_bin_midpoints
         self.energy_bin_edges = energy_bin_edges
         self.default_bounds = default_bounds
         self.bounds = bounds
-        
+
     def __call__(self, numbered_slice):
         i, slice = numbered_slice
         slice_left_edge = self.energy_bin_edges[i]
-        slice_right_edge = self.energy_bin_edges[i+1]
+        slice_right_edge = self.energy_bin_edges[i + 1]
         fit_bounds = self.default_bounds
 
         if self.bounds is not None:
@@ -114,29 +112,41 @@ class SliceFitter:
             )
         except RuntimeError:
             bad_param_values = (None, None, None, None, None, None)
-            return (i, *bad_param_values, None, slice_left_edge, slice_right_edge), (i, *bad_param_values, slice_left_edge, slice_right_edge)
+            return (i, *bad_param_values, None, slice_left_edge, slice_right_edge), (
+                i,
+                *bad_param_values,
+                slice_left_edge,
+                slice_right_edge,
+            )
 
         fom = FOM(*gamma_params[:-1], *neutron_params[:-1])
 
         perr = np.sqrt(np.diag(cov))
 
-        return (i, *gamma_params, *neutron_params, slice_left_edge, slice_right_edge, fom), (i, *perr, slice_left_edge, slice_right_edge)
+        return (
+            i,
+            *gamma_params,
+            *neutron_params,
+            slice_left_edge,
+            slice_right_edge,
+            fom,
+        ), (i, *perr, slice_left_edge, slice_right_edge)
 
 
 def scan_histogram_slices(
-    psd_bin_centers: np.ndarray, 
-    histogram: np.ndarray, 
-    energy_bin_edges: np.ndarray, 
+    psd_bin_centers: np.ndarray,
+    histogram: np.ndarray,
+    energy_bin_edges: np.ndarray,
     default_bounds: BimodalBounds,
-    bounds: Sequence[tuple[tuple[int, int], BimodalBounds]] | None = None, 
-    start_idx: int = 0, 
+    bounds: Sequence[tuple[tuple[int, int], BimodalBounds]] | None = None,
+    start_idx: int = 0,
     end_idx: int | None = None,
     cores: int = 4,
-    use_chunks: bool = False
+    use_chunks: bool = False,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Determines bimodal fit and FOM for every energy slice 
+    """Determines bimodal fit and FOM for every energy slice
     in a 2D PSD/Energy histogram
-    
+
     Parameters
     ----------
     bins: ndarray
@@ -146,7 +156,7 @@ def scan_histogram_slices(
     default_bounds: BimodalBounds
         Default lower and upper bounds of fit parameters
     bounds: list[tuple[tuple[int, int], BimodalBounds]] | None, default None
-        Allows custom bounds for slice ranges. 
+        Allows custom bounds for slice ranges.
         Each list entry must have a tuple of start and stop indexes, and corresponding fit bounds.
         Bounds are used when the slice index falls within the start/stop range (start inclusive, stop exclusive).
         If index ranges overlap, the last matching range is used.
@@ -161,7 +171,7 @@ def scan_histogram_slices(
     use_chunks: bool, default False
         Whether to split slices into larger chunks during parallelization.
         This can help speed up the scan on larger histograms.
-        
+
     Returns
     -------
     fit_dataframe: DataFrame
@@ -170,52 +180,65 @@ def scan_histogram_slices(
         DataFrame of (1 standard deviation) errors in fit parameters (as columns) for each slice (as rows)
     """
     end_idx = len(histogram) if end_idx is None else min(len(histogram), end_idx)
-    pool_size = max(2*cores, 4)  # based on https://jupyter-tutorial.readthedocs.io/en/stable/performance/multiprocessing.html
+    pool_size = max(
+        2 * cores, 4
+    )  # based on https://jupyter-tutorial.readthedocs.io/en/stable/performance/multiprocessing.html
 
     energy_slices = list(histogram[:, start_idx:end_idx].T)
 
     if use_chunks:
-        chunksize, extra = divmod(len(energy_slices), pool_size*4)
+        chunksize, extra = divmod(len(energy_slices), pool_size * 4)
         if extra > 0:
             chunksize += 1
     else:
         chunksize = 1
-    
+
     pool = Pool(pool_size)
     results = pool.imap_unordered(
-        SliceFitter(psd_bin_centers, energy_bin_edges, default_bounds, bounds), 
-        enumerate(energy_slices), 
-        chunksize=chunksize)
+        SliceFitter(psd_bin_centers, energy_bin_edges, default_bounds, bounds),
+        enumerate(energy_slices),
+        chunksize=chunksize,
+    )
     zipped_results = zip(*results)
     slice_params, slice_err = zipped_results
-    
+
     slice_params = sorted(list(slice_params), key=lambda x: x[0])
     slice_err = sorted(list(slice_err), key=lambda x: x[0])
 
-    columns = ['i', 'mu1', 'sigma1', 'a1', 'mu2', 'sigma2', 'a2', 'slice_energy_min', 'slice_energy_max']
-    df = pd.DataFrame(slice_params, columns=columns + ['fom'])
+    columns = [
+        "i",
+        "mu1",
+        "sigma1",
+        "a1",
+        "mu2",
+        "sigma2",
+        "a2",
+        "slice_energy_min",
+        "slice_energy_max",
+    ]
+    df = pd.DataFrame(slice_params, columns=columns + ["fom"])
     err_df = pd.DataFrame(slice_err, columns=columns)
 
     return df, err_df
 
 
 def get_psd_energy_histogram(
-    df: pd.DataFrame, 
+    df: pd.DataFrame,
     energy_width: float = 15.0,
     psd_bin_count: int = 100,
     psd_min: float = 0.0,
-    psd_max: float = 0.5
+    psd_max: float = 0.5,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     x = get_df_col(df, DataframeColumn.CALIB_ENERGY)
     y = get_df_col(df, DataframeColumn.PSD)
-    
+
     within_psd = y.between(psd_min, psd_max)
     y = y[within_psd == True].copy()
     x = x[within_psd == True].copy()
-    
-    x_bins: np.ndarray = np.linspace(0, x.max(), int(x.max()/energy_width)+1)
+
+    x_bins: np.ndarray = np.linspace(0, x.max(), int(x.max() / energy_width) + 1)
     print(f"Energy width = {x_bins} keVee")
-    y_bins: np.ndarray = np.linspace(psd_min, psd_max, psd_bin_count+1)
-    
+    y_bins: np.ndarray = np.linspace(psd_min, psd_max, psd_bin_count + 1)
+
     Z, xe, ye = np.histogram2d(x, y, bins=[x_bins, y_bins])
     return Z, xe, ye

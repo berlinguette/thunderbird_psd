@@ -7,8 +7,8 @@ import numpy as np
 import pandas as pd
 from data_processing.dataframe_validation import DataframeColumn, get_df_col
 from data_processing.processing.figure_of_merit import FOM, gaussian
-from data_processing.processing.processing_configs import DEFAULT_LOWER_ENERGY_BOUND
 from data_processing.processing.neutron_classification import WindowBorders
+from data_processing.processing.processing_configs import DEFAULT_LOWER_ENERGY_BOUND
 from data_processing.reporting.plot_configs import *
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
@@ -122,8 +122,8 @@ def graph_psd_histogram(
     axis_tick_font_size = graph_kwargs.get("axis_tick_font_size", AXIS_TICK_FONT_SIZE)
     cmin = graph_kwargs.get("cmin")
     weights = graph_kwargs.get("weights", None)
-    vmin = graph_kwargs.get('vmin')
-    vmax = graph_kwargs.get('vmax')
+    vmin = graph_kwargs.get("vmin")
+    vmax = graph_kwargs.get("vmax")
 
     data_x = data["x"]
     data_y = data["y"]
@@ -142,7 +142,7 @@ def graph_psd_histogram(
         cmin=cmin,
         weights=weights,
         vmin=vmin,
-        vmax=vmax
+        vmax=vmax,
     )
 
     if colorbar:
@@ -232,16 +232,16 @@ def add_fit_window_to_plot(
     axes: Axes,
     borders: WindowBorders,
     graph_x_limits: tuple[float, float],
-    graph_y_limits: tuple[float, float]
+    graph_y_limits: tuple[float, float],
 ) -> Axes:
     left_border = borders.left
     right_border = borders.right
     bottom_border_fn = borders.bottom
     top_border_fn = borders.top
-    
+
     min_energy = left_border if left_border is not None else graph_x_limits[0]
     max_energy = right_border if right_border is not None else graph_x_limits[1]
-    
+
     energy_space = np.linspace(min_energy, max_energy + 0.5, 200)
     if bottom_border_fn is not None:
         axes.plot(energy_space, bottom_border_fn(energy_space), "r--")
@@ -252,12 +252,28 @@ def add_fit_window_to_plot(
     #           neutron_ub_fit(all_slice_xs[0]),
     #           'r', ls='--')
     if left_border is not None:
-        line_bottom = bottom_border_fn(left_border) if bottom_border_fn is not None else graph_y_limits[0]
-        line_top = top_border_fn(left_border) if top_border_fn is not None else graph_y_limits[1]
+        line_bottom = (
+            bottom_border_fn(left_border)
+            if bottom_border_fn is not None
+            else graph_y_limits[0]
+        )
+        line_top = (
+            top_border_fn(left_border)
+            if top_border_fn is not None
+            else graph_y_limits[1]
+        )
         axes.vlines(left_border, line_bottom, line_top, "r", ls="--")  # type: ignore
     if right_border is not None:
-        line_bottom = bottom_border_fn(right_border) if bottom_border_fn is not None else graph_y_limits[0]
-        line_top = top_border_fn(right_border) if top_border_fn is not None else graph_y_limits[1]
+        line_bottom = (
+            bottom_border_fn(right_border)
+            if bottom_border_fn is not None
+            else graph_y_limits[0]
+        )
+        line_top = (
+            top_border_fn(right_border)
+            if top_border_fn is not None
+            else graph_y_limits[1]
+        )
         axes.vlines(right_border, line_bottom, line_top, "r", ls="--")  # type: ignore
     return axes
 
