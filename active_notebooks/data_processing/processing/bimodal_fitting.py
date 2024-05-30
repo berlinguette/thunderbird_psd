@@ -1,29 +1,12 @@
 from multiprocessing.pool import Pool
-from typing import NamedTuple, Sequence
+from typing import Sequence
 
 import numpy as np
 import pandas as pd
 from data_processing.dataframe_validation import DataframeColumn, get_df_col
 from data_processing.processing.figure_of_merit import FOM, bimodal
+from data_processing.types import BimodalBounds, BimodalParams, GaussianParams
 from scipy.optimize import curve_fit
-
-
-class BimodalParams(NamedTuple):
-    mu1: float
-    sigma1: float
-    a1: float
-    mu2: float
-    sigma2: float
-    a2: float
-
-
-class GaussianParams(NamedTuple):
-    mu: float
-    sigma: float
-    a: float
-
-
-BimodalBounds = tuple[BimodalParams, BimodalParams]
 
 
 def split_params(params: BimodalParams) -> tuple[GaussianParams, GaussianParams]:

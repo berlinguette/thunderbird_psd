@@ -1,5 +1,4 @@
 from math import ceil
-from typing import Any, Callable, Literal, TypeVar
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -7,16 +6,19 @@ import numpy as np
 import pandas as pd
 from data_processing.dataframe_validation import DataframeColumn, get_df_col
 from data_processing.processing.figure_of_merit import FOM, gaussian
-from data_processing.processing.neutron_classification import WindowBorders
 from data_processing.processing.processing_configs import DEFAULT_LOWER_ENERGY_BOUND
 from data_processing.reporting.plot_configs import *
+from data_processing.types import (
+    AxesMatrix,
+    DictKey,
+    DictValue,
+    GraphData,
+    GraphingFunction,
+    Kwargs,
+    WindowBorders,
+)
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
-
-Kwargs = dict[str, Any]
-GraphData = dict[Literal["x"] | Literal["y"], pd.Series]
-GraphingFunction = Callable[[Figure, Axes, GraphData, Kwargs], Axes]
-AxesMatrix = list[list[Axes]]
 
 
 def plot_single(
@@ -596,11 +598,9 @@ def _get_range_with_margins(
     return (start - margin, end + margin)
 
 
-K = TypeVar("K")
-V = TypeVar("V")
-
-
-def _popget(dictionary: dict[K, V], key: K, default: V) -> V:
+def _popget(
+    dictionary: dict[DictKey, DictValue], key: DictKey, default: DictValue
+) -> DictValue:
     # acts like dict.get, but pops key out of dict if exists
     try:
         return dictionary.pop(key)

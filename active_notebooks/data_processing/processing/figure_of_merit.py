@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from bimodal_fitting import BimodalParams
+from data_processing.types import BimodalParams
 from scipy import interpolate, signal
 from scipy.optimize import curve_fit
 

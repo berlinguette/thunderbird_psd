@@ -1,23 +1,11 @@
-from typing import Callable, NamedTuple, TypeVar
-
 import numpy as np
 import pandas as pd
+from data_processing.types import WindowBorders, WindowBorderFunction
 from data_processing.dataframe_validation import DataframeColumn, get_df_col
 from data_processing.processing.processing_configs import DEFAULT_LOWER_ENERGY_BOUND
-from numpy.typing import NDArray
 from scipy.interpolate import interp1d
 from scipy.optimize import root_scalar
 from scipy.signal import savgol_filter
-
-V = TypeVar("V", float, pd.Series[float], NDArray)
-WindowBorderFunction = Callable[[V], V]
-
-
-class WindowBorders(NamedTuple):
-    left: float | None
-    right: float | None
-    bottom: WindowBorderFunction | None
-    top: WindowBorderFunction | None
 
 
 def generate_nasa_neutron_window(
