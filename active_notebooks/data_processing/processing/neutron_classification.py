@@ -41,14 +41,14 @@ def generate_nasa_neutron_window(
 def generate_new_neutron_window(
     slice_fit_df: pd.DataFrame,
     sigma: float = 3,
-    fom_energy_range: tuple[float, float] = (0.10, 0.25),
+    fom_energy_range: tuple[float, float] = (0.10, 0.35),
 ) -> WindowBorders:
     energy_bin_left_edges = slice_fit_df['slice_energy_min']
     energy_bin_midpoints = _get_energy_midpoints(slice_fit_df)
     left_border = _generate_new_window_left_border(
         slice_fit_df, energy_bin_midpoints, fom_energy_range=fom_energy_range
     )
-    right_border = 688  # keVee, Compton edge + detector resolution
+    right_border = 0.688  # keVee, Compton edge + detector resolution
     bottom_border = _generate_new_window_bottom_border(
         slice_fit_df, energy_bin_left_edges, sigma
     )
@@ -66,11 +66,9 @@ def _generate_new_window_left_border(
     fom_energy_range: tuple[float, float]
 ) -> float:
     # create interp: x = energy_bin_midpoints, y = fom
-    energy_fom_curve = interp1d(energy_bin_midpoints, slice_fit_df["fom"])
-    # modify function: lambda x: fn(x) - 1.27
-    curve_for_root_finding = lambda x: energy_fom_curve(x) - 1.27
+    energy_fom_curve = interp1d(energy_bin_midpoints, slice_fit_df["fom"] - 1.27)
     # use root_scalar to find E where FOM = 1.27 and return
-    root_results = root_scalar(curve_for_root_finding, bracket=fom_energy_range)
+    root_results = root_scalar(energy_fom_curve, bracket=fom_energy_range)
     if root_results.converged:
         return root_results.root
     else:
@@ -83,12 +81,12 @@ def _generate_new_window_left_border(
 def _generate_new_window_bottom_border(
     slice_fit_df: pd.DataFrame, energy_bin_left_edges: np.ndarray, sigma: float
 ) -> WindowBorderFunction:
-    border_psd_values = slice_fit_df["mu1"] - sigma * slice_fit_df["sigma1"]
+    border_psd_values = slice_fit_df["mu2"] - sigma * slice_fit_df["sigma2"]
     border: WindowBorderFunction = interp1d(
         energy_bin_left_edges,
         border_psd_values,
         kind="previous",
-        fill_value=(border_psd_values[0], border_psd_values[-1]),  # type: ignore
+        fill_value=(border_psd_values.iloc[0], border_psd_values.iloc[-1]),
         bounds_error=False,
     )
     return border
@@ -97,12 +95,12 @@ def _generate_new_window_bottom_border(
 def _generate_new_window_top_border(
     slice_fit_df: pd.DataFrame, energy_bin_left_edges: np.ndarray, sigma: float
 ) -> WindowBorderFunction:
-    border_psd_values = slice_fit_df["mu1"] + sigma * slice_fit_df["sigma1"]
+    border_psd_values = slice_fit_df["mu2"] + sigma * slice_fit_df["sigma2"]
     border: WindowBorderFunction = interp1d(
         energy_bin_left_edges,
         border_psd_values,
         kind="previous",
-        fill_value=(border_psd_values[0], border_psd_values[-1]),  # type: ignore
+        fill_value=(border_psd_values.iloc[0], border_psd_values.iloc[-1]),
         bounds_error=False,
     )
     return border

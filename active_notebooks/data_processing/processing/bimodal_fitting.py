@@ -237,7 +237,7 @@ def scan_histogram_slices(
 
     psd_bin_left_edges = psd_bin_edges[:-1]
     psd_bin_right_edges = psd_bin_edges[1:]
-    psd_bin_centers = psd_bin_right_edges - psd_bin_left_edges
+    psd_bin_centers = (psd_bin_right_edges + psd_bin_left_edges)/2
     energy_bin_edges_limited = energy_bin_edges[start_idx:end_idx+1]
 
     energy_slices = list(histogram[start_idx:end_idx, :])
