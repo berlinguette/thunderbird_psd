@@ -13,6 +13,7 @@ from data_processing.types import (
     GaussianParams,
     UnpackedFitErrorResult,
     UnpackedFitResult,
+    unpack_bimodal_params
 )
 from scipy.optimize import curve_fit
 
@@ -60,19 +61,16 @@ def get_bimodal_fit(
     cov: ndarray
         Estimated covariance of all bimodial parameters
     """
-    bounds_tuple = (
-        bounds.mu1,
-        bounds.sigma1,
-        bounds.A1,
-        bounds.mu2,
-        bounds.sigma2,
-        bounds.A2
-    )
+    lo_bounds, hi_bounds = bounds
+    unpacked_lo = unpack_bimodal_params(lo_bounds)
+    unpacked_hi = unpack_bimodal_params(hi_bounds)
+    bounds_tuple = (unpacked_lo, unpacked_hi)
+    
     params, cov = curve_fit(
         bimodal,
         bins,
         histogram_slice,
-        bounds=bounds_tuple,
+        bounds=bounds_tuple
     )
 
     params = BimodalParams(*params)

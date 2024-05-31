@@ -24,6 +24,29 @@ class GaussianParams(NamedTuple):
 BimodalBounds = tuple[BimodalParams, BimodalParams]
 
 
+def unpack_bimodal_params(
+    params: BimodalParams
+) -> tuple[float, float, float, float, float, float]:
+    return (
+        params.mu1,
+        params.sigma1,
+        params.a1,
+        params.mu2,
+        params.sigma2,
+        params.a2
+    )
+    
+
+def unpack_gaussian_params(
+    params: GaussianParams
+) -> tuple[float, float, float]:
+    return (
+        params.mu,
+        params.sigma,
+        params.a
+    )
+
+
 class FitResult(NamedTuple):
     index: int
     gamma_params: GaussianParams | None
