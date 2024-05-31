@@ -60,11 +60,19 @@ def get_bimodal_fit(
     cov: ndarray
         Estimated covariance of all bimodial parameters
     """
+    bounds_tuple = (
+        bounds.mu1,
+        bounds.sigma1,
+        bounds.A1,
+        bounds.mu2,
+        bounds.sigma2,
+        bounds.A2
+    )
     params, cov = curve_fit(
         bimodal,
         bins,
         histogram_slice,
-        bounds=bounds,
+        bounds=bounds_tuple,
     )
 
     params = BimodalParams(*params)

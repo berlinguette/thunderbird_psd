@@ -41,12 +41,12 @@ def generate_nasa_neutron_window(
 def generate_new_neutron_window(
     slice_fit_df: pd.DataFrame,
     sigma: float = 3,
-    fom_energy_guess: float = 0.2,
+    fom_energy_range: tuple[float, float] = (0.10, 0.25),
 ) -> WindowBorders:
-    energy_bin_left_edges = pd['slice_energy_min']
+    energy_bin_left_edges = slice_fit_df['slice_energy_min']
     energy_bin_midpoints = _get_energy_midpoints(slice_fit_df)
     left_border = _generate_new_window_left_border(
-        slice_fit_df, energy_bin_midpoints, fom_energy_guess=fom_energy_guess
+        slice_fit_df, energy_bin_midpoints, fom_energy_range=fom_energy_range
     )
     right_border = 688  # keVee, Compton edge + detector resolution
     bottom_border = _generate_new_window_bottom_border(
@@ -63,14 +63,14 @@ def generate_new_neutron_window(
 def _generate_new_window_left_border(
     slice_fit_df: pd.DataFrame,
     energy_bin_midpoints: np.ndarray,
-    fom_energy_guess: float = 200,
+    fom_energy_range: tuple[float, float]
 ) -> float:
     # create interp: x = energy_bin_midpoints, y = fom
     energy_fom_curve = interp1d(energy_bin_midpoints, slice_fit_df["fom"])
     # modify function: lambda x: fn(x) - 1.27
     curve_for_root_finding = lambda x: energy_fom_curve(x) - 1.27
     # use root_scalar to find E where FOM = 1.27 and return
-    root_results = root_scalar(curve_for_root_finding, x0=fom_energy_guess)
+    root_results = root_scalar(curve_for_root_finding, bracket=fom_energy_range)
     if root_results.converged:
         return root_results.root
     else:
