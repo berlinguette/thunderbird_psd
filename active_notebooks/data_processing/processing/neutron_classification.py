@@ -2,7 +2,6 @@ import numpy as np
 import pandas as pd
 from data_processing.types import WindowBorders, WindowBorderFunction
 from data_processing.dataframe_validation import DataframeColumn, get_df_col
-from data_processing.processing.processing_configs import DEFAULT_LOWER_ENERGY_BOUND
 from scipy.interpolate import interp1d
 from scipy.optimize import root_scalar
 from scipy.signal import savgol_filter
@@ -62,7 +61,7 @@ def generate_new_neutron_window(
 
 def _generate_new_window_left_border(
     slice_fit_df: pd.DataFrame,
-    energy_bin_midpoints: np.ndarray,
+    energy_bin_midpoints: pd.Series,
     fom_energy_range: tuple[float, float]
 ) -> float:
     # create interp: x = energy_bin_midpoints, y = fom
@@ -79,28 +78,30 @@ def _generate_new_window_left_border(
 
 
 def _generate_new_window_bottom_border(
-    slice_fit_df: pd.DataFrame, energy_bin_left_edges: np.ndarray, sigma: float
+    slice_fit_df: pd.DataFrame, energy_bin_left_edges: pd.Series, sigma: float
 ) -> WindowBorderFunction:
     border_psd_values = slice_fit_df["mu2"] - sigma * slice_fit_df["sigma2"]
+    fill_values = (border_psd_values.iloc[0], border_psd_values.iloc[-1])
     border: WindowBorderFunction = interp1d(
         energy_bin_left_edges,
         border_psd_values,
         kind="previous",
-        fill_value=(border_psd_values.iloc[0], border_psd_values.iloc[-1]),
+        fill_value=fill_values,  # type: ignore
         bounds_error=False,
     )
     return border
 
 
 def _generate_new_window_top_border(
-    slice_fit_df: pd.DataFrame, energy_bin_left_edges: np.ndarray, sigma: float
+    slice_fit_df: pd.DataFrame, energy_bin_left_edges: pd.Series, sigma: float
 ) -> WindowBorderFunction:
     border_psd_values = slice_fit_df["mu2"] + sigma * slice_fit_df["sigma2"]
+    fill_values = (border_psd_values.iloc[0], border_psd_values.iloc[-1])
     border: WindowBorderFunction = interp1d(
         energy_bin_left_edges,
         border_psd_values,
         kind="previous",
-        fill_value=(border_psd_values.iloc[0], border_psd_values.iloc[-1]),
+        fill_value=fill_values,  # type: ignore
         bounds_error=False,
     )
     return border
@@ -176,5 +177,5 @@ def _get_energy_midpoints(df: pd.DataFrame) -> pd.Series:
     slice_energy_min = df['slice_energy_min']
     slice_energy_max = df['slice_energy_max']
     intervals = pd.Series(pd.arrays.IntervalArray.from_arrays(slice_energy_min, slice_energy_max), index=df.index)
-    midpoints = pd.Series(intervals.array.mid, index=df.index)
+    midpoints = pd.Series(intervals.array.mid, index=df.index)  # type: ignore
     return midpoints
