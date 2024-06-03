@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Final
+from typing import Final, Literal
 
 from numpy import int64
 from pandas import DataFrame, Series
@@ -7,6 +7,7 @@ from pandas import DataFrame, Series
 
 class DetectorDataframeColumn(Enum):
     CALIB_ENERGY = "CALIB_ENERGY"
+    RECALIBRATED_ENERGY = "RECALIB_ENERGY"
     ENERGYSHORT = "ENERGYSHORT"
     ENERGY = "ENERGY"
     TIMETAG = "TIMETAG"
@@ -32,6 +33,7 @@ col_types = {
     DetectorDataframeColumn.TIMETAG: int64,
 }
 STARTING_COL_TYPES: Final = {k.value: v for k, v in col_types.items()}
+EnergyColumn = Literal[DetectorDataframeColumn.CALIB_ENERGY, DetectorDataframeColumn.RECALIBRATED_ENERGY]
 
 
 class SliceFitDataframeColumn(Enum):

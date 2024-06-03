@@ -1,9 +1,15 @@
 from multiprocessing.pool import IMapIterator, Pool
-from typing import Sequence
+from typing import Literal, Sequence
 
 import numpy as np
 import pandas as pd
-from data_processing.dataframe_validation import DetectorDataframeColumn, get_df_col, FIT_COLUMN_NAMES, FIT_ERROR_COLUMN_NAMES
+from data_processing.dataframe_validation import (
+    FIT_COLUMN_NAMES,
+    FIT_ERROR_COLUMN_NAMES,
+    DetectorDataframeColumn,
+    EnergyColumn,
+    get_df_col,
+)
 from data_processing.processing.figure_of_merit import FOM, bimodal
 from data_processing.types import (
     BimodalBounds,
@@ -13,7 +19,7 @@ from data_processing.types import (
     GaussianParams,
     UnpackedFitErrorResult,
     UnpackedFitResult,
-    unpack_bimodal_params
+    unpack_bimodal_params,
 )
 from scipy.optimize import curve_fit
 
@@ -65,13 +71,8 @@ def get_bimodal_fit(
     unpacked_lo = unpack_bimodal_params(lo_bounds)
     unpacked_hi = unpack_bimodal_params(hi_bounds)
     bounds_tuple = (unpacked_lo, unpacked_hi)
-    
-    params, cov = curve_fit(
-        bimodal,
-        bins,
-        histogram_slice,
-        bounds=bounds_tuple
-    )
+
+    params, cov = curve_fit(bimodal, bins, histogram_slice, bounds=bounds_tuple)
 
     params = BimodalParams(*params)
     gamma_params, neutron_params = split_params(params)
@@ -237,8 +238,8 @@ def scan_histogram_slices(
 
     psd_bin_left_edges = psd_bin_edges[:-1]
     psd_bin_right_edges = psd_bin_edges[1:]
-    psd_bin_centers = (psd_bin_right_edges + psd_bin_left_edges)/2
-    energy_bin_edges_limited = energy_bin_edges[start_idx:end_idx+1]
+    psd_bin_centers = (psd_bin_right_edges + psd_bin_left_edges) / 2
+    energy_bin_edges_limited = energy_bin_edges[start_idx : end_idx + 1]
 
     energy_slices = list(histogram[start_idx:end_idx, :])
 
@@ -265,12 +266,13 @@ def scan_histogram_slices(
 
 def get_psd_energy_histogram(
     df: pd.DataFrame,
+    energy_column: EnergyColumn,
     energy_width: float = 0.0150,
     psd_bin_count: int = 100,
     psd_min: float = 0.0,
     psd_max: float = 0.5,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    x = get_df_col(df, DetectorDataframeColumn.CALIB_ENERGY)
+    x = get_df_col(df, energy_column)
     y = get_df_col(df, DetectorDataframeColumn.PSD)
 
     within_psd = y.between(psd_min, psd_max)

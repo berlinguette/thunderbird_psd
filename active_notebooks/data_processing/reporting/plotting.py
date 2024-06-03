@@ -4,7 +4,7 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from data_processing.dataframe_validation import DetectorDataframeColumn, get_df_col
+from data_processing.dataframe_validation import DetectorDataframeColumn, get_df_col, EnergyColumn
 from data_processing.processing.figure_of_merit import FOM, gaussian
 from data_processing.processing.processing_configs import DEFAULT_LOWER_ENERGY_BOUND
 from data_processing.reporting.plot_configs import *
@@ -171,7 +171,7 @@ def plot_tail_vs_total(
     y_resolution = _get_histogram_y_resolution(
         x_resolution=x_resolution, plot_width=figsize[0], plot_height=figsize[1]
     )
-    max_energy = get_df_col(df, DetectorDataframeColumn.CALIB_ENERGY).max()
+    max_energy = get_df_col(df, DetectorDataframeColumn.ENERGY).max()
     plot_kwargs = {
         "x_resolution": x_resolution,
         "y_resolution": y_resolution,
@@ -199,6 +199,7 @@ def plot_tail_vs_total(
 
 def plot_psd_histogram(
     df: pd.DataFrame,
+    energy_column: EnergyColumn = DetectorDataframeColumn.CALIB_ENERGY,
     colormap_name: str = "gnuplot",
     colorbar: bool = False,
     energy_start_zero: bool = False,
@@ -219,7 +220,7 @@ def plot_psd_histogram(
         **kwargs,
     }
 
-    energy_col = get_df_col(df, DetectorDataframeColumn.CALIB_ENERGY)
+    energy_col = get_df_col(df, energy_column)
     psd_col = get_df_col(df, DetectorDataframeColumn.PSD)
     data: GraphData = {"x": energy_col, "y": psd_col}
 

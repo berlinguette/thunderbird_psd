@@ -1,7 +1,13 @@
-import numpy as np
+from typing import Any
+
 import pandas as pd
-from data_processing.types import WindowBorders, VectorLikeFunction
-from data_processing.dataframe_validation import DetectorDataframeColumn, SliceFitDataframeColumn, get_df_col
+from data_processing.dataframe_validation import (
+    DetectorDataframeColumn,
+    EnergyColumn,
+    SliceFitDataframeColumn,
+    get_df_col,
+)
+from data_processing.types import VectorLike, VectorLikeFunction, WindowBorders
 from scipy.interpolate import interp1d
 from scipy.optimize import root_scalar
 from scipy.signal import savgol_filter
@@ -29,7 +35,7 @@ def generate_nasa_neutron_window(
         bounds_error=False,
     )  # now it's a function!
 
-    def neutron_ub_fit(x: pd.Series[float]) -> pd.Series[float]:
+    def neutron_ub_fit(x: VectorLike) -> Any:
         # upper bound is just a fixed PSD offset from lower bound
         # as observed in NASA paper graphs
         return neutron_lb_fit(x) + window_offset
@@ -44,7 +50,9 @@ def generate_new_neutron_window(
     sigma: float = 3,
     fom_energy_range: tuple[float, float] = (0.10, 0.35),
 ) -> WindowBorders:
-    energy_bin_left_edges = get_df_col(slice_fit_df, SliceFitDataframeColumn.SLICE_ENERGY_MINIMUM)
+    energy_bin_left_edges = get_df_col(
+        slice_fit_df, SliceFitDataframeColumn.SLICE_ENERGY_MINIMUM
+    )
     energy_bin_midpoints = _get_energy_midpoints(slice_fit_df)
     left_border = _generate_new_window_left_border(
         slice_fit_df, energy_bin_midpoints, fom_energy_range=fom_energy_range
@@ -64,7 +72,7 @@ def generate_new_neutron_window(
 def _generate_new_window_left_border(
     slice_fit_df: pd.DataFrame,
     energy_bin_midpoints: pd.Series,
-    fom_energy_range: tuple[float, float]
+    fom_energy_range: tuple[float, float],
 ) -> float:
     # create interp: x = energy_bin_midpoints, y = fom
     fom_series = get_df_col(slice_fit_df, SliceFitDataframeColumn.FOM)
@@ -84,7 +92,9 @@ def _generate_new_window_bottom_border(
     slice_fit_df: pd.DataFrame, energy_bin_left_edges: pd.Series, sigma: float
 ) -> VectorLikeFunction:
     neutron_mu_series = get_df_col(slice_fit_df, SliceFitDataframeColumn.NEUTRON_MU)
-    neutron_sigma_series = get_df_col(slice_fit_df, SliceFitDataframeColumn.NEUTRON_SIGMA)
+    neutron_sigma_series = get_df_col(
+        slice_fit_df, SliceFitDataframeColumn.NEUTRON_SIGMA
+    )
     border_psd_values = neutron_mu_series - sigma * neutron_sigma_series
     fill_values = (border_psd_values.iloc[0], border_psd_values.iloc[-1])
     border: VectorLikeFunction = interp1d(
@@ -101,7 +111,9 @@ def _generate_new_window_top_border(
     slice_fit_df: pd.DataFrame, energy_bin_left_edges: pd.Series, sigma: float
 ) -> VectorLikeFunction:
     neutron_mu_series = get_df_col(slice_fit_df, SliceFitDataframeColumn.NEUTRON_MU)
-    neutron_sigma_series = get_df_col(slice_fit_df, SliceFitDataframeColumn.NEUTRON_SIGMA)
+    neutron_sigma_series = get_df_col(
+        slice_fit_df, SliceFitDataframeColumn.NEUTRON_SIGMA
+    )
     border_psd_values = neutron_mu_series + sigma * neutron_sigma_series
     fill_values = (border_psd_values.iloc[0], border_psd_values.iloc[-1])
     border: VectorLikeFunction = interp1d(
@@ -116,6 +128,7 @@ def _generate_new_window_top_border(
 
 def classify(
     psd_report: pd.DataFrame,
+    energy_column: EnergyColumn,
     borders: WindowBorders,
     label: DetectorDataframeColumn = DetectorDataframeColumn.NEUTRON_CLASS,
     # window_adj_offset: int = 0
@@ -127,7 +140,9 @@ def classify(
     ----------
     psd_report: DataFrame
         DataFrame containing signal PSD data.
-        It must have the "tail / total" (for PSD value) and "CALIB_ENERGY" (for calibrated energy) columns.
+        It must have the "tail / total" (for PSD value) column, as well as the column given in the `energy_column` parameter.
+    energy_column: EnergyColumn
+        The column containing the calibrated energy values.
     borders: WindowBorders
         The borders for the neutron window
     label: str
@@ -138,7 +153,7 @@ def classify(
     psd_report: DataFrame
         Original DataFrame with new column for neutron classification
     """
-    energy_col = get_df_col(psd_report, DetectorDataframeColumn.CALIB_ENERGY)
+    energy_col = get_df_col(psd_report, energy_column)
     psd_col = get_df_col(psd_report, DetectorDataframeColumn.PSD)
 
     bottom_border_fn = borders.bottom
@@ -183,6 +198,9 @@ def _is_within_bounds(
 def _get_energy_midpoints(df: pd.DataFrame) -> pd.Series:
     slice_energy_min = get_df_col(df, SliceFitDataframeColumn.SLICE_ENERGY_MINIMUM)
     slice_energy_max = get_df_col(df, SliceFitDataframeColumn.SLICE_ENERGY_MAXIMUM)
-    intervals = pd.Series(pd.arrays.IntervalArray.from_arrays(slice_energy_min, slice_energy_max), index=df.index)
+    intervals = pd.Series(
+        pd.arrays.IntervalArray.from_arrays(slice_energy_min, slice_energy_max),
+        index=df.index,
+    )
     midpoints = pd.Series(intervals.array.mid, index=df.index)  # type: ignore
     return midpoints
