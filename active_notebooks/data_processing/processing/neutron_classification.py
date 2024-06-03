@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from data_processing.types import WindowBorders, WindowBorderFunction
+from data_processing.types import WindowBorders, VectorLikeFunction
 from data_processing.dataframe_validation import DataframeColumn, get_df_col
 from scipy.interpolate import interp1d
 from scipy.optimize import root_scalar
@@ -20,7 +20,7 @@ def generate_nasa_neutron_window(
         polyorder=3,
     )  # reduce noise
     slice_xs = _get_energy_midpoints(slice_fit_df)
-    neutron_lb_fit: WindowBorderFunction = interp1d(
+    neutron_lb_fit: VectorLikeFunction = interp1d(
         slice_xs,
         neutron_lb,
         fill_value=(neutron_lb[0], neutron_lb[-1]),  # type: ignore
@@ -79,10 +79,10 @@ def _generate_new_window_left_border(
 
 def _generate_new_window_bottom_border(
     slice_fit_df: pd.DataFrame, energy_bin_left_edges: pd.Series, sigma: float
-) -> WindowBorderFunction:
+) -> VectorLikeFunction:
     border_psd_values = slice_fit_df["mu2"] - sigma * slice_fit_df["sigma2"]
     fill_values = (border_psd_values.iloc[0], border_psd_values.iloc[-1])
-    border: WindowBorderFunction = interp1d(
+    border: VectorLikeFunction = interp1d(
         energy_bin_left_edges,
         border_psd_values,
         kind="previous",
@@ -94,10 +94,10 @@ def _generate_new_window_bottom_border(
 
 def _generate_new_window_top_border(
     slice_fit_df: pd.DataFrame, energy_bin_left_edges: pd.Series, sigma: float
-) -> WindowBorderFunction:
+) -> VectorLikeFunction:
     border_psd_values = slice_fit_df["mu2"] + sigma * slice_fit_df["sigma2"]
     fill_values = (border_psd_values.iloc[0], border_psd_values.iloc[-1])
-    border: WindowBorderFunction = interp1d(
+    border: VectorLikeFunction = interp1d(
         energy_bin_left_edges,
         border_psd_values,
         kind="previous",

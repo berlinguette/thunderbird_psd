@@ -89,14 +89,14 @@ UnpackedFitErrorResult = tuple[
 ]
 
 VectorLike = TypeVar("VectorLike", float, Series, NDArray)
-WindowBorderFunction = Callable[[VectorLike], VectorLike]
+VectorLikeFunction = Callable[[VectorLike], VectorLike]
 
 
 class WindowBorders(NamedTuple):
     left: float | None
     right: float | None
-    bottom: WindowBorderFunction | None
-    top: WindowBorderFunction | None
+    bottom: VectorLikeFunction | None
+    top: VectorLikeFunction | None
 
 
 Kwargs = dict[str, Any]
