@@ -34,5 +34,43 @@ col_types = {
 STARTING_COL_TYPES: Final = {k.value: v for k, v in col_types.items()}
 
 
-def get_df_col(df: DataFrame, col: DetectorDataframeColumn) -> Series:
+class SliceFitDataframeColumn(Enum):
+    INDEX = "i"
+    GAMMA_MU = "mu1"
+    GAMMA_SIGMA = "sigma1"
+    GAMMA_AMPLITUDE = "a1"
+    NEUTRON_MU = "mu2"
+    NEUTRON_SIGMA = "sigma2"
+    NEUTRON_AMPLITUDE = "a2"
+    SLICE_ENERGY_MINIMUM = "slice_energy_min"
+    SLICE_ENERGY_MAXIMUM = "slice_energy_max"
+    FOM = "fom"
+    
+FIT_COLUMNS: Final = [
+    SliceFitDataframeColumn.INDEX, 
+    SliceFitDataframeColumn.GAMMA_MU, 
+    SliceFitDataframeColumn.GAMMA_SIGMA, 
+    SliceFitDataframeColumn.GAMMA_AMPLITUDE, 
+    SliceFitDataframeColumn.NEUTRON_MU, 
+    SliceFitDataframeColumn.NEUTRON_SIGMA, 
+    SliceFitDataframeColumn.NEUTRON_AMPLITUDE, 
+    SliceFitDataframeColumn.SLICE_ENERGY_MINIMUM, 
+    SliceFitDataframeColumn.SLICE_ENERGY_MAXIMUM, 
+    SliceFitDataframeColumn.FOM
+]
+FIT_COLUMN_NAMES: Final = [e.value for e in FIT_COLUMNS]
+FIT_ERROR_COLUMNS: Final = [
+    SliceFitDataframeColumn.INDEX, 
+    SliceFitDataframeColumn.GAMMA_MU, 
+    SliceFitDataframeColumn.GAMMA_SIGMA, 
+    SliceFitDataframeColumn.GAMMA_AMPLITUDE, 
+    SliceFitDataframeColumn.NEUTRON_MU, 
+    SliceFitDataframeColumn.NEUTRON_SIGMA, 
+    SliceFitDataframeColumn.NEUTRON_AMPLITUDE, 
+    SliceFitDataframeColumn.SLICE_ENERGY_MINIMUM, 
+    SliceFitDataframeColumn.SLICE_ENERGY_MAXIMUM
+]
+FIT_ERROR_COLUMN_NAMES: Final = [e.value for e in FIT_ERROR_COLUMNS]
+
+def get_df_col(df: DataFrame, col: DetectorDataframeColumn|SliceFitDataframeColumn) -> Series:
     return df[col.value]

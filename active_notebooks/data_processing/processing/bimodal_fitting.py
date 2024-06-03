@@ -3,7 +3,7 @@ from typing import Sequence
 
 import numpy as np
 import pandas as pd
-from data_processing.dataframe_validation import DetectorDataframeColumn, get_df_col
+from data_processing.dataframe_validation import DetectorDataframeColumn, get_df_col, FIT_COLUMN_NAMES, FIT_ERROR_COLUMN_NAMES
 from data_processing.processing.figure_of_merit import FOM, bimodal
 from data_processing.types import (
     BimodalBounds,
@@ -257,19 +257,8 @@ def scan_histogram_slices(
     )
     slice_params, slice_err = _unpack_slice_fit_pool_results(results)
 
-    columns = [
-        "i",
-        "mu1",
-        "sigma1",
-        "a1",
-        "mu2",
-        "sigma2",
-        "a2",
-        "slice_energy_min",
-        "slice_energy_max",
-    ]
-    df = pd.DataFrame(slice_params, columns=columns + ["fom"])
-    err_df = pd.DataFrame(slice_err, columns=columns)
+    df = pd.DataFrame(slice_params, columns=FIT_COLUMN_NAMES)
+    err_df = pd.DataFrame(slice_err, columns=FIT_ERROR_COLUMN_NAMES)
 
     return df, err_df
 

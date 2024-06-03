@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 from data_processing.types import WindowBorders, VectorLikeFunction
-from data_processing.dataframe_validation import DetectorDataframeColumn, get_df_col
+from data_processing.dataframe_validation import DetectorDataframeColumn, SliceFitDataframeColumn, get_df_col
 from scipy.interpolate import interp1d
 from scipy.optimize import root_scalar
 from scipy.signal import savgol_filter
@@ -13,9 +13,11 @@ def generate_nasa_neutron_window(
     sigma: float = 5,
     lower_energy_bound: float = 0.1966,
 ) -> WindowBorders:
+    gamma_mu_series = get_df_col(slice_fit_df, SliceFitDataframeColumn.GAMMA_MU)
+    gamma_sigma_series = get_df_col(slice_fit_df, SliceFitDataframeColumn.GAMMA_SIGMA)
     # Define lower and upper bounds (neutron_lb_fit, neutron_ub_fit)
     neutron_lb = savgol_filter(
-        slice_fit_df["mu1"] + sigma * slice_fit_df["sigma1"],
+        gamma_mu_series + sigma * gamma_sigma_series,
         window_length=21,
         polyorder=3,
     )  # reduce noise
@@ -42,7 +44,7 @@ def generate_new_neutron_window(
     sigma: float = 3,
     fom_energy_range: tuple[float, float] = (0.10, 0.35),
 ) -> WindowBorders:
-    energy_bin_left_edges = slice_fit_df['slice_energy_min']
+    energy_bin_left_edges = get_df_col(slice_fit_df, SliceFitDataframeColumn.SLICE_ENERGY_MINIMUM)
     energy_bin_midpoints = _get_energy_midpoints(slice_fit_df)
     left_border = _generate_new_window_left_border(
         slice_fit_df, energy_bin_midpoints, fom_energy_range=fom_energy_range
@@ -65,7 +67,8 @@ def _generate_new_window_left_border(
     fom_energy_range: tuple[float, float]
 ) -> float:
     # create interp: x = energy_bin_midpoints, y = fom
-    energy_fom_curve = interp1d(energy_bin_midpoints, slice_fit_df["fom"] - 1.27)
+    fom_series = get_df_col(slice_fit_df, SliceFitDataframeColumn.FOM)
+    energy_fom_curve = interp1d(energy_bin_midpoints, fom_series - 1.27)
     # use root_scalar to find E where FOM = 1.27 and return
     root_results = root_scalar(energy_fom_curve, bracket=fom_energy_range)
     if root_results.converged:
@@ -80,7 +83,9 @@ def _generate_new_window_left_border(
 def _generate_new_window_bottom_border(
     slice_fit_df: pd.DataFrame, energy_bin_left_edges: pd.Series, sigma: float
 ) -> VectorLikeFunction:
-    border_psd_values = slice_fit_df["mu2"] - sigma * slice_fit_df["sigma2"]
+    neutron_mu_series = get_df_col(slice_fit_df, SliceFitDataframeColumn.NEUTRON_MU)
+    neutron_sigma_series = get_df_col(slice_fit_df, SliceFitDataframeColumn.NEUTRON_SIGMA)
+    border_psd_values = neutron_mu_series - sigma * neutron_sigma_series
     fill_values = (border_psd_values.iloc[0], border_psd_values.iloc[-1])
     border: VectorLikeFunction = interp1d(
         energy_bin_left_edges,
@@ -95,7 +100,9 @@ def _generate_new_window_bottom_border(
 def _generate_new_window_top_border(
     slice_fit_df: pd.DataFrame, energy_bin_left_edges: pd.Series, sigma: float
 ) -> VectorLikeFunction:
-    border_psd_values = slice_fit_df["mu2"] + sigma * slice_fit_df["sigma2"]
+    neutron_mu_series = get_df_col(slice_fit_df, SliceFitDataframeColumn.NEUTRON_MU)
+    neutron_sigma_series = get_df_col(slice_fit_df, SliceFitDataframeColumn.NEUTRON_SIGMA)
+    border_psd_values = neutron_mu_series + sigma * neutron_sigma_series
     fill_values = (border_psd_values.iloc[0], border_psd_values.iloc[-1])
     border: VectorLikeFunction = interp1d(
         energy_bin_left_edges,
@@ -174,8 +181,8 @@ def _is_within_bounds(
 
 
 def _get_energy_midpoints(df: pd.DataFrame) -> pd.Series:
-    slice_energy_min = df['slice_energy_min']
-    slice_energy_max = df['slice_energy_max']
+    slice_energy_min = get_df_col(df, SliceFitDataframeColumn.SLICE_ENERGY_MINIMUM)
+    slice_energy_max = get_df_col(df, SliceFitDataframeColumn.SLICE_ENERGY_MAXIMUM)
     intervals = pd.Series(pd.arrays.IntervalArray.from_arrays(slice_energy_min, slice_energy_max), index=df.index)
     midpoints = pd.Series(intervals.array.mid, index=df.index)  # type: ignore
     return midpoints
