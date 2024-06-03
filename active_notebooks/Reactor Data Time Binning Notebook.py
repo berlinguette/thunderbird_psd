@@ -31,7 +31,7 @@ import numpy as np
 
 from data_processing.arc_paths import (
     get_parq_root, get_report_root, get_exp_root, get_reactor_data_root)
-from data_processing.dataframe_validation import DataframeColumn
+from data_processing.dataframe_validation import DetectorDataframeColumn
 from data_processing.loading.dataframe_loading import load_psd
 from data_processing.loading.timetag_processing import calculate_timetag_hours
 from data_processing.processing.bimodal_fitting import (
@@ -405,7 +405,7 @@ for exp_name, psd_report in experiment_neutron_data.items():
         psd_report,
         neutron_lb_fit,
         neutron_ub_fit,
-        DataframeColumn.NEUTRON_CLASS,
+        DetectorDataframeColumn.NEUTRON_CLASS,
         le_cutoff=L0
     )
 

@@ -3,7 +3,7 @@ from typing import Sequence
 
 import numpy as np
 import pandas as pd
-from data_processing.dataframe_validation import DataframeColumn, get_df_col
+from data_processing.dataframe_validation import DetectorDataframeColumn, get_df_col
 from data_processing.processing.figure_of_merit import FOM, bimodal
 from data_processing.types import (
     BimodalBounds,
@@ -281,8 +281,8 @@ def get_psd_energy_histogram(
     psd_min: float = 0.0,
     psd_max: float = 0.5,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    x = get_df_col(df, DataframeColumn.CALIB_ENERGY)
-    y = get_df_col(df, DataframeColumn.PSD)
+    x = get_df_col(df, DetectorDataframeColumn.CALIB_ENERGY)
+    y = get_df_col(df, DetectorDataframeColumn.PSD)
 
     within_psd = y.between(psd_min, psd_max)
     y = y[within_psd == True].copy()

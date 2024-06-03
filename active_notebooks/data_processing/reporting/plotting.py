@@ -4,7 +4,7 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from data_processing.dataframe_validation import DataframeColumn, get_df_col
+from data_processing.dataframe_validation import DetectorDataframeColumn, get_df_col
 from data_processing.processing.figure_of_merit import FOM, gaussian
 from data_processing.processing.processing_configs import DEFAULT_LOWER_ENERGY_BOUND
 from data_processing.reporting.plot_configs import *
@@ -171,7 +171,7 @@ def plot_tail_vs_total(
     y_resolution = _get_histogram_y_resolution(
         x_resolution=x_resolution, plot_width=figsize[0], plot_height=figsize[1]
     )
-    max_energy = get_df_col(df, DataframeColumn.CALIB_ENERGY).max()
+    max_energy = get_df_col(df, DetectorDataframeColumn.CALIB_ENERGY).max()
     plot_kwargs = {
         "x_resolution": x_resolution,
         "y_resolution": y_resolution,
@@ -179,8 +179,8 @@ def plot_tail_vs_total(
         **kwargs,
     }
 
-    energy_col = get_df_col(df, DataframeColumn.ENERGY)
-    short_col = get_df_col(df, DataframeColumn.ENERGYSHORT)
+    energy_col = get_df_col(df, DetectorDataframeColumn.ENERGY)
+    short_col = get_df_col(df, DetectorDataframeColumn.ENERGYSHORT)
     data: GraphData = {"x": energy_col, "y": energy_col - short_col}
 
     supertitle = f"Tail vs Total - {experiment_display_name}"
@@ -219,8 +219,8 @@ def plot_psd_histogram(
         **kwargs,
     }
 
-    energy_col = get_df_col(df, DataframeColumn.CALIB_ENERGY)
-    psd_col = get_df_col(df, DataframeColumn.PSD)
+    energy_col = get_df_col(df, DetectorDataframeColumn.CALIB_ENERGY)
+    psd_col = get_df_col(df, DetectorDataframeColumn.PSD)
     data: GraphData = {"x": energy_col, "y": psd_col}
 
     fig, ax = plot_single(
@@ -284,7 +284,7 @@ def plot_classification(
     df: pd.DataFrame,
     borders: WindowBorders,
     experiment_display_name: str,
-    class_col_name: DataframeColumn,
+    class_col_name: DetectorDataframeColumn,
     colormap_name: str = "RdBu_r",
     count_limit: int = 5,
     **kwargs,

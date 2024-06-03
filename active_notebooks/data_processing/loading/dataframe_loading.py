@@ -3,7 +3,7 @@ import pandas as pd
 from data_processing.arc_paths import get_parq_root, get_signals_root
 from data_processing.dataframe_validation import (STARTING_COL_NAMES,
                                                   STARTING_COL_TYPES,
-                                                  DataframeColumn, get_df_col)
+                                                  DetectorDataframeColumn, get_df_col)
 
 
 def load_psd(experiment_name: str) -> pd.DataFrame:
@@ -14,10 +14,10 @@ def load_psd(experiment_name: str) -> pd.DataFrame:
     psd_df = psd_df.astype(STARTING_COL_TYPES)
 
     # Calculate PSD value as new column "tail / total"
-    energy_col = get_df_col(psd_df, DataframeColumn.ENERGY)
-    short_col = get_df_col(psd_df, DataframeColumn.ENERGYSHORT)
+    energy_col = get_df_col(psd_df, DetectorDataframeColumn.ENERGY)
+    short_col = get_df_col(psd_df, DetectorDataframeColumn.ENERGYSHORT)
     psd_col = (energy_col - short_col) / energy_col
-    psd_df[DataframeColumn.PSD.value] = psd_col
+    psd_df[DetectorDataframeColumn.PSD.value] = psd_col
     
     valid_psd = psd_col.between(0, 0.5)
     psd_df = psd_df[valid_psd]

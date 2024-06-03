@@ -1,11 +1,11 @@
 import pandas as pd
-from data_processing.dataframe_validation import DataframeColumn
+from data_processing.dataframe_validation import DetectorDataframeColumn
 
 
 def generate_full_neutron_df(
     classified_df: pd.DataFrame,
     signals_df: pd.DataFrame,
-    classification_col: DataframeColumn = DataframeColumn.NEUTRON_CLASS
+    classification_col: DetectorDataframeColumn = DetectorDataframeColumn.NEUTRON_CLASS
 ) -> pd.DataFrame:
     neutrons_only = classified_df.query(classification_col.value)
     full_neutron_df = neutrons_only.join(signals_df)

@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 from data_processing.types import WindowBorders, VectorLikeFunction
-from data_processing.dataframe_validation import DataframeColumn, get_df_col
+from data_processing.dataframe_validation import DetectorDataframeColumn, get_df_col
 from scipy.interpolate import interp1d
 from scipy.optimize import root_scalar
 from scipy.signal import savgol_filter
@@ -110,7 +110,7 @@ def _generate_new_window_top_border(
 def classify(
     psd_report: pd.DataFrame,
     borders: WindowBorders,
-    label: DataframeColumn = DataframeColumn.NEUTRON_CLASS,
+    label: DetectorDataframeColumn = DetectorDataframeColumn.NEUTRON_CLASS,
     # window_adj_offset: int = 0
 ) -> pd.DataFrame:
     """Classify signals as neutron or non-neutron for a given count window
@@ -131,8 +131,8 @@ def classify(
     psd_report: DataFrame
         Original DataFrame with new column for neutron classification
     """
-    energy_col = get_df_col(psd_report, DataframeColumn.CALIB_ENERGY)
-    psd_col = get_df_col(psd_report, DataframeColumn.PSD)
+    energy_col = get_df_col(psd_report, DetectorDataframeColumn.CALIB_ENERGY)
+    psd_col = get_df_col(psd_report, DetectorDataframeColumn.PSD)
 
     bottom_border_fn = borders.bottom
     top_border_fn = borders.top
