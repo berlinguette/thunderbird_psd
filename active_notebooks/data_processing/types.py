@@ -110,3 +110,7 @@ AxesMatrix = list[list[Axes]]
 
 DictKey = TypeVar("DictKey")
 DictValue = TypeVar("DictValue")
+
+class CalibrationParams(NamedTuple):
+    p1: float
+    p2: float
