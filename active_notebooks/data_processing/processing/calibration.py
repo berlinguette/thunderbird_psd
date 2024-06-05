@@ -5,12 +5,12 @@ from data_processing.types import VectorLikeFunction, CalibrationParams
 from data_processing.dataframe_validation import DetectorDataframeColumn, get_df_col
 
 class Detector(Enum):
+    ZERO = 0
     ONE = 1
-    TWO = 2
     
 DetectorCalibrationParams: Final = {
-    Detector.ONE: CalibrationParams(p1=2.179, p2=41.67),
-    Detector.TWO: CalibrationParams(p1=1.884, p2=26.42)
+    Detector.ZERO: CalibrationParams(p1=2.179, p2=41.67),
+    Detector.ONE: CalibrationParams(p1=1.884, p2=26.42)
 }
 
 def recalibrate(df: pd.DataFrame, detector: Detector) -> pd.DataFrame:
@@ -25,5 +25,5 @@ def _add_recalibration_column(df: pd.DataFrame, calibration_fn: VectorLikeFuncti
     return df
 
 def _make_calibration_fn(params: CalibrationParams) -> VectorLikeFunction:
-    return lambda x: params.p1*x+params.p2
-
+    # return lambda x: params.p1*x+params.p2
+    return lambda x: (x-params.p2)/(params.p1*1000)
