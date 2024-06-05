@@ -16,6 +16,7 @@ class DetectorDataframeColumn(Enum):
     EVENT_TIME = "EVENT_TIME"
     EVENT_TIME_PS = "EVENT_TIME_PS"
     NEUTRON_CLASS = "NASA"
+    NEUTRON_RECALC_CLASS = "NASA_RECALC"
     NEW_N_CLASS = "IS_NEUTRON"
 
 
