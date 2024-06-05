@@ -18,30 +18,15 @@ def generate_nasa_neutron_window(
     window_offset: float = 0.2,
     sigma: float = 5,
     lower_energy_bound: float = 0.1966,
+    recalculate_lower_energy_bound: bool = False
 ) -> WindowBorders:
-    gamma_mu_series = get_df_col(slice_fit_df, SliceFitDataframeColumn.GAMMA_MU)
-    gamma_sigma_series = get_df_col(slice_fit_df, SliceFitDataframeColumn.GAMMA_SIGMA)
-    # Define lower and upper bounds (neutron_lb_fit, neutron_ub_fit)
-    neutron_lb = savgol_filter(
-        gamma_mu_series + sigma * gamma_sigma_series,
-        window_length=21,
-        polyorder=3,
-    )  # reduce noise
-    slice_xs = _get_energy_midpoints(slice_fit_df)
-    neutron_lb_fit: VectorLikeFunction = interp1d(
-        slice_xs,
-        neutron_lb,
-        fill_value=(neutron_lb[0], neutron_lb[-1]),  # type: ignore
-        bounds_error=False,
-    )  # now it's a function!
-
-    def neutron_ub_fit(x: VectorLike) -> Any:
-        # upper bound is just a fixed PSD offset from lower bound
-        # as observed in NASA paper graphs
-        return neutron_lb_fit(x) + window_offset
-
+    energy_bin_midpoints = _get_energy_midpoints(slice_fit_df)
+    bottom_border = _generate_nasa_window_bottom_border(slice_fit_df, sigma)
+    top_border = _generate_nasa_window_top_border(slice_fit_df, sigma, window_offset)    
+    if recalculate_lower_energy_bound:
+        lower_energy_bound = _generate_window_left_border(slice_fit_df, energy_bin_midpoints, (0.10, 0.35))
     return WindowBorders(
-        left=lower_energy_bound, bottom=neutron_lb_fit, top=neutron_ub_fit, right=None
+        left=lower_energy_bound, bottom=bottom_border, top=top_border, right=None
     )
 
 
@@ -54,7 +39,7 @@ def generate_new_neutron_window(
         slice_fit_df, SliceFitDataframeColumn.SLICE_ENERGY_MINIMUM
     )
     energy_bin_midpoints = _get_energy_midpoints(slice_fit_df)
-    left_border = _generate_new_window_left_border(
+    left_border = _generate_window_left_border(
         slice_fit_df, energy_bin_midpoints, fom_energy_range=fom_energy_range
     )
     right_border = 0.688  # keVee, Compton edge + detector resolution
@@ -69,7 +54,7 @@ def generate_new_neutron_window(
     )
 
 
-def _generate_new_window_left_border(
+def _generate_window_left_border(
     slice_fit_df: pd.DataFrame,
     energy_bin_midpoints: pd.Series,
     fom_energy_range: tuple[float, float],
@@ -86,6 +71,40 @@ def _generate_new_window_left_border(
             f"Left border could not be found after {root_results.iterations}: "
             + f"{root_results.flag}"
         )
+
+
+def _generate_nasa_window_bottom_border(
+    slice_fit_df: pd.DataFrame, sigma: float
+) -> VectorLikeFunction:
+    return _generate_nasa_gamma_fn(slice_fit_df, sigma)
+
+
+def _generate_nasa_window_top_border(
+    slice_fit_df: pd.DataFrame, sigma: float, window_offset: float
+) -> VectorLikeFunction:
+    return _generate_nasa_gamma_fn(slice_fit_df, sigma, offset=window_offset)
+
+
+def _generate_nasa_gamma_fn(
+        slice_fit_df: pd.DataFrame, sigma: float, offset: float = 0
+) -> VectorLikeFunction:
+    gamma_mu_series = get_df_col(slice_fit_df, SliceFitDataframeColumn.GAMMA_MU)
+    gamma_sigma_series = get_df_col(slice_fit_df, SliceFitDataframeColumn.GAMMA_SIGMA)
+    # Define lower and upper bounds (neutron_lb_fit, neutron_ub_fit)
+    gamma_border = savgol_filter(
+        gamma_mu_series + sigma * gamma_sigma_series,
+        window_length=21,
+        polyorder=3,
+    )  # reduce noise
+    offset_border = gamma_border + offset
+    slice_xs = _get_energy_midpoints(slice_fit_df)
+    border_fn: VectorLikeFunction = interp1d(
+        slice_xs,
+        offset_border,
+        fill_value=(offset_border[0], offset_border[-1]),  # type: ignore
+        bounds_error=False,
+    )  # now it's a function!
+    return border_fn
 
 
 def _generate_new_window_bottom_border(
