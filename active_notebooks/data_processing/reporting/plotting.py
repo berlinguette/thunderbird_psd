@@ -286,6 +286,7 @@ def plot_classification(
     borders: WindowBorders,
     experiment_display_name: str,
     class_col_name: DetectorDataframeColumn,
+    energy_col_name: EnergyColumn,
     colormap_name: str = "RdBu_r",
     count_limit: int = 5,
     **kwargs,
@@ -315,6 +316,7 @@ def plot_classification(
 
     fig, ax = plot_psd_histogram(
         df,
+        energy_column=energy_col_name,
         colormap_name=colormap_name,
         weights=g_vs_n,
         vmin=-count_limit,
