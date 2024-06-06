@@ -1,7 +1,7 @@
 from typing import Callable, NamedTuple, TypeVar, Any, Literal
 
 from numpy.typing import NDArray
-from pandas import Series
+from pandas import Series, DataFrame
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 
@@ -101,6 +101,21 @@ class WindowBorders(NamedTuple):
     right: float | None
     bottom: VectorLikeFunction | None
     top: VectorLikeFunction | None
+
+
+class NasaGenerationSettings(NamedTuple):
+    window_offset: float = 0.2
+    sigma: float = 5
+    lower_energy_bound: float = 0.1966
+    recalculate_lower_energy_bound: bool = False
+
+
+class NewGenerationSettings(NamedTuple):
+    sigma: float = 3
+    fom_energy_range: tuple[float, float] = (0.10, 0.35)
+
+
+NeutronWindowSettings = NasaGenerationSettings | NewGenerationSettings | str
 
 
 Kwargs = dict[str, Any]
