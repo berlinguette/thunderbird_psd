@@ -1,9 +1,9 @@
-from typing import Callable, NamedTuple, TypeVar, Any, Literal
+from typing import Any, Callable, Literal, NamedTuple, TypeVar
 
-from numpy.typing import NDArray
-from pandas import Series, DataFrame
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
+from numpy.typing import NDArray
+from pandas import Series
 
 
 class BimodalParams(NamedTuple):
@@ -25,26 +25,13 @@ BimodalBounds = tuple[BimodalParams, BimodalParams]
 
 
 def unpack_bimodal_params(
-    params: BimodalParams
+    params: BimodalParams,
 ) -> tuple[float, float, float, float, float, float]:
-    return (
-        params.mu1,
-        params.sigma1,
-        params.a1,
-        params.mu2,
-        params.sigma2,
-        params.a2
-    )
-    
+    return (params.mu1, params.sigma1, params.a1, params.mu2, params.sigma2, params.a2)
 
-def unpack_gaussian_params(
-    params: GaussianParams
-) -> tuple[float, float, float]:
-    return (
-        params.mu,
-        params.sigma,
-        params.a
-    )
+
+def unpack_gaussian_params(params: GaussianParams) -> tuple[float, float, float]:
+    return (params.mu, params.sigma, params.a)
 
 
 class FitResult(NamedTuple):
@@ -88,11 +75,11 @@ UnpackedFitErrorResult = tuple[
     float,
 ]
 
-VectorLike = float|Series|NDArray
+VectorLike = float | Series | NDArray
 VectorLikeFunction = Callable[[VectorLike], Any]
-# A VectorLikeFunction will return the same time as passed in, but Python 
-# typing can't support this. Explicitly type hint the return value to match the 
-# input type if you're certain about what you're handing in, or just use type 
+# A VectorLikeFunction will return the same time as passed in, but Python
+# typing can't support this. Explicitly type hint the return value to match the
+# input type if you're certain about what you're handing in, or just use type
 # checks (isinstance) if you're not sure
 
 
@@ -110,12 +97,20 @@ class NasaGenerationSettings(NamedTuple):
     recalculate_lower_energy_bound: bool = False
 
 
-class NewGenerationSettings(NamedTuple):
+class NeutronDistributionGenerationSettings(NamedTuple):
     sigma: float = 3
     fom_energy_range: tuple[float, float] = (0.10, 0.35)
 
 
-NeutronWindowSettings = NasaGenerationSettings | NewGenerationSettings | str
+NeutronWindowSettings = (
+    NasaGenerationSettings | NeutronDistributionGenerationSettings | str
+)
+SpecificNeutronWindowSettings = TypeVar(
+    "SpecificNeutronWindowSettings",
+    NasaGenerationSettings,
+    NeutronDistributionGenerationSettings,
+    str,
+)
 
 
 Kwargs = dict[str, Any]
@@ -126,6 +121,10 @@ AxesMatrix = list[list[Axes]]
 DictKey = TypeVar("DictKey")
 DictValue = TypeVar("DictValue")
 
+
 class CalibrationParams(NamedTuple):
     p1: float
     p2: float
+
+
+WindowType = Literal["nasa", "n_distro"]

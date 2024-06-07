@@ -1,9 +1,6 @@
 import pandas as pd
-from data_processing.dataframe_validation import (
-    SliceFitDataframeColumn,
-    get_df_col,
-)
-from data_processing.types import VectorLikeFunction, WindowBorders, WindowBorderGenerator, WindowBorderProducer
+from data_processing.dataframe_validation import SliceFitDataframeColumn, get_df_col
+from data_processing.types import VectorLikeFunction, WindowBorders
 from scipy.interpolate import interp1d
 from scipy.optimize import root_scalar
 from scipy.signal import savgol_filter
@@ -14,19 +11,21 @@ def generate_nasa_neutron_window(
     window_offset: float = 0.2,
     sigma: float = 5,
     lower_energy_bound: float = 0.1966,
-    recalculate_lower_energy_bound: bool = False
+    recalculate_lower_energy_bound: bool = False,
 ) -> WindowBorders:
     energy_bin_midpoints = _get_energy_midpoints(slice_fit_df)
     bottom_border = _generate_nasa_window_bottom_border(slice_fit_df, sigma)
-    top_border = _generate_nasa_window_top_border(slice_fit_df, sigma, window_offset)    
+    top_border = _generate_nasa_window_top_border(slice_fit_df, sigma, window_offset)
     if recalculate_lower_energy_bound:
-        lower_energy_bound = _generate_window_left_border(slice_fit_df, energy_bin_midpoints, (0.10, 0.35))
+        lower_energy_bound = _generate_window_left_border(
+            slice_fit_df, energy_bin_midpoints, (0.10, 0.35)
+        )
     return WindowBorders(
         left=lower_energy_bound, bottom=bottom_border, top=top_border, right=None
     )
 
 
-def generate_new_neutron_window(
+def generate_n_distro_neutron_window(
     slice_fit_df: pd.DataFrame,
     sigma: float = 3,
     fom_energy_range: tuple[float, float] = (0.10, 0.35),
@@ -82,17 +81,18 @@ def _generate_nasa_window_top_border(
 
 
 def _generate_nasa_gamma_fn(
-        slice_fit_df: pd.DataFrame, sigma: float, offset: float = 0
+    slice_fit_df: pd.DataFrame, sigma: float, offset: float = 0
 ) -> VectorLikeFunction:
     gamma_mu_series = get_df_col(slice_fit_df, SliceFitDataframeColumn.GAMMA_MU)
     gamma_sigma_series = get_df_col(slice_fit_df, SliceFitDataframeColumn.GAMMA_SIGMA)
-    # Define lower and upper bounds (neutron_lb_fit, neutron_ub_fit)
+
     gamma_border = savgol_filter(
         gamma_mu_series + sigma * gamma_sigma_series,
         window_length=21,
         polyorder=3,
     )  # reduce noise
-    offset_border = gamma_border + offset
+    offset_border = gamma_border + offset  # type: ignore
+
     slice_xs = _get_energy_midpoints(slice_fit_df)
     border_fn: VectorLikeFunction = interp1d(
         slice_xs,
