@@ -6,20 +6,23 @@ from data_processing.types import WindowBorders, VectorLikeFunction, WindowBorde
 from data_processing.arc_paths import INPUT_DATA_FOLDER
 
 def load_neutron_window(file_name_prefix: str) -> WindowBorders:
-    window_save_folder = INPUT_DATA_FOLDER / "ReferenceWindow"
-    side_borders_path = window_save_folder / f"{file_name_prefix}_side_borders.txt"
-    bottom_border_path = window_save_folder / f"{file_name_prefix}_bottom_border.pkl"
-    top_border_path = window_save_folder / f"{file_name_prefix}_top_border.pkl"
-    
+    side_borders_path, bottom_border_path, top_border_path = get_neutron_window_paths(
+        file_name_prefix
+    )
     left_border, right_border = _load_side_borders(side_borders_path)
     bottom_border = _load_pickled_border(bottom_border_path)
     top_border = _load_pickled_border(top_border_path)
     return WindowBorders(
-        left=left_border,
-        right=right_border,
-        bottom=bottom_border,
-        top=top_border
+        left=left_border, right=right_border, bottom=bottom_border, top=top_border
     )
+
+
+def get_neutron_window_paths(file_name_prefix: str) -> tuple[Path, Path, Path]:
+    window_save_folder = INPUT_DATA_FOLDER / "ReferenceWindow"
+    side_borders_path = window_save_folder / f"{file_name_prefix}_side_borders.txt"
+    bottom_border_path = window_save_folder / f"{file_name_prefix}_bottom_border.pkl"
+    top_border_path = window_save_folder / f"{file_name_prefix}_top_border.pkl"
+    return side_borders_path, bottom_border_path, top_border_path
 
 
 def _load_side_borders(
