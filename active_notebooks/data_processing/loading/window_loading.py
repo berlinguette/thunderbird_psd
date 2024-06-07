@@ -10,7 +10,7 @@ def load_neutron_window(file_name_prefix: str) -> WindowBorders:
     side_borders_path, bottom_border_path, top_border_path = get_neutron_window_paths(
         file_name_prefix
     )
-    left_border, right_border = _load_side_borders(side_borders_path)
+    left_border, right_border = load_side_borders(side_borders_path)
     bottom_border = _load_pickled_border(bottom_border_path)
     top_border = _load_pickled_border(top_border_path)
     return WindowBorders(
@@ -26,7 +26,7 @@ def get_neutron_window_paths(file_name_prefix: str) -> tuple[Path, Path, Path]:
     return side_borders_path, bottom_border_path, top_border_path
 
 
-def _load_side_borders(side_borders_path: Path) -> tuple[float | None, float | None]:
+def load_side_borders(side_borders_path: Path) -> tuple[float | None, float | None]:
     with side_borders_path.open("r") as side_file:
         side_file_lines = side_file.readlines()
     if len(side_file_lines) < 2:
