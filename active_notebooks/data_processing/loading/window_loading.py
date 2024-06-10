@@ -30,7 +30,7 @@ def load_side_borders(side_borders_path: Path) -> tuple[float | None, float | No
     with side_borders_path.open("r") as side_file:
         side_file_lines = side_file.readlines()
     if len(side_file_lines) < 2:
-        raise ValueError("Side borders path did not lines for left and right borders")
+        raise ValueError("Side borders path did not have lines for left and right borders")
     left_line, right_line, *_ = side_file_lines
 
     left_match = re.match(r"left: (.+)", left_line)
