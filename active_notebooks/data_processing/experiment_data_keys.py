@@ -18,5 +18,17 @@ class ExperimentDataKey(Enum):
     NASA_BORDERS_RECALC = "nasa_borders_recalc"
     BORDER_STRATEGY = "border_strategy"
     PSD_REPORT = "psd_report"
+    START_TIME = "start_time"
+    NEUTRONS_ONLY = "neutrons_only"
+    GAMMA_ONLY = "gamma_only"
+    TIME_BIN_EDGES = "time_bin_edges"
+    BINNED_NEUTRONS = "binned_neutrons"
+    BINNED_GAMMA = "binned_gamma"
+    GAMMA_ENERGY_SPECTRUM = "gamma_energy_spectrum"
+    GAMMA_ENERGY_BIN_EDGES = "gamma_energy_bin_edges"
+    REACTOR_DATA = "reactor_data"
+    BINNED_REACTOR_DATA = "binned_reactor_data"
+    ALL_BINNED_DATA = "all_binned_data"
+
 
 ExperimentNeutronData = dict[str, dict[ExperimentDataKey, Any]]

@@ -79,6 +79,8 @@ dot_env.py
 # Cython debug symbols
 cython_debug/
 
+*.pkl
+
 ### VisualStudioCode ###
 .vscode/*
 !.vscode/settings.json

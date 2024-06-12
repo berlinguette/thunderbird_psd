@@ -75,5 +75,24 @@ FIT_ERROR_COLUMNS: Final = [
 ]
 FIT_ERROR_COLUMN_NAMES: Final = [e.value for e in FIT_ERROR_COLUMNS]
 
+class NonReactorDataframeColumn(Enum):
+    TIME = "Time"
+    DATA = "Data"
+    UNITS = "Units"
+    NORMALIZED_DATA = "Normalized Data"
+    NORMALIZED_UNITS = "Normalized Units"
+
+class BinningDataframeColumn(Enum):
+    TIME_BIN = "Time Bin"
+    ENERGY_BIN = "Energy Bin"
+    BIN_MIDPOINT = "Bin midpoint"
+    BIN_TIME = "Bin time (s)"
+    COUNT = "count"
+    COUNT_ERROR = "count_error"
+    NEUTRON_RATE = "Neutron rate (cps)"
+    NEUTRON_RATE_ERROR = "Neutron error (cps)"
+    GAMMA_RATE = "Background gamma rate (cps)"
+    GAMMA_RATE_ERROR = "Gamma error (cps)"
+
 def get_df_col(df: DataFrame, col: DetectorDataframeColumn|SliceFitDataframeColumn) -> Series:
     return df[col.value]
