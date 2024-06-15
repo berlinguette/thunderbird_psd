@@ -285,3 +285,41 @@ def get_psd_energy_histogram(
 
     Z, xe, ye = np.histogram2d(x, y, bins=[x_bins, y_bins])
     return Z, xe, ye
+
+
+def find_failed_slices(
+    df: pd.DataFrame,
+    experiment_id: str,
+    nan_total_threshold: int = 5,  # max bad slice fits total
+    nan_window_threshold: int = 4,  # max bad slice fits in a "window"
+    nan_rolling_window: int = 7  # window size
+) -> tuple[pd.DataFrame, np.ndarray | None]:
+    bad_slice_indexes = None
+    nan_rows = df.isna().any(axis=1)
+    nan_rows = nan_rows[nan_rows]
+    if nan_rows.shape[0] > 0:
+        nan_indexes = np.where(nan_rows)[0]
+        total_nan_rows = len(nan_indexes)
+        rolling_nan_count = nan_rows.rolling(window=nan_rolling_window) \
+            .sum() \
+            .max()
+
+        print(f"Fit issues in {experiment_id}")
+        print(f"Fit failed on following slice indexes: {nan_indexes}")
+
+        if (total_nan_rows > nan_total_threshold
+                or rolling_nan_count > nan_window_threshold):
+            print(f"Experiment {experiment_id} could not be classified")
+            print(f"Total failed slices: {total_nan_rows}")
+            print(
+                f"Max failed slices in a {nan_rolling_window} slice window:"+
+                f" {rolling_nan_count}"
+            )
+
+            df = df.dropna().copy()
+            bad_slice_indexes = nan_indexes
+
+        # filter out all nan rows from df
+        df = df.dropna().copy()
+        # continue as normal to try fitting with bad rows ignored
+    return df, bad_slice_indexes
