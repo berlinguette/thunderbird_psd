@@ -4,7 +4,10 @@ from data_processing.processing.neutron_window_generation import (
 from data_processing.processing.neutron_window_strategy.abstract_strategy import (
     AbstractNeutronStrategy,
 )
-from data_processing.types import NeutronDistributionGenerationSettings, WindowBorders
+from data_processing.types import (
+    NeutronDistributionGenerationSettings,
+    WindowBorders
+)
 
 
 class NeutronDistributionGenerationStrategy(AbstractNeutronStrategy):
