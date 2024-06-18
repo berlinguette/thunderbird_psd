@@ -49,6 +49,14 @@ def generate_n_distro_neutron_window(
     )
 
 
+def generate_rectangle_neutron_window(left: float, bottom: float, width: float, height: float) -> WindowBorders:
+    right = left + width
+    top = bottom + height
+    bottom_border = interp1d([left, right], [bottom, bottom], bounds_error=False)
+    top_border = interp1d([left, right], [top, top], bounds_error=False)
+    return WindowBorders(left=left, right=right, bottom=bottom_border, top=top_border)
+
+
 def _generate_window_left_border(
     slice_fit_df: pd.DataFrame,
     energy_bin_midpoints: pd.Series,
