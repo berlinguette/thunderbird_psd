@@ -102,13 +102,21 @@ class NeutronDistributionGenerationSettings(NamedTuple):
     fom_energy_range: tuple[float, float] = (0.10, 0.35)
 
 
+class SquarishGenerationSettings(NamedTuple):
+    left: float
+    bottom: float
+    width: float = 0.1
+    aspect_ratio: float = 2.5/0.5  # width/height
+
+
 NeutronWindowSettings = (
-    NasaGenerationSettings | NeutronDistributionGenerationSettings | str
+    NasaGenerationSettings | NeutronDistributionGenerationSettings | SquarishGenerationSettings | str
 )
 SpecificNeutronWindowSettings = TypeVar(
     "SpecificNeutronWindowSettings",
     NasaGenerationSettings,
     NeutronDistributionGenerationSettings,
+    SquarishGenerationSettings,
     str,
 )
 
@@ -127,4 +135,4 @@ class CalibrationParams(NamedTuple):
     p2: float
 
 
-WindowType = Literal["nasa", "n_distro"]
+WindowType = Literal["nasa", "n_distro", "squarish"]
