@@ -1,21 +1,24 @@
 from math import ceil
-from typing import Any, Callable, Literal, TypeVar
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from data_processing.dataframe_validation import DataframeColumn, get_df_col
+from data_processing.dataframe_validation import DetectorDataframeColumn, get_df_col, EnergyColumn
 from data_processing.processing.figure_of_merit import FOM, gaussian
 from data_processing.processing.processing_configs import DEFAULT_LOWER_ENERGY_BOUND
 from data_processing.reporting.plot_configs import *
+from data_processing.types import (
+    AxesMatrix,
+    DictKey,
+    DictValue,
+    GraphData,
+    GraphingFunction,
+    Kwargs,
+    WindowBorders,
+)
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
-
-Kwargs = dict[str, Any]
-GraphData = dict[Literal["x"] | Literal["y"], pd.Series]
-GraphingFunction = Callable[[Figure, Axes, GraphData, Kwargs], Axes]
-AxesMatrix = list[list[Axes]]
 
 
 def plot_single(
@@ -121,8 +124,8 @@ def graph_psd_histogram(
     axis_tick_font_size = graph_kwargs.get("axis_tick_font_size", AXIS_TICK_FONT_SIZE)
     cmin = graph_kwargs.get("cmin")
     weights = graph_kwargs.get("weights", None)
-    vmin = graph_kwargs.get('vmin')
-    vmax = graph_kwargs.get('vmax')
+    vmin = graph_kwargs.get("vmin")
+    vmax = graph_kwargs.get("vmax")
 
     data_x = data["x"]
     data_y = data["y"]
@@ -141,7 +144,7 @@ def graph_psd_histogram(
         cmin=cmin,
         weights=weights,
         vmin=vmin,
-        vmax=vmax
+        vmax=vmax,
     )
 
     if colorbar:
@@ -168,7 +171,7 @@ def plot_tail_vs_total(
     y_resolution = _get_histogram_y_resolution(
         x_resolution=x_resolution, plot_width=figsize[0], plot_height=figsize[1]
     )
-    max_energy = get_df_col(df, DataframeColumn.CALIB_ENERGY).max()
+    max_energy = get_df_col(df, DetectorDataframeColumn.ENERGY).max()
     plot_kwargs = {
         "x_resolution": x_resolution,
         "y_resolution": y_resolution,
@@ -176,8 +179,8 @@ def plot_tail_vs_total(
         **kwargs,
     }
 
-    energy_col = get_df_col(df, DataframeColumn.ENERGY)
-    short_col = get_df_col(df, DataframeColumn.ENERGYSHORT)
+    energy_col = get_df_col(df, DetectorDataframeColumn.ENERGY)
+    short_col = get_df_col(df, DetectorDataframeColumn.ENERGYSHORT)
     data: GraphData = {"x": energy_col, "y": energy_col - short_col}
 
     supertitle = f"Tail vs Total - {experiment_display_name}"
@@ -196,6 +199,7 @@ def plot_tail_vs_total(
 
 def plot_psd_histogram(
     df: pd.DataFrame,
+    energy_column: EnergyColumn = DetectorDataframeColumn.CALIB_ENERGY,
     colormap_name: str = "gnuplot",
     colorbar: bool = False,
     energy_start_zero: bool = False,
@@ -216,8 +220,8 @@ def plot_psd_histogram(
         **kwargs,
     }
 
-    energy_col = get_df_col(df, DataframeColumn.CALIB_ENERGY)
-    psd_col = get_df_col(df, DataframeColumn.PSD)
+    energy_col = get_df_col(df, energy_column)
+    psd_col = get_df_col(df, DetectorDataframeColumn.PSD)
     data: GraphData = {"x": energy_col, "y": psd_col}
 
     fig, ax = plot_single(
@@ -229,43 +233,70 @@ def plot_psd_histogram(
 
 def add_fit_window_to_plot(
     axes: Axes,
-    neutron_lb_fit: Callable,
-    neutron_ub_fit: Callable,
-    upper_energy_bound: float,
-    lower_energy_bound: float = DEFAULT_LOWER_ENERGY_BOUND,
+    borders: WindowBorders,
+    graph_x_limits: tuple[float, float],
+    graph_y_limits: tuple[float, float],
 ) -> Axes:
-    energy_space = np.linspace(0, upper_energy_bound + 0.5, 200)
-    axes.plot(energy_space, neutron_lb_fit(energy_space), "r--")
-    axes.plot(energy_space, neutron_ub_fit(energy_space), "r--")
+    left_border = borders.left
+    right_border = borders.right
+    bottom_border_fn = borders.bottom
+    top_border_fn = borders.top
+
+    min_energy = left_border if left_border is not None else graph_x_limits[0]
+    max_energy = right_border if right_border is not None else graph_x_limits[1]
+
+    energy_space = np.linspace(min_energy, max_energy + 0.5, 200)
+    if bottom_border_fn is not None:
+        axes.plot(energy_space, bottom_border_fn(energy_space), "r--")
+    if top_border_fn is not None:
+        axes.plot(energy_space, top_border_fn(energy_space), "r--")
     # ax.vlines(all_slice_xs[0],
     #           neutron_lb_fit(all_slice_xs[0]),
     #           neutron_ub_fit(all_slice_xs[0]),
     #           'r', ls='--')
-    axes.vlines(
-        lower_energy_bound,
-        neutron_lb_fit(lower_energy_bound),
-        neutron_ub_fit(lower_energy_bound),
-        "r",  # type: ignore
-        ls="--",
-    )  # type: ignore
+    if left_border is not None:
+        line_bottom = (
+            bottom_border_fn(left_border)
+            if bottom_border_fn is not None
+            else graph_y_limits[0]
+        )
+        line_top = (
+            top_border_fn(left_border)
+            if top_border_fn is not None
+            else graph_y_limits[1]
+        )
+        axes.vlines(left_border, line_bottom, line_top, "r", ls="--")  # type: ignore
+    if right_border is not None:
+        line_bottom = (
+            bottom_border_fn(right_border)
+            if bottom_border_fn is not None
+            else graph_y_limits[0]
+        )
+        line_top = (
+            top_border_fn(right_border)
+            if top_border_fn is not None
+            else graph_y_limits[1]
+        )
+        axes.vlines(right_border, line_bottom, line_top, "r", ls="--")  # type: ignore
     return axes
 
 
 def plot_classification(
     df: pd.DataFrame,
-    neutron_lb_fit: Callable,
-    neutron_ub_fit: Callable,
+    borders: WindowBorders,
     experiment_display_name: str,
+    class_col_name: DetectorDataframeColumn,
+    energy_col_name: EnergyColumn,
     colormap_name: str = "RdBu_r",
     count_limit: int = 5,
     **kwargs,
 ) -> tuple[Figure, Axes]:
     # y_resolution = _get_histogram_y_resolution()
-    max_energy = get_df_col(df, DataframeColumn.CALIB_ENERGY).max()
+    # max_energy = get_df_col(df, DataframeColumn.CALIB_ENERGY).max()
 
     # fig, ax = plt.subplots(figsize=(FIG_DIM_X, FIG_DIM_Y))
 
-    class_col = get_df_col(df, DataframeColumn.NEUTRON_CLASS)
+    class_col = get_df_col(df, class_col_name)
     # energy_col = get_df_col(df, DataframeColumn.CALIB_ENERGY)
     # psd_col = get_df_col(df, DataframeColumn.PSD)
 
@@ -285,6 +316,7 @@ def plot_classification(
 
     fig, ax = plot_psd_histogram(
         df,
+        energy_column=energy_col_name,
         colormap_name=colormap_name,
         weights=g_vs_n,
         vmin=-count_limit,
@@ -304,11 +336,11 @@ def plot_classification(
     #           neutron_lb_fit(lower_energy_bound),
     #           neutron_ub_fit(lower_energy_bound),
     #           'r', ls="--") # type: ignore
-    ax = add_fit_window_to_plot(ax, neutron_lb_fit, neutron_ub_fit, max_energy)
+    ax = add_fit_window_to_plot(ax, borders, ax.get_xlim(), ax.get_ylim())
 
     # ax.set_ylim(0, 0.5)
     # ax.set_xlim(0, max_energy + .05)
-    n_neutrons = df[df["NASA"]].shape[0]
+    n_neutrons = df[df[class_col_name.value]].shape[0]
     fig.suptitle(
         f"Neutron Classification: {experiment_display_name}",
         fontsize=SUPTITLE_FONT_SIZE,
@@ -569,11 +601,9 @@ def _get_range_with_margins(
     return (start - margin, end + margin)
 
 
-K = TypeVar("K")
-V = TypeVar("V")
-
-
-def _popget(dictionary: dict[K, V], key: K, default: V) -> V:
+def _popget(
+    dictionary: dict[DictKey, DictValue], key: DictKey, default: DictValue
+) -> DictValue:
     # acts like dict.get, but pops key out of dict if exists
     try:
         return dictionary.pop(key)

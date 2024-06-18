@@ -8,7 +8,7 @@ from typing_extensions import Self
 import matplotlib.pyplot as plt
 import pandas as pd
 from data_processing.reporting.plotting import plot_bounded_scatter
-from data_processing.dataframe_validation import DataframeColumn, get_df_col
+from data_processing.dataframe_validation import DetectorDataframeColumn, get_df_col
 from data_processing.processing.dataframe_manipulation import \
     generate_neutron_signals
 from data_processing.reporting.plot_configs import *
@@ -52,7 +52,7 @@ class QueryBoundary(Protocol):
 class QueryRange(Generic[C]):
     def __init__(
         self,
-        col: DataframeColumn,
+        col: DetectorDataframeColumn,
         start: QueryEdge = None,
         end: QueryEdge = None
     ) -> None:
@@ -177,13 +177,13 @@ class DatetimeQueryRange(QueryRange[datetime]):
 class Query:
     psd: QueryRange = field(
         default_factory=lambda: QueryRange[float](
-            DataframeColumn.PSD))
+            DetectorDataframeColumn.PSD))
     energy: QueryRange = field(
         default_factory=lambda: QueryRange[float](
-            DataframeColumn.CALIB_ENERGY))
+            DetectorDataframeColumn.CALIB_ENERGY))
     time: QueryRange = field(
         default_factory=lambda: DatetimeQueryRange(
-            DataframeColumn.EVENT_TIME))
+            DetectorDataframeColumn.EVENT_TIME))
 
     def update_query(self,
                      psd: QueryFloatInput | None = None,
@@ -244,10 +244,10 @@ class SignalInvestigator:
 
         samples_count = 0
         for index, row in query_result.iterrows():
-            n_psd = row[DataframeColumn.PSD.value]
-            n_eng = row[DataframeColumn.CALIB_ENERGY.value]
-            n_time = row[DataframeColumn.EVENT_TIME.value]
-            n_ps_remain = row[DataframeColumn.EVENT_TIME_PS.value]
+            n_psd = row[DetectorDataframeColumn.PSD.value]
+            n_eng = row[DetectorDataframeColumn.CALIB_ENERGY.value]
+            n_time = row[DetectorDataframeColumn.EVENT_TIME.value]
+            n_ps_remain = row[DetectorDataframeColumn.EVENT_TIME_PS.value]
 
             series_name = (f"Time {n_time} +{n_ps_remain}ps, ",
                            f"PSD {n_psd:.4f}, E {n_eng:.4f} MeVee")
@@ -290,8 +290,8 @@ class SignalInvestigator:
     def visualize_scatter(self) -> tuple[Figure, Axes]:
         query_results = self.perform_query()
 
-        energy_col = get_df_col(query_results, DataframeColumn.CALIB_ENERGY)
-        psd_col = get_df_col(query_results, DataframeColumn.PSD)
+        energy_col = get_df_col(query_results, DetectorDataframeColumn.CALIB_ENERGY)
+        psd_col = get_df_col(query_results, DetectorDataframeColumn.PSD)
 
         return plot_bounded_scatter(
             energy_col,
