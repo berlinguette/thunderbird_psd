@@ -3,12 +3,12 @@ from data_processing.loading.window_loading import (
     load_neutron_window,
 )
 from data_processing.processing.neutron_window_strategy.abstract_strategy import (
-    AbstractNeutronStrategy,
+    AbstractNeutronWindowStrategy,
 )
 from data_processing.types import WindowBorders
 
 
-class LoadingStrategy(AbstractNeutronStrategy):
+class LoadingStrategy(AbstractNeutronWindowStrategy):
     def get_neutron_window(self) -> WindowBorders:
         file_name_prefix = self._get_settings(str)
         return load_neutron_window(file_name_prefix)

@@ -2,7 +2,7 @@ from data_processing.processing.neutron_window_generation import (
     generate_n_distro_neutron_window,
 )
 from data_processing.processing.neutron_window_strategy.abstract_strategy import (
-    AbstractNeutronStrategy,
+    AbstractNeutronWindowStrategy,
 )
 from data_processing.types import (
     NeutronDistributionGenerationSettings,
@@ -10,7 +10,7 @@ from data_processing.types import (
 )
 
 
-class NeutronDistributionGenerationStrategy(AbstractNeutronStrategy):
+class NeutronDistributionGenerationStrategy(AbstractNeutronWindowStrategy):
     def get_neutron_window(self) -> WindowBorders:
         window_settings = self._get_settings(NeutronDistributionGenerationSettings)
         df = self._get_slice_fit_dataframe()

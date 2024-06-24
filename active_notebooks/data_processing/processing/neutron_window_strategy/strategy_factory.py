@@ -1,5 +1,5 @@
 from data_processing.processing.neutron_window_strategy.abstract_strategy import (
-    AbstractNeutronStrategy,
+    AbstractNeutronWindowStrategy,
 )
 from data_processing.processing.neutron_window_strategy.concrete_strategies import (
     LoadingStrategy,
@@ -16,7 +16,7 @@ class NeutronStrategyFactory:
         window_type: WindowType,
         loading: bool,
         settings: NeutronWindowSettings,
-    ) -> AbstractNeutronStrategy:
+    ) -> AbstractNeutronWindowStrategy:
         if loading:
             return self._make_loading_strategy(settings)
         else:
@@ -24,12 +24,12 @@ class NeutronStrategyFactory:
 
     def _make_loading_strategy(
         self, settings: NeutronWindowSettings
-    ) -> AbstractNeutronStrategy:
+    ) -> AbstractNeutronWindowStrategy:
         return LoadingStrategy(settings)
 
     def _make_generator_strategy(
         self, window_type: WindowType, settings: NeutronWindowSettings
-    ) -> AbstractNeutronStrategy:
+    ) -> AbstractNeutronWindowStrategy:
         if window_type == "nasa":
             return NasaGenerationStrategy(settings)
         elif window_type == "n_distro":

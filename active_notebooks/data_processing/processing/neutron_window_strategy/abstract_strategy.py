@@ -8,7 +8,7 @@ from data_processing.types import (
 from pandas import DataFrame
 
 
-class AbstractNeutronStrategy(ABC):
+class AbstractNeutronWindowStrategy(ABC):
     def __init__(self, settings: NeutronWindowSettings):
         self._slice_fit_df: DataFrame | None = None
         self._settings = settings
