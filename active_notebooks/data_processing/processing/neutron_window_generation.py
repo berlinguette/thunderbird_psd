@@ -94,7 +94,7 @@ def _generate_nasa_gamma_fn(
     gamma_mu_series = get_df_col(slice_fit_df, SliceFitDataframeColumn.GAMMA_MU)
     gamma_sigma_series = get_df_col(slice_fit_df, SliceFitDataframeColumn.GAMMA_SIGMA)
 
-    gamma_border = gamma_mu_series + sigma * gamma_sigma_series
+    gamma_border = (gamma_mu_series + sigma * gamma_sigma_series).to_numpy(copy=True)
     if use_filter:
         gamma_border = savgol_filter(
             gamma_border,
