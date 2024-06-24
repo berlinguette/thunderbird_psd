@@ -89,16 +89,18 @@ def _generate_nasa_window_top_border(
 
 
 def _generate_nasa_gamma_fn(
-    slice_fit_df: pd.DataFrame, sigma: float, offset: float = 0
+    slice_fit_df: pd.DataFrame, sigma: float, offset: float = 0, use_filter: bool = False
 ) -> VectorLikeFunction:
     gamma_mu_series = get_df_col(slice_fit_df, SliceFitDataframeColumn.GAMMA_MU)
     gamma_sigma_series = get_df_col(slice_fit_df, SliceFitDataframeColumn.GAMMA_SIGMA)
 
-    gamma_border = savgol_filter(
-        gamma_mu_series + sigma * gamma_sigma_series,
-        window_length=21,
-        polyorder=3,
-    )  # reduce noise
+    gamma_border = gamma_mu_series + sigma * gamma_sigma_series
+    if use_filter:
+        gamma_border = savgol_filter(
+            gamma_border,
+            window_length=21,
+            polyorder=3,
+        )  # reduce noise
     offset_border = gamma_border + offset  # type: ignore
 
     slice_xs = _get_energy_midpoints(slice_fit_df)
