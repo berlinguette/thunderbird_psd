@@ -1,6 +1,7 @@
 import pandas as pd
 from data_processing.dataframe_validation import SliceFitDataframeColumn, get_df_col
 from data_processing.types import VectorLikeFunction, WindowBorders
+from data_processing.helpers import get_midpoints_from_min_max_series
 from scipy.interpolate import interp1d
 from scipy.optimize import root_scalar
 from scipy.signal import savgol_filter
@@ -89,16 +90,18 @@ def _generate_nasa_window_top_border(
 
 
 def _generate_nasa_gamma_fn(
-    slice_fit_df: pd.DataFrame, sigma: float, offset: float = 0
+    slice_fit_df: pd.DataFrame, sigma: float, offset: float = 0, use_filter: bool = False
 ) -> VectorLikeFunction:
     gamma_mu_series = get_df_col(slice_fit_df, SliceFitDataframeColumn.GAMMA_MU)
     gamma_sigma_series = get_df_col(slice_fit_df, SliceFitDataframeColumn.GAMMA_SIGMA)
 
-    gamma_border = savgol_filter(
-        gamma_mu_series + sigma * gamma_sigma_series,
-        window_length=21,
-        polyorder=3,
-    )  # reduce noise
+    gamma_border = (gamma_mu_series + sigma * gamma_sigma_series).to_numpy(copy=True)
+    if use_filter:
+        gamma_border = savgol_filter(
+            gamma_border,
+            window_length=21,
+            polyorder=3,
+        )  # reduce noise
     offset_border = gamma_border + offset  # type: ignore
 
     slice_xs = _get_energy_midpoints(slice_fit_df)
@@ -152,9 +155,5 @@ def _generate_new_window_top_border(
 def _get_energy_midpoints(df: pd.DataFrame) -> pd.Series:
     slice_energy_min = get_df_col(df, SliceFitDataframeColumn.SLICE_ENERGY_MINIMUM)
     slice_energy_max = get_df_col(df, SliceFitDataframeColumn.SLICE_ENERGY_MAXIMUM)
-    intervals = pd.Series(
-        pd.arrays.IntervalArray.from_arrays(slice_energy_min, slice_energy_max),
-        index=df.index,
-    )
-    midpoints = pd.Series(intervals.array.mid, index=df.index)  # type: ignore
-    return midpoints
+    index = df.index
+    return get_midpoints_from_min_max_series(slice_energy_min, slice_energy_max, index)
