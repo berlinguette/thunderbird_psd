@@ -11,7 +11,7 @@ from numpy import ndarray
 @dataclass
 class RawExperimentalData:
     neutron_detector: DataFrame
-    start_time: datetime | None
+    start_time: datetime | None = None
     reactor: DataFrame | None = None
 
 
