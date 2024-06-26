@@ -22,6 +22,7 @@ from data_processing.types import (
     unpack_bimodal_params,
 )
 from scipy.optimize import curve_fit
+from data_processing.types import ChannelDataframes
 
 
 def split_params(params: BimodalParams) -> tuple[GaussianParams, GaussianParams]:
@@ -265,6 +266,17 @@ def scan_histogram_slices(
 
 
 def get_psd_energy_histogram(
+    dfs: ChannelDataframes,
+    energy_column: EnergyColumn,
+    energy_width: float = 0.0150,
+    psd_bin_count: int = 100,
+    psd_min: float = 0.0,
+    psd_max: float = 0.5,
+) -> dict[int, tuple[np.ndarray, np.ndarray, np.ndarray]]:
+    # TODO finish this!
+
+
+def _get_psd_energy_histogram_for_df(
     df: pd.DataFrame,
     energy_column: EnergyColumn,
     energy_width: float = 0.0150,
