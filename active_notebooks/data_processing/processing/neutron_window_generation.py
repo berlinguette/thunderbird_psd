@@ -1,6 +1,7 @@
 import pandas as pd
 from data_processing.dataframe_validation import SliceFitDataframeColumn, get_df_col
 from data_processing.types import VectorLikeFunction, WindowBorders
+from data_processing.helpers import get_midpoints_from_min_max_series
 from scipy.interpolate import interp1d
 from scipy.optimize import root_scalar
 from scipy.signal import savgol_filter
@@ -154,9 +155,5 @@ def _generate_new_window_top_border(
 def _get_energy_midpoints(df: pd.DataFrame) -> pd.Series:
     slice_energy_min = get_df_col(df, SliceFitDataframeColumn.SLICE_ENERGY_MINIMUM)
     slice_energy_max = get_df_col(df, SliceFitDataframeColumn.SLICE_ENERGY_MAXIMUM)
-    intervals = pd.Series(
-        pd.arrays.IntervalArray.from_arrays(slice_energy_min, slice_energy_max),
-        index=df.index,
-    )
-    midpoints = pd.Series(intervals.array.mid, index=df.index)  # type: ignore
-    return midpoints
+    index = df.index
+    return get_midpoints_from_min_max_series(slice_energy_min, slice_energy_max, index)
