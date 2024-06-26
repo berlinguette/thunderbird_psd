@@ -3,8 +3,10 @@ from typing import Any, Callable, Literal, NamedTuple, TypeVar
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 from numpy.typing import NDArray
-from pandas import Series
+from pandas import Series, DataFrame
 
+
+ChannelDataframes = dict[int, DataFrame]
 
 class BimodalParams(NamedTuple):
     mu1: float
@@ -129,6 +131,7 @@ AxesMatrix = list[list[Axes]]
 DictKey = TypeVar("DictKey")
 DictValue = TypeVar("DictValue")
 
+CalibrationType = Literal['original', 'may2024']
 
 class CalibrationParams(NamedTuple):
     p1: float
