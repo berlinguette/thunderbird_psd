@@ -293,7 +293,7 @@ def find_failed_slices(
     nan_total_threshold: int = 5,  # max bad slice fits total
     nan_window_threshold: int = 4,  # max bad slice fits in a "window"
     nan_rolling_window: int = 7  # window size
-) -> tuple[pd.DataFrame, np.ndarray | None]:
+) -> tuple[pd.DataFrame, list | None]:
     bad_slice_indexes = None
     row_is_nan = df.isna().any(axis=1)
     nan_rows = df[row_is_nan]
