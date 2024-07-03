@@ -136,3 +136,7 @@ class CalibrationParams(NamedTuple):
 
 
 WindowType = Literal["nasa", "n_distro", "squarish"]
+SliceFitStyle = Literal["bounds", "peak_finder"]
+NumberedSlice = tuple[int, Any]
+SliceFitResult = tuple[FitResult, FitErrorResult]
+# SliceFitter = Callable[[NumberedSlice], SliceFitResult]
