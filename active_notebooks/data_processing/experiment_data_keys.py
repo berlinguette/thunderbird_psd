@@ -29,6 +29,8 @@ class ExperimentDataKey(Enum):
     REACTOR_DATA = "reactor_data"
     BINNED_REACTOR_DATA = "binned_reactor_data"
     ALL_BINNED_DATA = "all_binned_data"
+    PULSE_HEIGHT_DISTRIBUTION = "pulse_height_distribution"
+    HISTOGRAM_ENERGY_BIN_EDGES = "histogram_energy_bin_edges"
 
 
 ExperimentNeutronData = dict[str, dict[ExperimentDataKey, Any]]
