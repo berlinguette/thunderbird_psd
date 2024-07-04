@@ -1,4 +1,4 @@
- source_e(MeV)            NPS   det_pulse(MeVee)       det_cell     corr_count       time(s)  cells_history
+ source_e (MeV)            NPS   det_pulse (MeVee)       det_cell     corr_count       time(s)  cells_history
 
 
            2.45              9            0.192814              1             no    6.19077e-09          4  1 
