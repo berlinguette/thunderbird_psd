@@ -49,7 +49,7 @@ def get_bimodal_fit_guess(
         rel_height=0.5,
         prominence_data=prominence_data,
     )
-    widths, *_ = peak_widths(histogram_slice, **peak_width_settings)
+    widths, *_ = peak_widths(histogram_slice, peaks, **peak_width_settings)
     
     # TODO get bimodal params for each peak
     left_peak_idx = peaks[0]
