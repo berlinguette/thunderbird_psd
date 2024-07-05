@@ -1,4 +1,5 @@
 from typing import Any
+from math import ceil
 
 import numpy as np
 from data_processing.helpers.get_midpoints_from_bins import get_midpoints_from_bins
@@ -11,38 +12,62 @@ from data_processing.types import (
     unpack_bimodal_params,
 )
 from scipy.optimize import curve_fit
-from scipy.signal import find_peaks
+from scipy.signal import find_peaks, peak_widths
 
 
 def get_bimodal_fit_guess(
     bins: np.ndarray, histogram_slice: np.ndarray
 ) -> BimodalParams:
-    # TODO use peak finder to get peak positions
     bin_mids = get_midpoints_from_bins(bins)
+    sample_psd_rate = bin_mids[1] - bin_mids[0]  # assume mids increase linearly
 
-    # TODO check with Sergey re: best parameters for this
+    slice_samples = histogram_slice.shape[0]
     peak_search_settings: dict[str, Any] = dict(
-        height=None,
-        threshold=None,
-        distance=None,  # TODO add more?
+        prominence=max(histogram_slice) / 10,
+        wlen=ceil(slice_samples/2),
+        distance=slice_samples/4,
     )
     peaks, properties = find_peaks(histogram_slice, **peak_search_settings)
+    
     if len(peaks) > 2:
-        pass  # TODO what to do with >2 peaks?
+        # pick out 2 peaks with lowest index
+        indexes = np.argsort(peaks)
+        peaks = peaks[indexes[:2]]
+        
+        new_properties = {}
+        for k, v in properties.items():
+            new_v = v[indexes[:2]]
+            new_properties[k] = new_v
+        properties = new_properties
+    
+    prominences = properties.get("prominences")
+    left_bases = properties.get("left_bases")
+    right_bases = properties.get("right_bases")
+    prom_data_is_none = any([x is None for x in [prominences, left_bases, right_bases]])
+    prominence_data = None if prom_data_is_none else (prominences, left_bases, right_bases)
+    peak_width_settings: dict[str, Any] = dict(
+        rel_height=0.5,
+        prominence_data=prominence_data,
+    )
+    widths, *_ = peak_widths(histogram_slice, **peak_width_settings)
+    
     # TODO get bimodal params for each peak
     left_peak_idx = peaks[0]
+    left_peak_width = widths[0]
     A_left = histogram_slice[left_peak_idx]
     mu_left = bin_mids[left_peak_idx]
-    sigma_left = 0.05  # STUB how to get this from peak width?
+    sigma_left = sample_psd_rate * left_peak_width
+    
     if len(peaks) == 1:
         A_right = 0
-        mu_right = mu_left + 0.2
-        sigma_right = sigma_left
+        mu_right = 0
+        sigma_right = 0
     else:
         right_peak_idx = peaks[1]
+        right_peak_width = widths[1]
         A_right = histogram_slice[right_peak_idx]
         mu_right = bin_mids[right_peak_idx]
-        sigma_right = 0.025  # STUB how to get this from peak width?
+        sigma_right = sample_psd_rate * right_peak_width
 
     return BimodalParams(mu_left, sigma_left, A_left, mu_right, sigma_right, A_right)
 
