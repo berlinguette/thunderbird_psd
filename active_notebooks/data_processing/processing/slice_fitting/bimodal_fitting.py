@@ -61,7 +61,7 @@ def get_bimodal_fit_guess(
     if len(peaks) == 1:
         A_right = 0
         mu_right = 0
-        sigma_right = 0
+        sigma_right = 0.0000001
     else:
         right_peak_idx = peaks[1]
         right_peak_width = widths[1]
@@ -73,7 +73,7 @@ def get_bimodal_fit_guess(
 
 
 def get_bimodal_fit(
-    bins: np.ndarray,
+    bin_midpoints: np.ndarray,
     histogram_slice: np.ndarray,
     guess: BimodalParams | None = None,
     bounds: BimodalBounds | None = None,
@@ -82,8 +82,8 @@ def get_bimodal_fit(
 
     Parameters
     ----------
-    bins: ndarray
-        Lower bounds of each PSD bin in the histogram
+    bin_midpoints: ndarray
+        Midpoints of each PSD bin in the histogram
     histogram_slice: ndarray
         Slice of the 2D PSD/Energy histogram taken for a specific energy (i.e. PSD vs Counts)
     bounds: BimodalBounds
@@ -98,15 +98,18 @@ def get_bimodal_fit(
     cov: ndarray
         Estimated covariance of all bimodial parameters
     """
-    bounds_tuple = None
+    # bounds_tuple = None
+    curve_fit_params: dict[str, Any] = {}
+    if guess is not None:
+        curve_fit_params["p0"] = guess
     if bounds is not None:
         lo_bounds, hi_bounds = bounds
         unpacked_lo = unpack_bimodal_params(lo_bounds)
         unpacked_hi = unpack_bimodal_params(hi_bounds)
-        bounds_tuple = (unpacked_lo, unpacked_hi)
+        curve_fit_params['bounds'] = (unpacked_lo, unpacked_hi)
 
     params, cov = curve_fit(
-        bimodal, bins, histogram_slice, p0=guess, bounds=bounds_tuple
+        bimodal, bin_midpoints, histogram_slice, **curve_fit_params
     )
 
     params = BimodalParams(*params)
