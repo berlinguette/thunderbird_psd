@@ -56,7 +56,7 @@ def get_bimodal_fit_guess(
     left_peak_width = widths[0]
     A_left = histogram_slice[left_peak_idx]
     mu_left = bin_mids[left_peak_idx]
-    sigma_left = sample_psd_rate * left_peak_width
+    sigma_left = sample_psd_rate * (left_peak_width / 2)
     
     if len(peaks) == 1:
         A_right = 0
@@ -67,7 +67,7 @@ def get_bimodal_fit_guess(
         right_peak_width = widths[1]
         A_right = histogram_slice[right_peak_idx]
         mu_right = bin_mids[right_peak_idx]
-        sigma_right = sample_psd_rate * right_peak_width
+        sigma_right = sample_psd_rate * (right_peak_width / 2)
 
     return BimodalParams(mu_left, sigma_left, A_left, mu_right, sigma_right, A_right)
 
