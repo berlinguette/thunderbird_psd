@@ -23,7 +23,7 @@ def get_bimodal_fit_guess(
 
     slice_samples = histogram_slice.shape[0]
     peak_search_settings: dict[str, Any] = dict(
-        prominence=max(histogram_slice) / 10,
+        prominence=max(max(histogram_slice) / 10, 1),
         wlen=ceil(slice_samples/2),
         distance=slice_samples/4,
     )
@@ -52,13 +52,18 @@ def get_bimodal_fit_guess(
     widths, *_ = peak_widths(histogram_slice, peaks, **peak_width_settings)
     
     # TODO get bimodal params for each peak
-    left_peak_idx = peaks[0]
-    left_peak_width = widths[0]
-    A_left = histogram_slice[left_peak_idx]
-    mu_left = bin_mids[left_peak_idx]
-    sigma_left = sample_psd_rate * (left_peak_width / 2)
+    if len(peaks) == 0:
+        A_left = 0
+        mu_left = 0
+        sigma_left = 0.0000001
+    else:
+        left_peak_idx = peaks[0]
+        left_peak_width = widths[0]
+        A_left = histogram_slice[left_peak_idx]
+        mu_left = bin_mids[left_peak_idx]
+        sigma_left = sample_psd_rate * (left_peak_width / 2)
     
-    if len(peaks) == 1:
+    if len(peaks) < 2:
         A_right = 0
         mu_right = 0
         sigma_right = 0.0000001
