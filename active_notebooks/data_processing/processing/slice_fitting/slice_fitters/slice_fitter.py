@@ -1,8 +1,7 @@
 from abc import ABC, abstractmethod
-from typing import Sequence
 
 import numpy as np
-from data_processing.types import BimodalBounds, NumberedSlice, SliceFitResult
+from data_processing.types import BimodalBounds, NumberedSlice, SliceFitResult, BoundsSequence
 
 
 class SliceFitter(ABC):
@@ -13,8 +12,8 @@ class SliceFitter(ABC):
         self,
         psd_bin_midpoints: np.ndarray,
         energy_bin_edges: np.ndarray,
-        default_bounds: BimodalBounds,
-        bounds: Sequence[tuple[tuple[int, int], BimodalBounds]] | None = None,
+        default_bounds: BimodalBounds | None = None,
+        bounds: BoundsSequence | None = None,
     ):
         self.psd_bin_midpoints = psd_bin_midpoints
         self.energy_bin_edges = energy_bin_edges

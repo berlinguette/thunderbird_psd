@@ -19,6 +19,14 @@ class BoundsSliceFitter(SliceFitter):
         slice_left_edge = self.energy_bin_edges[i]
         slice_right_edge = self.energy_bin_edges[i + 1]
         fit_bounds = self.default_bounds
+        if fit_bounds is None:
+            fit_result = FitResult(
+                i, None, None, slice_left_edge, slice_right_edge, None
+            )
+            fit_error_result = FitErrorResult(
+                i, None, None, slice_left_edge, slice_right_edge
+            )
+            return fit_result, fit_error_result
 
         if self.bounds is not None:
             for i_range, bound in self.bounds:

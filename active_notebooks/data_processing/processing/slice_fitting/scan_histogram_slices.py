@@ -10,17 +10,18 @@ from data_processing.dataframe_validation import (
 from data_processing.processing.slice_fitting.helpers import (
     unpack_slice_fit_pool_results,
 )
+from data_processing.helpers import get_midpoints_from_bins
 from data_processing.processing.slice_fitting.slice_fitters import SliceFitterFactory
-from data_processing.types import BimodalBounds, SliceFitStyle
+from data_processing.types import BimodalBounds, SliceFitStyle, BoundsSequence
 
 
 def scan_histogram_slices(
     histogram: np.ndarray,
     energy_bin_edges: np.ndarray,
     psd_bin_edges: np.ndarray,
-    default_bounds: BimodalBounds,
-    bounds: Sequence[tuple[tuple[int, int], BimodalBounds]] | None = None,
     fit_style: SliceFitStyle = "bounds",
+    default_bounds: BimodalBounds | None = None,
+    bounds: BoundsSequence | None = None,
     start_idx: int = 0,
     end_idx: int | None = None,
     cores: int = 4,
@@ -41,6 +42,8 @@ def scan_histogram_slices(
     psd_bin_edges: ndarray
         Edge values for each PSD bin in the histogram.
         For M PSD bins, there must be M+1 edges.
+    fit_style: SliceFitStyle
+        The style of best fit to use
     default_bounds: BimodalBounds
         Default lower and upper bounds of fit parameters
     bounds: list[tuple[tuple[int, int], BimodalBounds]] | None, default None
@@ -72,9 +75,10 @@ def scan_histogram_slices(
         2 * cores, 4
     )  # based on https://jupyter-tutorial.readthedocs.io/en/stable/performance/multiprocessing.html
 
-    psd_bin_left_edges = psd_bin_edges[:-1]
-    psd_bin_right_edges = psd_bin_edges[1:]
-    psd_bin_centers = (psd_bin_right_edges + psd_bin_left_edges) / 2
+    # psd_bin_left_edges = psd_bin_edges[:-1]
+    # psd_bin_right_edges = psd_bin_edges[1:]
+    # psd_bin_centers = (psd_bin_right_edges + psd_bin_left_edges) / 2
+    psd_bin_centers = get_midpoints_from_bins(psd_bin_edges)
     energy_bin_edges_limited = energy_bin_edges[start_idx : end_idx + 1]
 
     energy_slices = list(histogram[start_idx:end_idx, :])
@@ -98,6 +102,7 @@ def scan_histogram_slices(
         enumerate(energy_slices),
         chunksize=chunksize,
     )
+
     slice_params, slice_err = unpack_slice_fit_pool_results(results)
 
     df = pd.DataFrame(slice_params, columns=FIT_COLUMN_NAMES)
