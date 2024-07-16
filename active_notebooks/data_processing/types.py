@@ -1,4 +1,4 @@
-from typing import Any, Callable, Literal, NamedTuple, TypeVar
+from typing import Any, Callable, Literal, NamedTuple, TypeVar, Sequence
 
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
@@ -22,6 +22,7 @@ class GaussianParams(NamedTuple):
 
 
 BimodalBounds = tuple[BimodalParams, BimodalParams]
+BoundsSequence = Sequence[tuple[tuple[int, int], BimodalBounds]]
 
 
 def unpack_bimodal_params(
@@ -136,3 +137,6 @@ class CalibrationParams(NamedTuple):
 
 
 WindowType = Literal["nasa", "n_distro", "squarish"]
+SliceFitStyle = Literal["bounds", "peak_finder"]
+NumberedSlice = tuple[int, Any]
+SliceFitResult = tuple[FitResult, FitErrorResult]
