@@ -1,4 +1,4 @@
-from data_processing.arc_paths import get_parq_root
+from data_processing.paths import get_parq_root
 
 def input_experiment_ids() -> list[str]:
     done = False
