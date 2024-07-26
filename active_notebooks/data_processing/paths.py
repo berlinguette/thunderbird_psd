@@ -25,11 +25,11 @@ def get_parq_root(experiment_name: str) -> Path:
 
 
 def get_unfiltered_csv_root(experiment_name: str) -> Path:
-    return get_exp_unconverted_root(experiment_name) / "???"  # TODO fix this!
+    return get_exp_unconverted_root(experiment_name) / "UNFILTERED"
 
 
 def get_raw_csv_root(experiment_name: str) -> Path:
-    return get_exp_unconverted_root(experiment_name) / "???"  # TODO fix this!
+    return get_exp_unconverted_root(experiment_name) / "RAW"
 
 
 def get_report_root(experiment_name: str) -> Path:
