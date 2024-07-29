@@ -10,7 +10,7 @@ from data_processing.dataframe_validation import (
     get_df_col,
 )
 
-from active_notebooks.data_processing import paths
+from data_processing import paths
 
 END_NUMBER_PATTERN = r"^(.*_)(\d+)$"
 SAMPLES_COL_NAME = "SAMPLES"
@@ -46,17 +46,18 @@ def load_caen_csvs(
         if raw
         else paths.get_unfiltered_csv_root(experiment_name)
     )
-    source_files = [f for f in csv_folder_path.iterdir() if f.suffix == ".csv"]
+    source_files = [f for f in csv_folder_path.iterdir() if f.suffix.lower() == ".csv"]
     if len(source_files) < 1:
         raise ValueError("Folder has no csv files")
 
     headers, total_cols = _get_info_from_first_file(source_files)
     if SAMPLES_COL_NAME in headers:
         psd_cols, signal_cols = _get_split_cols(headers, total_cols)
+        names = psd_cols + signal_cols
     else:
-        psd_cols = headers
+        names = headers
         signal_cols = []
-    names, usecols = _get_names_and_usecols(wanted_data, psd_cols, signal_cols)
+    usecols = _get_usecols(wanted_data, signal_cols)
 
     dfs = []
     for source_file in source_files:
@@ -112,23 +113,19 @@ def _has_header_line(source_file: Path) -> bool:
     return re.match(END_NUMBER_PATTERN, source_file.stem) is None
 
 
-def _get_names_and_usecols(
+def _get_usecols(
     wanted_data: Literal["psd", "signals", "all"],
-    psd_cols: list[str],
     signal_cols: list[str],
-):
+) -> list[str]:
     if wanted_data == "psd":
-        names = psd_cols
         usecols = STARTING_COL_NAMES
     elif wanted_data == "signals":
         if len(signal_cols) < 1:
             raise ValueError("Signals columns were not present in data files")
-        names = signal_cols
         usecols = signal_cols
     else:
-        names = psd_cols + signal_cols
         usecols = STARTING_COL_NAMES + signal_cols
-    return names, usecols
+    return usecols
 
 
 def _process_psd_data(full_df: pd.DataFrame) -> pd.DataFrame:

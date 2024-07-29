@@ -2,7 +2,7 @@ import pickle as pkl
 import re
 from pathlib import Path
 
-from active_notebooks.data_processing.paths import INPUT_DATA_FOLDER
+from data_processing.paths import INPUT_DATA_FOLDER
 from data_processing.types import VectorLikeFunction, WindowBorders
 
 
