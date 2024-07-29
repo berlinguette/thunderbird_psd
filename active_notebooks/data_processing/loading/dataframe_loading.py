@@ -41,6 +41,19 @@ def load_caen_csvs(
     wanted_data: Literal["psd", "signals", "all"] = "psd",
     raw: bool = False,
 ) -> pd.DataFrame:
+    """Loads experiment data from unconverted CAEN Compass CSV files.
+    It is expected that these files are in the "1-Unconverted" folder as exported by Compass.
+
+    :param experiment_name: Name of experiment
+    :type experiment_name: str
+    :param wanted_data: What kind of data to load (only PSD related, only signal related, or all data), defaults to "psd"
+    :type wanted_data: Literal['psd', 'signals', 'all'], optional
+    :param raw: Whether to load raw (True) or unfiltered (False) data, defaults to False
+    :type raw: bool, optional
+    :raises ValueError: when the given folder has no CSV files
+    :return: dataframe of all desired data. If PSD data is desired, a PSD column will be added, and only rows where PSD is within 0-0.5 will be included
+    :rtype: pd.DataFrame
+    """    
     csv_folder_path = (
         paths.get_raw_csv_root(experiment_name)
         if raw
