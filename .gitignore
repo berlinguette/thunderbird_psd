@@ -118,3 +118,4 @@ sample_datasets/*/raw_data/mat/
 *.jpeg
 
 active_notebooks/pulse_height_distribution/*
+active_notebooks/outputs/*
