@@ -59,9 +59,9 @@ Open Jupyter Lab
 jupyter lab
 ```
 
-Find main notebook in `active_notebooks`
-Use `Run All`
-Get output in `3-Output/ID-XXX`
+Notebooks are stored in `active_notebooks`
+Notebooks can typically be run using the `Run All` command
+The `Reactor Data Time Binning Notebook` will find neutron count rates over time and output to `3-Output/ID-XXX`
 
 ## Contributors
 
