@@ -1,5 +1,6 @@
 # Local PC Folders
-NEUTRON_DATA_FOLDER="/replace/with/your/folder/path"
+NEUTRON_DATA_FOLDER="/Users/ryanoldford/Documents/NeutronData"
+UNCONVERTED_DATA_FOLDER=f"{NEUTRON_DATA_FOLDER}/1-Unconverted_Data"
 INPUT_DATA_FOLDER=f"{NEUTRON_DATA_FOLDER}/2-Converted_Data"
 OUTPUT_DATA_FOLDER=f"{NEUTRON_DATA_FOLDER}/3-Output"
 

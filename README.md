@@ -39,7 +39,8 @@ pip install -r requirements.txt
 
 Set up experimental data folders:
 - Find a suitable main folder for all neutron data.
-- In that folder, make 2 subfolders:
+- In that folder, make 3 subfolders:
+  - `1-Unconverted_Data`
   - `2-Converted_Data`
   - `3-Output`
 
