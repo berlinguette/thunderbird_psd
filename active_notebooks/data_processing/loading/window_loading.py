@@ -1,3 +1,4 @@
+"""This module is responsible for functions that help with loading neutron classification windows from file."""
 import pickle as pkl
 import re
 from pathlib import Path
@@ -7,6 +8,14 @@ from data_processing.types import VectorLikeFunction, WindowBorders
 
 
 def load_neutron_window(file_name_prefix: str) -> WindowBorders:
+    """Loads a neutron window from files with the given prefix.
+    The different sides are loaded separately, but should all start with the same prefix.
+
+    :param file_name_prefix: Start of neutron window files
+    :type file_name_prefix: str
+    :return: Neutron window borders
+    :rtype: WindowBorders
+    """
     side_borders_path, bottom_border_path, top_border_path = get_neutron_window_paths(
         file_name_prefix
     )
@@ -19,6 +28,13 @@ def load_neutron_window(file_name_prefix: str) -> WindowBorders:
 
 
 def get_neutron_window_paths(file_name_prefix: str) -> tuple[Path, Path, Path]:
+    """Gets the file paths for the neutron window files.
+
+    :param file_name_prefix: Start of neutron window files
+    :type file_name_prefix: str
+    :return: Paths for the side, bottom, and top border paths
+    :rtype: tuple[Path, Path, Path]
+    """
     window_save_folder = INPUT_DATA_FOLDER / "ReferenceWindow"
     side_borders_path = window_save_folder / f"{file_name_prefix}_side_borders.txt"
     bottom_border_path = window_save_folder / f"{file_name_prefix}_bottom_border.pkl"
@@ -27,6 +43,14 @@ def get_neutron_window_paths(file_name_prefix: str) -> tuple[Path, Path, Path]:
 
 
 def load_side_borders(side_borders_path: Path) -> tuple[float | None, float | None]:
+    """Loads the side borders from saved file.
+
+    :param side_borders_path: Path to side border file
+    :type side_borders_path: Path
+    :raises ValueError: if side border values are not readable
+    :return: Left and right border value; can be None if border was saved as not being present
+    :rtype: tuple[float | None, float | None]
+    """
     with side_borders_path.open("r") as side_file:
         side_file_lines = side_file.readlines()
     if len(side_file_lines) < 2:

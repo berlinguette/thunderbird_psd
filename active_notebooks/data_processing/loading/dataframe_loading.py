@@ -1,3 +1,4 @@
+"""This module is responsible for loading neutron data from Parquet files."""
 import re
 from pathlib import Path
 from typing import Literal
@@ -18,6 +19,13 @@ DELIMITER = ";"
 
 
 def load_parquet_psd(experiment_name: str) -> pd.DataFrame:
+    """Loads PSD data from converted Parquet files.
+
+    :param experiment_name: ID of the chosen experiment
+    :type experiment_name: str
+    :return: DataFrame of PSD data
+    :rtype: pd.DataFrame
+    """
     psd_folder = paths.get_parq_root(experiment_name)
 
     # Load PSD data to "psd_report" DataFrame
@@ -30,6 +38,13 @@ def load_parquet_psd(experiment_name: str) -> pd.DataFrame:
 
 
 def load_parquet_signals(experiment_name: str) -> pd.DataFrame:
+    """Loads signal (pulse trace) data from converted Parquet files.
+
+    :param experiment_name: _description_
+    :type experiment_name: str
+    :return: _description_
+    :rtype: pd.DataFrame
+    """
     signals_folder = paths.get_signals_root(experiment_name)
 
     signals_data = pd.read_parquet(signals_folder)
@@ -41,8 +56,7 @@ def load_caen_csvs(
     wanted_data: Literal["psd", "signals", "all"] = "psd",
     raw: bool = False,
 ) -> pd.DataFrame:
-    """Loads experiment data from unconverted CAEN Compass CSV files.
-    It is expected that these files are in the "1-Unconverted" folder as exported by Compass.
+    """Loads experiment data from unconverted CAEN Compass CSV files in the unconverted data folder.
 
     :param experiment_name: Name of experiment
     :type experiment_name: str
