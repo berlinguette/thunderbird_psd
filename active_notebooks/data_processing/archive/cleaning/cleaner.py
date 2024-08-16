@@ -14,7 +14,7 @@ from data_processing.cleaning.data_cleaning import (
     rms,
     subtract_rms,
 )
-from data_processing.reporting.plotting import plot_signal
+# from data_processing.reporting.plotting import plot_signal
 from data_processing.reporting.reporting import generate_report, save_plot
 from data_processing.saving.io import load_exp_info
 from logging_helpers.setup_logger import Messenger, setup_logger
@@ -25,7 +25,7 @@ def clean_file(
     root_dir: Path,
     plot_destination: Optional[Path] = None,
 ) -> tuple[pd.DataFrame, dict, pd.DataFrame]:
-    """Cleans the given parquet file using the following pipeline:
+    """[DEPRECATED]Cleans the given parquet file using the following pipeline:
     1. Removing invalid entries
     2. Recentering mean DC offset
     3. Filtering multipeak signals

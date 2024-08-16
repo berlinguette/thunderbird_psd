@@ -9,7 +9,7 @@ import pandas as pd
 from data_processing.processing.figure_of_merit import FOM, fit_fom, n_sigma_classifier, n_sigma_classifier
 from data_processing.processing.peak_finding import get_bases
 from data_processing.processing.processing_configs import *
-from data_processing.processing.psd import generate_psd
+from active_notebooks.data_processing.archive.processing.psd import generate_psd
 from data_processing.reporting.plot_configs import (
     QUOTIENT_LOWER_LIM,
     QUOTIENT_UPPER_LIM,
