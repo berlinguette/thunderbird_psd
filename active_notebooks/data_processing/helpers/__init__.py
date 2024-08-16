@@ -1,3 +1,4 @@
+"""This package is responsible for a variety of helpful functions."""
 from .get_bin_widths import get_bin_widths
 from .get_input_with_default import get_input_with_default
 from .get_left_right_bin_edges import get_left_right_bin_edges

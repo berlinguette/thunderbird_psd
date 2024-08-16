@@ -4,4 +4,8 @@ class StopExecution(Exception):
     
     
 def stop():
+    """Stops Jupyter notebook execution
+
+    :raises StopExecution: to stop notebook execution
+    """
     raise StopExecution

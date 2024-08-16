@@ -5,6 +5,13 @@ from numpy import ndarray
 
 
 def get_midpoints_from_bins(bins: ndarray) -> ndarray:
+    """Gets the midpoint of each bin in a histogram
+
+    :param bins: Array of (n+1) bin edges
+    :type bins: ndarray
+    :return: Array of n bin midpoints
+    :rtype: ndarray
+    """
     validate_bins(bins)
 
     # left_edges = bins[:-1]

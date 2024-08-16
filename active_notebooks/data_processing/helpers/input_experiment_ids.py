@@ -1,6 +1,15 @@
 from data_processing.paths import get_parq_root
 
 def input_experiment_ids() -> list[str]:
+    """Prompts the user for an experiment ID number.
+    Multiple ID numbers can be entered.
+    Each ID is formatted as "ID-{number}".
+    Each final ID is checked to see if valid data can be found for that experiment.
+    If any cannot be found, the user must try again
+
+    :return: All experiment IDs
+    :rtype: list[str]
+    """
     done = False
     experiment_ids = []
     while not done:
