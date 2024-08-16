@@ -37,6 +37,14 @@ Install required packages:
 pip install -r requirements.txt
 ```
 
+Set up experimental data folders:
+- Find a suitable main folder for all neutron data.
+- In that folder, make 2 subfolders:
+  - `2-Converted_Data`
+  - `3-Output`
+
+Create a `dot_env.py` file in the `data_processing` folder based on `dot_env.py.example`.
+
 Set up notebook cleaning filters:
 
 ```bash
