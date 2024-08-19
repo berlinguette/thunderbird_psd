@@ -1,3 +1,4 @@
+"""This module is responsible for the core interface of all neutron window strategies."""
 from abc import ABC, abstractmethod
 
 from data_processing.types import (
@@ -9,6 +10,12 @@ from pandas import DataFrame
 
 
 class AbstractNeutronStrategy(ABC):
+    """Abstract strategy to generate a neutron window.
+
+    :param settings: Neutron window generation settings
+    :type settings: NeutronWindowSettings
+    :raises ValueError: if settings are not valid for the concrete neutron window strategy used
+    """
     def __init__(self, settings: NeutronWindowSettings):
         self._slice_fit_df: DataFrame | None = None
         self._settings = settings
@@ -17,10 +24,22 @@ class AbstractNeutronStrategy(ABC):
             raise ValueError("Settings are not valid")
 
     @abstractmethod
-    def get_neutron_window(self) -> WindowBorders: ...
+    def get_neutron_window(self) -> WindowBorders: 
+        """Generate the neutron window for this strategy
+
+        :return: Borders of the generated neutron window
+        :rtype: WindowBorders
+        """
+        ...
 
     @abstractmethod
-    def _validate_settings(self) -> bool: ...
+    def _validate_settings(self) -> bool: 
+        """Determine whether settings are valid for this neutron generation strategy
+
+        :return: True if the settings are valid, False otherwise
+        :rtype: bool
+        """
+        ...
 
     def _get_settings(
         self, settings_type: type[SpecificNeutronWindowSettings]
@@ -31,6 +50,11 @@ class AbstractNeutronStrategy(ABC):
             raise ValueError("Settings are not valid")
 
     def set_slice_fit_dataframe(self, df: DataFrame):
+        """Sets the slice fit dataframe for this strategy
+
+        :param df: Slice fit dataframe
+        :type df: DataFrame
+        """
         self._slice_fit_df = df
 
     def _get_slice_fit_dataframe(self) -> DataFrame:

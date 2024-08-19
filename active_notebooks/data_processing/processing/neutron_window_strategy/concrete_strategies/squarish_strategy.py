@@ -10,6 +10,11 @@ from data_processing.types import (
 
 class SquarishGenerationStrategy(AbstractNeutronStrategy):
     def get_neutron_window(self) -> WindowBorders:
+        """Generate the neutron window for this strategy
+
+        :return: Borders of the generated neutron window
+        :rtype: WindowBorders
+        """
         window_settings = self._get_settings(SquarishGenerationSettings)
         left = window_settings.left
         bottom = window_settings.bottom

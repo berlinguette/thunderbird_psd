@@ -12,6 +12,11 @@ from data_processing.types import (
 
 class NeutronDistributionGenerationStrategy(AbstractNeutronStrategy):
     def get_neutron_window(self) -> WindowBorders:
+        """Generate the neutron window for this strategy
+
+        :return: Borders of the generated neutron window
+        :rtype: WindowBorders
+        """
         window_settings = self._get_settings(NeutronDistributionGenerationSettings)
         df = self._get_slice_fit_dataframe()
         return generate_n_distro_neutron_window(

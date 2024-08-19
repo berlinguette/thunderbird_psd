@@ -1,3 +1,4 @@
+"""This module is responsible for the Loading neutron window strategy."""
 from data_processing.loading.window_loading import (
     get_neutron_window_paths,
     load_neutron_window,
@@ -9,7 +10,14 @@ from data_processing.types import WindowBorders
 
 
 class LoadingStrategy(AbstractNeutronStrategy):
+    """Strategy to generate a neutron window by loading from window files.
+    """
     def get_neutron_window(self) -> WindowBorders:
+        """Generate the neutron window for this strategy
+
+        :return: Borders of the generated neutron window
+        :rtype: WindowBorders
+        """
         file_name_prefix = self._get_settings(str)
         return load_neutron_window(file_name_prefix)
 
@@ -20,6 +28,3 @@ class LoadingStrategy(AbstractNeutronStrategy):
             return all(paths_exist)
         else:
             return False
-
-    # def _get_settings(self) -> str:
-    #     return self._get_settings_generic(str)
