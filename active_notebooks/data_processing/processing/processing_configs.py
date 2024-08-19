@@ -1,3 +1,4 @@
+"""This module is responsible for storing processing configuration values."""
 # [PROCESSING]
 MAX_VOLTAGE = 2.5
 FINE_DC_OFFSET = -0.00144

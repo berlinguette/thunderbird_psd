@@ -1,3 +1,4 @@
+"""This package is responsible for processing neutron detector data."""
 from .calibration import Detector, recalibrate
 from .dataframe_manipulation import generate_full_neutron_df, generate_neutron_signals
 from .figure_of_merit import FOM, FWHM, bimodal, gaussian, guess_bimodal_params

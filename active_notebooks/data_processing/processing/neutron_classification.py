@@ -1,3 +1,4 @@
+"""This module is responsible for neutron classification."""
 # from typing import Any
 
 import pandas as pd
@@ -18,25 +19,20 @@ def classify(
     borders: WindowBorders,
     label: DetectorDataframeColumn = DetectorDataframeColumn.NEUTRON_CLASS
 ) -> pd.DataFrame:
-    """Classify signals as neutron or non-neutron for a given count window
+    """Classify signals as neutron or non-neutron for a given "window"
     Classification creates a new column of boolean values, where True indicates a neutron classified signal.
+    Signals with PSD/energy values within the window are classified as neutrons.
 
-    Parameters
-    ----------
-    psd_report: DataFrame
-        DataFrame containing signal PSD data.
-        It must have the "tail / total" (for PSD value) column, as well as the column given in the `energy_column` parameter.
-    energy_column: EnergyColumn
-        The column containing the calibrated energy values.
-    borders: WindowBorders
-        The borders for the neutron window
-    label: str
-        Column label to use for signal classification results
-
-    Returns
-    -------
-    psd_report: DataFrame
-        Original DataFrame with new column for neutron classification
+    :param psd_report: Dataframe containing signal PSD (in "tail / total" column) and energy data
+    :type psd_report: pd.DataFrame
+    :param energy_column: Dataframe column containing pulse energy values
+    :type energy_column: EnergyColumn
+    :param borders: Neutron window borders
+    :type borders: WindowBorders
+    :param label: Label of neutron classification column, defaults to DetectorDataframeColumn.NEUTRON_CLASS
+    :type label: DetectorDataframeColumn, optional
+    :return: Original DataFrame with new column for neutron classification
+    :rtype: pd.DataFrame
     """
     energy_col = get_df_col(psd_report, energy_column)
     psd_col = get_df_col(psd_report, DetectorDataframeColumn.PSD)

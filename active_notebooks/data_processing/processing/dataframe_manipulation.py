@@ -1,3 +1,4 @@
+"""This module is responsible for neutron dataframe manipulation."""
 import pandas as pd
 from data_processing.dataframe_validation import DetectorDataframeColumn
 
@@ -7,6 +8,17 @@ def generate_full_neutron_df(
     signals_df: pd.DataFrame,
     classification_col: DetectorDataframeColumn = DetectorDataframeColumn.NEUTRON_CLASS
 ) -> pd.DataFrame:
+    """Makes a full neutron dataframe from the neutron detector dataframe with classification and the signals dataframe
+
+    :param classified_df: Neutron detector dataframe with neutron classification column
+    :type classified_df: pd.DataFrame
+    :param signals_df: Detector signals dataframe
+    :type signals_df: pd.DataFrame
+    :param classification_col: Classification column, defaults to DetectorDataframeColumn.NEUTRON_CLASS
+    :type classification_col: DetectorDataframeColumn, optional
+    :return: Full neutron dataframe
+    :rtype: pd.DataFrame
+    """
     neutrons_only = classified_df.query(classification_col.value)
     full_neutron_df = neutrons_only.join(signals_df)
     return full_neutron_df
@@ -16,6 +28,15 @@ def generate_neutron_signals(
     neutron_events_df: pd.DataFrame,
     signal_length: int = 200
 ) -> pd.DataFrame:
+    """Generate neutron signals dataframe from neutron events dataframe.
+
+    :param neutron_events_df: Neutron events dataframe
+    :type neutron_events_df: pd.DataFrame
+    :param signal_length: Length of output signal, defaults to 200
+    :type signal_length: int, optional
+    :return: Neutron signals dataframe
+    :rtype: pd.DataFrame
+    """
     signal_start = '0'
     signal_end = str(signal_length-1)
     neutron_signals = neutron_events_df.loc[:, signal_start:signal_end]
