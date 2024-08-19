@@ -1,3 +1,4 @@
+"""This package is responsible for reporting results."""
 from .plot_configs import *
 from .plotting import (
     add_fit_window_to_plot,

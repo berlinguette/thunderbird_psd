@@ -1,3 +1,4 @@
+"""This module is responsible for plot configuration values."""
 SUPTITLE_FONT_SIZE = 24
 TITLE_FONT_SIZE = 22
 AXIS_FONT_SIZE = 14

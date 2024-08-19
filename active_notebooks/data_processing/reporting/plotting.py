@@ -1,3 +1,4 @@
+"""This module is responsible for plotting data."""
 from math import ceil
 
 import matplotlib as mpl
@@ -30,6 +31,23 @@ def plot_single(
     plot_kwargs: Kwargs | None = None,
     **kwargs,
 ):
+    """Plots a single set of data using a given graphing function.
+
+    :param graphing_function: A function able to add graph data to plot Axes
+    :type graphing_function: GraphingFunction
+    :param data: dictionary of data Series representing x and y values for a single dataset
+    :type data: GraphData
+    :param figsize: Width and height of figure, defaults to (FIG_DIM_X, FIG_DIM_Y)
+    :type figsize: tuple[float, float], optional
+    :param supertitle: Main plot title, defaults to None
+    :type supertitle: str | None, optional
+    :param supertitle_font_size: Font size for main plot title, defaults to SUPTITLE_FONT_SIZE
+    :type supertitle_font_size: float, optional
+    :param plot_kwargs: Other keyword arguments to be used on the plot, defaults to None
+    :type plot_kwargs: Kwargs | None, optional
+    :return: Plot Figure and Axes
+    :rtype: tuple[Figure, Axes]
+    """
     fig, ax = plt.subplots(figsize=figsize, **kwargs)
 
     if plot_kwargs is None:
@@ -52,6 +70,26 @@ def plot_many(
     plot_kwargs: list[Kwargs] | None = None,
     **kwargs,
 ):
+    """Plots multiple sets of data using a given graphing function.
+    Each data set is plotted on a separate subplot, arranged in a grid.
+
+    :param graphing_function: A function able to add graph data to plot Axes
+    :type graphing_function: GraphingFunction
+    :param data: list of dictionaries of data Series representing x and y values for each dataset
+    :type data: list[GraphData]
+    :param figsize: Width and height of figure, defaults to (FIG_DIM_X, FIG_DIM_Y)
+    :type figsize: tuple[float, float], optional
+    :param max_cols: Maximum number of columns to use in the subplots grid, defaults to SUBPLOTS_MAX_COLS
+    :type max_cols: int, optional
+    :param supertitle: Main plot title, defaults to None
+    :type supertitle: str | None, optional
+    :param supertitle_font_size: Font size for main plot title, defaults to SUPTITLE_FONT_SIZE
+    :type supertitle_font_size: float, optional
+    :param plot_kwargs: Other keyword arguments to be used on the plot, defaults to None
+    :type plot_kwargs: list[Kwargs] | None, optional
+    :return: Plot Figure and matrix of Axes
+    :rtype: tuple[Figure, AxesMatrix]
+    """
     n_plots = len(data)
     n_cols = min(max_cols, n_plots)
     n_rows = ceil(n_plots / n_cols)
@@ -82,6 +120,19 @@ def plot_many(
 def graph_tail_vs_total(
     fig: Figure, ax: Axes, data: GraphData, graph_kwargs: Kwargs
 ) -> Axes:
+    """Graphing Function to graph detector event tail vs total
+
+    :param fig: Graph figure
+    :type fig: Figure
+    :param ax: Graph axis
+    :type ax: Axes
+    :param data: Data to plot
+    :type data: GraphData
+    :param graph_kwargs: Other keyword arguments to be used on the plot 
+    :type graph_kwargs: Kwargs
+    :return: Axis configured to plot given data
+    :rtype: Axes
+    """
     x_resolution = graph_kwargs.get("x_resolution", HISTOGRAM_RES)
     y_resolution = graph_kwargs.get("y_resolution", HISTOGRAM_RES)
     max_energy = graph_kwargs.get("max_energy", 5)
@@ -115,6 +166,19 @@ def graph_tail_vs_total(
 def graph_psd_histogram(
     fig: Figure, ax: Axes, data: GraphData, graph_kwargs: Kwargs
 ) -> Axes:
+    """Graphing Function to graph PSD/energy 2D histogram
+
+    :param fig: Graph figure
+    :type fig: Figure
+    :param ax: Graph axis
+    :type ax: Axes
+    :param data: Data to plot
+    :type data: GraphData
+    :param graph_kwargs: Other keyword arguments to be used on the plot 
+    :type graph_kwargs: Kwargs
+    :return: Axis configured to plot given data
+    :rtype: Axes
+    """
     x_resolution = graph_kwargs.get("x_resolution", HISTOGRAM_RES)
     y_resolution = graph_kwargs.get("y_resolution", HISTOGRAM_RES)
     energy_start_zero = graph_kwargs.get("energy_start_zero", False)
@@ -164,6 +228,15 @@ def graph_psd_histogram(
 def plot_tail_vs_total(
     df: pd.DataFrame, experiment_display_name: str, **kwargs
 ) -> tuple[Figure, Axes]:
+    """Plot tail vs total from neutron detector dataframe
+
+    :param df: Dataframe with neutron detector PSD data
+    :type df: pd.DataFrame
+    :param experiment_display_name: Name of experiment to display on graph
+    :type experiment_display_name: str
+    :return: Graph Figure and Axes
+    :rtype: tuple[Figure, Axes]
+    """
     figsize = _popget(kwargs, "figsize", (FIG_DIM_X, FIG_DIM_Y))
     x_resolution = _popget(kwargs, "x_resolution", HISTOGRAM_RES)
     # cmap = _popget(kwargs, "cmap", mpl.colormaps["gnuplot"])  # type: ignore
@@ -205,6 +278,21 @@ def plot_psd_histogram(
     energy_start_zero: bool = False,
     **kwargs,
 ) -> tuple[Figure, Axes]:
+    """Plot PSD histogram using neutron detector dataframe
+
+    :param df: Dataframe with neutron detector PSD data
+    :type df: pd.DataFrame
+    :param energy_column: Name of dataframe column with energy data, defaults to DetectorDataframeColumn.CALIB_ENERGY
+    :type energy_column: EnergyColumn, optional
+    :param colormap_name: Name of colormap to use, defaults to "gnuplot"
+    :type colormap_name: str, optional
+    :param colorbar: Whether to show colorbar, defaults to False
+    :type colorbar: bool, optional
+    :param energy_start_zero: Whether to set the energy axis minimum to 0 regardless of data, defaults to False
+    :type energy_start_zero: bool, optional
+    :return: Plot figure, plot axes
+    :rtype: tuple[Figure, Axes]
+    """
     figsize = _popget(kwargs, "figsize", (FIG_DIM_X, FIG_DIM_Y))
     x_resolution = _popget(kwargs, "x_resolution", HISTOGRAM_RES)
     y_resolution = _get_histogram_y_resolution(
@@ -237,6 +325,19 @@ def add_fit_window_to_plot(
     graph_x_limits: tuple[float, float],
     graph_y_limits: tuple[float, float],
 ) -> Axes:
+    """Adds fit window display to an existing PSD/energy histogram plot
+
+    :param axes: PSD/energy histogram plot axes
+    :type axes: Axes
+    :param borders: Neutron window borders
+    :type borders: WindowBorders
+    :param graph_x_limits: Limits of plot area on x axis
+    :type graph_x_limits: tuple[float, float]
+    :param graph_y_limits: Limits of plot area on y axis
+    :type graph_y_limits: tuple[float, float]
+    :return: Original axis with fit window display
+    :rtype: Axes
+    """
     left_border = borders.left
     right_border = borders.right
     bottom_border_fn = borders.bottom
@@ -291,6 +392,27 @@ def plot_classification(
     count_limit: int = 5,
     **kwargs,
 ) -> tuple[Figure, Axes]:
+    """Plots neutron classification data.
+    The plot shows the PSD/neutron histogram, but with neutron classification window highlighted.
+    The plot title includes data about the classified neutron count.
+
+    :param df: Dataframe with neutron detector data
+    :type df: pd.DataFrame
+    :param borders: Neutron window borders
+    :type borders: WindowBorders
+    :param experiment_display_name: Experiment name to use on plot title
+    :type experiment_display_name: str
+    :param class_col_name: Column containing neutron classification data
+    :type class_col_name: DetectorDataframeColumn
+    :param energy_col_name: Column containing signal energy data
+    :type energy_col_name: EnergyColumn
+    :param colormap_name: Colormap to use (diverging colormaps are ideal), defaults to "RdBu_r"
+    :type colormap_name: str, optional
+    :param count_limit: Neutron count to get maximum color value, ensuring that low counts are still visible, defaults to 5
+    :type count_limit: int, optional
+    :return: Plot figure, plot axes
+    :rtype: tuple[Figure, Axes]
+    """
     # y_resolution = _get_histogram_y_resolution()
     # max_energy = get_df_col(df, DataframeColumn.CALIB_ENERGY).max()
 
@@ -408,6 +530,20 @@ def plot_classification(
 def plot_fom(
     psd: list, params: tuple, unimodal: bool = False, n_bins: int = 100
 ) -> tuple[Figure, Axes]:
+    """Plots fit bimodal curve for a given PSD/energy histogram slice.
+    This plot's title displays the Figure Of Merit (FOM) value.
+
+    :param psd: list of PSD values for a given slice
+    :type psd: list
+    :param params: bimodal fit parameters
+    :type params: tuple
+    :param unimodal: Whether to treat the data as unimodal (i.e. no neutron Gaussian), defaults to False
+    :type unimodal: bool, optional
+    :param n_bins: Number of PSD bins to use, defaults to 100
+    :type n_bins: int, optional
+    :return: Plot figure, plot axes
+    :rtype: tuple[Figure, Axes]
+    """    
     """Returns the Figure of Merit and fitting data for the biomdal gaussians"""
     counts, bins = np.histogram(psd, n_bins)
 
@@ -440,6 +576,15 @@ def plot_fom(
 def plot_scatter(
     x: list | pd.Series, y: list | pd.Series, **kwargs
 ) -> tuple[Figure, Axes]:
+    """Create a scatter plot.
+
+    :param x: X values of all data points
+    :type x: list | pd.Series
+    :param y: Y values of all data points
+    :type y: list | pd.Series
+    :return: Plot figure, plot axes
+    :rtype: tuple[Figure, Axes]
+    """
     figsize = kwargs.get("figsize", (FIG_DIM_X, FIG_DIM_Y))
     marker = kwargs.get("marker", SCATTER_MARKER_DOT)
     marker_size = kwargs.get("s", SCATTER_MARKER_SIZE_SMALL)
@@ -459,7 +604,23 @@ def plot_bounded_scatter(
     ybounds: tuple[float, float] | None = None,
     **kwargs,
 ) -> tuple[Figure, Axes]:
-    """Returns a generic scatter plot"""
+    """Create a scatter plot with X and Y labels and display bounds.
+
+    :param x: X values of all data points
+    :type x: list | pd.Series
+    :param y: Y values of all data points
+    :type y: list | pd.Series
+    :param xlabel: X axis label
+    :type xlabel: str
+    :param ylabel: Y axis label
+    :type ylabel: str
+    :param xbounds: X axis display bounds, defaults to None
+    :type xbounds: tuple[float, float] | None, optional
+    :param ybounds: Y axis display bounds, defaults to None
+    :type ybounds: tuple[float, float] | None, optional
+    :return: Plot figure, plot axes
+    :rtype: tuple[Figure, Axes]
+    """
     fig, ax = plot_scatter(x, y, **kwargs)
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
