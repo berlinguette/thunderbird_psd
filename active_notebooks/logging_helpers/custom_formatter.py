@@ -1,3 +1,4 @@
+"""This module is responsible for creating custom logging formatters."""
 import logging
 from typing import Dict, Tuple, Union
 
@@ -19,18 +20,13 @@ class CustomFormatter(logging.Formatter):
         logging.CRITICAL: detailed_format
     }
 
-    def format(self, record):
+    def format(self, record: logging.LogRecord) -> str:
         """Formats a given record according to its severity level
 
-        Parameters
-        ----------
-        record : LogRecord
-            Record to format
-
-        Returns
-        -------
-        str
-            Formatted log record text
+        :param record: Record to format
+        :type record: LogRecord
+        :return: Formatted log record text
+        :rtype: str
         """
         log_fmt = self.FORMATS.get(record.levelno, self.detailed_format)
         formatter = logging.Formatter(*log_fmt)

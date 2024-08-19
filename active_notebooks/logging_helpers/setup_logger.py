@@ -12,12 +12,10 @@ def setup_logger(logger: logging.Logger, log_file: Path):
     - applies CustomFormatter
     - sets logger to log to given log file
 
-    Parameters
-    ----------
-    logger : logging.Logger
-        logger to set up
-    log_file : Path
-        path to log file
+    :param logger: Logger to set up
+    :type logger: logging.Logger
+    :param log_file: Path to log file
+    :type log_file: Path
     """
     logger.setLevel(logging.DEBUG)
 
@@ -32,15 +30,10 @@ def setup_logger(logger: logging.Logger, log_file: Path):
 def get_conversion_logfile_path(experiment_folder: Path) -> Path:
     """Gives correct conversion log file path for given experiment folder
 
-    Parameters
-    ----------
-    experiment_folder : Path
-        path to root folder for this experiment
-
-    Returns
-    -------
-    Path
-        path to experiment's conversion log file
+    :param experiment_folder: path to root folder for this experiment
+    :type experiment_folder: Path
+    :return: path to experiment's conversion log file
+    :rtype: Path
     """
     log_filename = 'conversion.log'
     return experiment_folder / log_filename
@@ -49,10 +42,8 @@ def get_conversion_logfile_path(experiment_folder: Path) -> Path:
 def cleanup_logger(logger: logging.Logger):
     """Cleans up file loggers, releasing all log file resources
 
-    Parameters
-    ----------
-    logger : logging.Logger
-        logger to clean up if needed
+    :param logger: logger to clean up if needed
+    :type logger: logging.Logger
     """
     for handler in logger.handlers:
         if isinstance(handler, logging.FileHandler):
@@ -63,16 +54,13 @@ def cleanup_logger(logger: logging.Logger):
 class Messenger:
     """Handles sending log messages that are compatible with tqdm
 
-    Parameters
-    ----------
-    logger : logging.Logger
-        logger used when sending log messages
-    in_log : bool, optional
-        whether messages should be saved to log file, by default True
-    on_screen : bool, optional
-        whether messages should be displayed in console, by default True
+    :param logger: logger used when sending log messages
+    :type logger: logging.Logger
+    :param in_log: whether messages should be saved to log file, by default True, defaults to True
+    :type in_log: bool, optional
+    :param on_screen: whether messages should be displayed in console, by default True, defaults to True
+    :type on_screen: bool, optional
     """
-
     def __init__(
         self,
         logger: logging.Logger,
@@ -86,14 +74,10 @@ class Messenger:
     def message(self, msg: str, level: int):
         """Send a message that can be logged and/or displayed on screen
 
-        These messages are compatible with tqdm. 
-
-        Parameters
-        ----------
-        msg : str
-            message to log/display
-        level : int
-            desired log level
+        :param msg: message to log/display
+        :type msg: str
+        :param level: desired log level
+        :type level: int
         """
         if self.in_log:
             self.logger.log(level, msg)
@@ -103,19 +87,15 @@ class Messenger:
     def debug(self, msg: str):
         """Send a message that logs at the debug log level
 
-        Parameters
-        ----------
-        msg : str
-            message to log/display
+        :param msg: message to log/display
+        :type msg: str
         """
         self.message(msg, logging.DEBUG)
 
     def info(self, msg: str):
         """Send a message that logs at the debug log level
 
-        Parameters
-        ----------
-        msg : str
-            message to log/display
+        :param msg: message to log/display
+        :type msg: str
         """
         self.message(msg, logging.INFO)
