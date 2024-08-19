@@ -14,17 +14,10 @@ from data_processing.types import (
 def split_params(params: BimodalParams) -> tuple[GaussianParams, GaussianParams]:
     """Separates bimodal function parameters into 2 sets, one per component gaussian
 
-    Parameters
-    ----------
-    params: BimodalParams
-        parameters of a bimodal function
-
-    Returns
-    -------
-    lower_gaussian_params: GaussianParams
-        Parameters of the lower gaussian (i.e. lower mu value)
-    upper_gaussian_params: GaussianParams
-        Parameters of the upper gaussian (i.e. higher mu value)
+    :param params: parameters of a bimodal function
+    :type params: BimodalParams
+    :return: Gaussian parameters of the lower (smaller mu) and upper (larger mu) gaussian
+    :rtype: tuple[GaussianParams, GaussianParams]
     """
     lower_gauss = GaussianParams(abs(params.mu1), abs(params.sigma1), abs(params.a1))
     upper_gauss = GaussianParams(abs(params.mu2), abs(params.sigma2), abs(params.a2))
@@ -34,6 +27,15 @@ def split_params(params: BimodalParams) -> tuple[GaussianParams, GaussianParams]
 def unpack_slice_fit_pool_results(
     results: IMapIterator,
 ) -> tuple[list[UnpackedFitResult], list[UnpackedFitErrorResult]]:
+    """Unpacks slice fit pool results.
+    The unpacked results are a list of fit results and fit error, one per slice.
+    Each array is sorted by slice index.
+
+    :param results: Slice fit pool results
+    :type results: IMapIterator
+    :return: Fit results for each slice, fit error for each slice
+    :rtype: tuple[list[UnpackedFitResult], list[UnpackedFitErrorResult]]
+    """
     zipped_results = zip(*results)
     slice_params_from_zip: tuple[FitResult]
     slice_err_from_zip: tuple[FitErrorResult]
@@ -82,10 +84,27 @@ def unpack_slice_fit_pool_results(
 def find_failed_slices(
     df: pd.DataFrame,
     experiment_id: str,
-    nan_total_threshold: int = 5,  # max bad slice fits total
-    nan_window_threshold: int = 4,  # max bad slice fits in a "window"
-    nan_rolling_window: int = 7,  # window size
+    nan_total_threshold: int = 5,
+    nan_window_threshold: int = 4,
+    nan_rolling_window: int = 7,
 ) -> tuple[pd.DataFrame, list | None]:
+    """Finds failed slices in result of PSD/energy histogram slice fitting.
+    Slices are considered failed if any slice fit parameter is NaN.
+    This function prints diagnostic messages explaining fit failure, as well as removing bad fit slice data.
+
+    :param df: Dataframe with PSD/energy slice fit parameters per slice
+    :type df: pd.DataFrame
+    :param experiment_id: Experiment ID
+    :type experiment_id: str
+    :param nan_total_threshold: Maximum total bad slice fits, defaults to 5
+    :type nan_total_threshold: int, optional
+    :param nan_window_threshold: Maximum bad fits in a rolling "window", defaults to 4
+    :type nan_window_threshold: int, optional
+    :param nan_rolling_window: Size of rolling "window", defaults to 7
+    :type nan_rolling_window: int, optional
+    :return: Original dataframe with bad fit slices removed, list of bad fit slice indexes
+    :rtype: tuple[pd.DataFrame, list | None]
+    """
     bad_slice_indexes = None
     row_is_nan = df.isna().any(axis=1)
     nan_rows = df[row_is_nan]

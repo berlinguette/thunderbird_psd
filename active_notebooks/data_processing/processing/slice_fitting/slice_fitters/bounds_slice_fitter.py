@@ -1,3 +1,4 @@
+"""This module is responsible for the bounds-based slice fitter."""
 import numpy as np
 from data_processing.processing.figure_of_merit import FOM
 from data_processing.processing.slice_fitting.bimodal_fitting import get_bimodal_fit
@@ -14,6 +15,9 @@ from .slice_fitter import SliceFitter
 
 
 class BoundsSliceFitter(SliceFitter):
+    """Slice fitter based on fit bounds.
+    Bounds force the fit function parameters to stay within a specified range.
+    """
     def __call__(self, numbered_slice: NumberedSlice) -> SliceFitResult:
         i, slice = numbered_slice
         slice_left_edge = self.energy_bin_edges[i]

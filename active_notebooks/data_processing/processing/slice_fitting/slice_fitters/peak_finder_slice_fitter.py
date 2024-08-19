@@ -17,6 +17,9 @@ from .slice_fitter import SliceFitter
 
 
 class PeakFinderSliceFitter(SliceFitter):
+    """Slice fitter based on peak finding.
+    The peak finding algorithm provides parameter guesses to the fit function.
+    """
     def __call__(self, numbered_slice: NumberedSlice) -> SliceFitResult:
         i, slice = numbered_slice
         slice_left_edge = self.energy_bin_edges[i]

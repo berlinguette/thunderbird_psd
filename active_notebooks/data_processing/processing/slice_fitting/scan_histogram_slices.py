@@ -27,48 +27,32 @@ def scan_histogram_slices(
     cores: int = 4,
     use_chunks: bool = False,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Determines bimodal fit and FOM for every energy slice
-    in a 2D PSD/Energy histogram
+    """Determines bimodal fit and FOM for every energy slice in a 2D PSD/Energy histogram
+    The histogram should have the shape [N, M], where N is the number of energy bins, and M is the number of PSD bids.
+    This matches the output of numpy's histogram2d function.
 
-    Parameters
-    ----------
-    histogram: ndarray
-        2D PSD/Energy histogram.
-        The histogram shape should be [N, M], where N is the number of energy bins, and M is the number of PSD bins.
-        This matches the output of Numpy's histogram2d function.
-    energy_bin_edges: ndarray
-        Edge values for each energy bin in the histogram.
-        For N energy bins, there must be N+1 edges.
-    psd_bin_edges: ndarray
-        Edge values for each PSD bin in the histogram.
-        For M PSD bins, there must be M+1 edges.
-    fit_style: SliceFitStyle
-        The style of best fit to use
-    default_bounds: BimodalBounds
-        Default lower and upper bounds of fit parameters
-    bounds: list[tuple[tuple[int, int], BimodalBounds]] | None, default None
-        Allows custom bounds for slice ranges.
-        Each list entry must have a tuple of start and stop indexes, and corresponding fit bounds.
-        Bounds are used when the slice index falls within the start/stop range (start inclusive, stop exclusive).
-        If index ranges overlap, the last matching range is used.
-        If bounds is None, only default_bounds are used.
-    start_idx: int, default 0
-        Starting index (inclusive) of slice range to fit to bimodal
-    end_idx: int | None, default None
-        Ending index (exclusive) of slice range to fit to bimodal
-    cores: int, default 4
-        Number of logical cores present on this computer.
-        Used to control parallelization of the scan.
-    use_chunks: bool, default False
-        Whether to split slices into larger chunks during parallelization.
-        This can help speed up the scan on larger histograms.
-
-    Returns
-    -------
-    fit_dataframe: DataFrame
-        DataFrame of fit parameters including FOM (as columns) for each slice (as rows)
-    error_dataframe: DataFrame
-        DataFrame of (1 standard deviation) errors in fit parameters (as columns) for each slice (as rows)
+    :param histogram: PSD/energy 2D histogram
+    :type histogram: np.ndarray
+    :param energy_bin_edges: Energy bin edges, with shape [N+1]
+    :type energy_bin_edges: np.ndarray
+    :param psd_bin_edges: PSD bin edges, with shape [M+1]
+    :type psd_bin_edges: np.ndarray
+    :param fit_style: Style of best fit to use, defaults to "bounds"
+    :type fit_style: SliceFitStyle, optional
+    :param default_bounds: Default lower and upper bounds of fit parameters to use on slices where no bounds are defined, defaults to None
+    :type default_bounds: BimodalBounds | None, optional
+    :param bounds: Information on bounds to use for specified ranges of slices, defaults to None
+    :type bounds: BoundsSequence | None, optional
+    :param start_idx: Index of slice to start from, defaults to 0
+    :type start_idx: int, optional
+    :param end_idx: Index of slice to end on, defaults to None
+    :type end_idx: int | None, optional
+    :param cores: CPU cores to use, defaults to 4
+    :type cores: int, optional
+    :param use_chunks: Whether to split slices into larger chunks during parallelization, defaults to False
+    :type use_chunks: bool, optional
+    :return: Dataframe of fit parameters, dataframe of fit errors
+    :rtype: tuple[pd.DataFrame, pd.DataFrame]
     """
     end_idx = len(histogram) if end_idx is None else min(len(histogram), end_idx)
     pool_size = max(

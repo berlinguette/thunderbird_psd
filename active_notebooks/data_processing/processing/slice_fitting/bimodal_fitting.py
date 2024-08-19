@@ -1,3 +1,4 @@
+"""This module is responsible for bimodal fitting."""
 from math import ceil
 from typing import Any
 
@@ -18,6 +19,15 @@ from scipy.signal import find_peaks, peak_widths
 def get_bimodal_fit_guess(
     bins: np.ndarray, histogram_slice: np.ndarray
 ) -> BimodalParams:
+    """Gets guess of bimodal fit parameters, to be used in bimodal fitting, for a given PSD/energy histogram slice.
+
+    :param bins: PSD bins for the histogram slice
+    :type bins: np.ndarray
+    :param histogram_slice: PSD/Energy histogram slice for a single energy bin
+    :type histogram_slice: np.ndarray
+    :return: Bimodal fit parameter guess for this slice
+    :rtype: BimodalParams
+    """
     bin_mids = get_midpoints_from_bins(bins)
     sample_psd_rate = bin_mids[1] - bin_mids[0]  # assume mids increase linearly
 
@@ -86,25 +96,17 @@ def get_bimodal_fit(
 ) -> tuple[GaussianParams, GaussianParams, np.ndarray]:
     """Fits a histogram slice to a bimodal distribution
 
-    Parameters
-    ----------
-    bin_midpoints: ndarray
-        Midpoints of each PSD bin in the histogram
-    histogram_slice: ndarray
-        Slice of the 2D PSD/Energy histogram taken for a specific energy (i.e. PSD vs Counts)
-    bounds: BimodalBounds
-        Lower and upper bounds of fit parameters for this slice
-
-    Returns
-    -------
-    gamma_params: GaussianParams
-        Parameters of the gaussian fit for gamma rays
-    neutron_params: GaussianParams
-        Parameters of the gaussian fit for neutrons
-    cov: ndarray
-        Estimated covariance of all bimodial parameters
+    :param bin_midpoints: Midpoints of each PSD bin in the histogram
+    :type bin_midpoints: np.ndarray
+    :param histogram_slice: Slice of the 2D PSD/Energy histogram taken for a specific energy (i.e. PSD vs Counts)
+    :type histogram_slice: np.ndarray
+    :param guess: Fit parameter guess for this slice, defaults to None
+    :type guess: BimodalParams | None, optional
+    :param bounds: Lower and upper bounds of fit parameters for this slice, defaults to None
+    :type bounds: BimodalBounds | None, optional
+    :return: Parameters of the gaussian fit for gamma rays and neutrons, and estimated covariance of all bimodal parameters
+    :rtype: tuple[GaussianParams, GaussianParams, np.ndarray]
     """
-    # bounds_tuple = None
     curve_fit_params: dict[str, Any] = {}
     if guess is not None:
         curve_fit_params["p0"] = guess

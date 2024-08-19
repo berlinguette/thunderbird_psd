@@ -15,6 +15,23 @@ def get_psd_energy_histogram(
     psd_min: float = 0.0,
     psd_max: float = 0.5,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Gets PSD/energy 2D histogram for a set of neutron detector energy.
+
+    :param df: Dataframe of all neutron detector events
+    :type df: pd.DataFrame
+    :param energy_column: Name of energy column in events dataframe
+    :type energy_column: EnergyColumn
+    :param energy_width: Desired energy bin width, defaults to 0.0150
+    :type energy_width: float, optional
+    :param psd_bin_count: Desired number of PSD bins, defaults to 100
+    :type psd_bin_count: int, optional
+    :param psd_min: Minimum PSD value used in histogram, defaults to 0.0
+    :type psd_min: float, optional
+    :param psd_max: Maximum PSD value used in histogram, defaults to 0.5
+    :type psd_max: float, optional
+    :return: PSD/energy 2D histogram, energy bins, PSD bins
+    :rtype: tuple[np.ndarray, np.ndarray, np.ndarray]
+    """
     x = get_df_col(df, energy_column)
     y = get_df_col(df, DetectorDataframeColumn.PSD)
 
