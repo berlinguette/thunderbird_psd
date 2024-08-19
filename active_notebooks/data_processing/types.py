@@ -1,3 +1,4 @@
+"""This module is responsible for types used across the codebase."""
 from typing import Any, Callable, Literal, NamedTuple, TypeVar, Sequence
 
 from matplotlib.axes import Axes
@@ -28,10 +29,24 @@ BoundsSequence = Sequence[tuple[tuple[int, int], BimodalBounds]]
 def unpack_bimodal_params(
     params: BimodalParams,
 ) -> tuple[float, float, float, float, float, float]:
+    """Convert bimodal params into a simple tuple.
+
+    :param params: Bimodal fit parameters
+    :type params: BimodalParams
+    :return: Mu, sigma, and A for both Gaussians in bimodal
+    :rtype: tuple[float, float, float, float, float, float]
+    """
     return (params.mu1, params.sigma1, params.a1, params.mu2, params.sigma2, params.a2)
 
 
 def unpack_gaussian_params(params: GaussianParams) -> tuple[float, float, float]:
+    """Convert Gaussian parameters into a simple tuple.
+
+    :param params: Gaussian fit parameters
+    :type params: GaussianParams
+    :return: Mu, sigma and A for a Gaussian distribution
+    :rtype: tuple[float, float, float]
+    """
     return (params.mu, params.sigma, params.a)
 
 

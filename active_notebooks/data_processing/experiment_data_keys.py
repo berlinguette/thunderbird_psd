@@ -1,3 +1,4 @@
+"""This module is responsible for storing keys for use with experiment data dictionary."""
 from enum import Enum
 from typing import Any
 

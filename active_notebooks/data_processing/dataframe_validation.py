@@ -1,3 +1,4 @@
+"""This module is responsible for helping to make valid neutron detection dataframes."""
 from enum import Enum
 from typing import Final, Literal
 
@@ -95,4 +96,13 @@ class BinningDataframeColumn(Enum):
     GAMMA_RATE_ERROR = "Gamma error (cps)"
 
 def get_df_col(df: DataFrame, col: DetectorDataframeColumn|SliceFitDataframeColumn) -> Series:
+    """Get given column from given dataframe.
+
+    :param df: Dataframe to get column from
+    :type df: DataFrame
+    :param col: Column name
+    :type col: DetectorDataframeColumn | SliceFitDataframeColumn
+    :return: Desired dataframe column
+    :rtype: Series
+    """
     return df[col.value]
