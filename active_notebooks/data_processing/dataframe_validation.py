@@ -76,7 +76,7 @@ FIT_ERROR_COLUMNS: Final = [
 FIT_ERROR_COLUMN_NAMES: Final = [e.value for e in FIT_ERROR_COLUMNS]
 
 class NonReactorDataframeColumn(Enum):
-    TIME = "Time"
+    TIME = "Timestamp"
     DATA = "Data"
     UNITS = "Units"
     NORMALIZED_DATA = "Normalized Data"

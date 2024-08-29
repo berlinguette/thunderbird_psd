@@ -28,7 +28,9 @@ class ExperimentDataKey(Enum):
     GAMMA_ENERGY_BIN_EDGES = "gamma_energy_bin_edges"
     REACTOR_DATA = "reactor_data"
     BINNED_REACTOR_DATA = "binned_reactor_data"
+    UNBINNED_REACTOR_DATA = "unbinned_reactor_data"
     ALL_BINNED_DATA = "all_binned_data"
+    ALL_UNBINNED_DATA = "all_unbinned_data"
     PULSE_HEIGHT_DISTRIBUTION = "pulse_height_distribution"
     HISTOGRAM_ENERGY_BIN_EDGES = "histogram_energy_bin_edges"
 

@@ -43,4 +43,4 @@ def get_signals_root(experiment_name: str) -> Path:
 
 
 def get_reactor_data_root(experiment_name: str) -> Path:
-    return get_exp_root(experiment_name) / "reactor_data"
+    return get_exp_root(experiment_name) / "processed_data/reactor"
