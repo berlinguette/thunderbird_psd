@@ -61,7 +61,7 @@ jupyter lab
 
 Find main notebook in `active_notebooks`
 Use `Run All`
-Get output in `3-Output/ID-XXX`
+Get output in `3-Output/TB-XXX` (or `ID-XXX` if using older ID format)
 
 ## Contributors
 
