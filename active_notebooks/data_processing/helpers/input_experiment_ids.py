@@ -1,5 +1,5 @@
 from data_processing.paths import get_parq_root
-from helpers.get_input_with_default import get_input_with_default
+from data_processing.helpers.get_input_with_default import get_input_with_default
 
 def input_experiment_ids() -> list[str]:
     done = False
