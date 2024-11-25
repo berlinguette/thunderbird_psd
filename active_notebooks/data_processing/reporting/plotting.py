@@ -2,6 +2,7 @@ from math import ceil
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+from matplotlib import colormaps
 import numpy as np
 import pandas as pd
 from data_processing.dataframe_validation import DetectorDataframeColumn, get_df_col, EnergyColumn
@@ -201,6 +202,7 @@ def plot_psd_histogram(
     df: pd.DataFrame,
     energy_column: EnergyColumn = DetectorDataframeColumn.CALIB_ENERGY,
     colormap_name: str = "gnuplot",
+    colormap: mpl.colors.Colormap | None = None,
     colorbar: bool = False,
     energy_start_zero: bool = False,
     **kwargs,
@@ -210,7 +212,10 @@ def plot_psd_histogram(
     y_resolution = _get_histogram_y_resolution(
         x_resolution=x_resolution, plot_width=figsize[0], plot_height=figsize[1]
     )
-    cmap = mpl.colormaps[colormap_name]  # type: ignore
+    if colormap is not None:
+        cmap = colormap
+    else:
+        cmap = colormaps[colormap_name]
     plot_kwargs = {
         "x_resolution": x_resolution,
         "y_resolution": y_resolution,
