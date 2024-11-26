@@ -11,6 +11,7 @@ def get_psd_energy_histogram(
     df: pd.DataFrame,
     energy_column: EnergyColumn,
     energy_width: float = 0.0150,
+    energy_bins: np.ndarray | None = None,
     psd_bin_count: int = 100,
     psd_min: float = 0.0,
     psd_max: float = 0.5,
@@ -22,7 +23,10 @@ def get_psd_energy_histogram(
     y = y[within_psd == True].copy()
     x = x[within_psd == True].copy()
 
-    x_bins: np.ndarray = np.linspace(0, x.max(), int(x.max() / energy_width) + 1)
+    if energy_bins is not None:
+        x_bins = energy_bins
+    else:
+        x_bins: np.ndarray = np.linspace(0, x.max(), int(x.max() / energy_width) + 1)
     print(f"Energy width = {x_bins[1]-x_bins[0]} MeVee")
     y_bins: np.ndarray = np.linspace(psd_min, psd_max, psd_bin_count + 1)
 
