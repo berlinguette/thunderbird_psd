@@ -12,6 +12,7 @@ class ExperimentDataKey(Enum):
     VALID_SLICE_FITS = "valid_slice_fits"
     BAD_SLICE_INDEXES = "bad_slice_indexes"
     FOM_RESULTS = "fom_results"
+    FOM_ERRORS = "fom_errors"
     BORDERS = "borders"
     N_WINDOW_BORDERS = "n_window_borders"
     NASA_BORDERS = "nasa_borders"

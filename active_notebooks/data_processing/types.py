@@ -98,6 +98,12 @@ class NasaGenerationSettings(NamedTuple):
     recalculate_lower_energy_bound: bool = False
 
 
+class ModifiedNasaGenerationSettings(NamedTuple):
+    gamma_sigma: float = 5
+    neutron_sigma: float = 5
+    lower_energy_bound: float = 0.050
+
+
 class NeutronDistributionGenerationSettings(NamedTuple):
     sigma: float = 3
     fom_energy_range: tuple[float, float] = (0.10, 0.35)
@@ -107,15 +113,20 @@ class SquarishGenerationSettings(NamedTuple):
     left: float
     bottom: float
     width: float = 0.1
-    aspect_ratio: float = 2.5/0.5  # width/height
+    aspect_ratio: float = 2.5 / 0.5  # width/height
 
 
 NeutronWindowSettings = (
-    NasaGenerationSettings | NeutronDistributionGenerationSettings | SquarishGenerationSettings | str
+    NasaGenerationSettings
+    | ModifiedNasaGenerationSettings
+    | NeutronDistributionGenerationSettings
+    | SquarishGenerationSettings
+    | str
 )
 SpecificNeutronWindowSettings = TypeVar(
     "SpecificNeutronWindowSettings",
     NasaGenerationSettings,
+    ModifiedNasaGenerationSettings,
     NeutronDistributionGenerationSettings,
     SquarishGenerationSettings,
     str,

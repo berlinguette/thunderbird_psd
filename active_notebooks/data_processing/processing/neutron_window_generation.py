@@ -58,6 +58,18 @@ def generate_rectangle_neutron_window(left: float, bottom: float, width: float, 
     return WindowBorders(left=left, right=right, bottom=bottom_border, top=top_border)
 
 
+def generate_modified_nasa_neutron_window(
+    slice_fit_df: pd.DataFrame,
+    gamma_sigma: float = 5,
+    neutron_sigma: float = 5,
+    lower_energy_bound: float = 0.050,
+) -> WindowBorders:
+    energy_bin_midpoints = _get_energy_midpoints(slice_fit_df)
+    bottom_border = _generate_mod_nasa_window_bottom_border(slice_fit_df, gamma_sigma)
+    top_border = _generate_mod_nasa_window_top_border(slice_fit_df, neutron_sigma)
+    return WindowBorders(left=lower_energy_bound, right=None, bottom=bottom_border, top=top_border)  # STUB
+
+
 def _generate_window_left_border(
     slice_fit_df: pd.DataFrame,
     energy_bin_midpoints: pd.Series,
@@ -87,6 +99,14 @@ def _generate_nasa_window_top_border(
     slice_fit_df: pd.DataFrame, sigma: float, window_offset: float
 ) -> VectorLikeFunction:
     return _generate_nasa_gamma_fn(slice_fit_df, sigma, offset=window_offset)
+
+
+def _generate_mod_nasa_window_bottom_border(slice_fit_df: pd.DataFrame, sigma: float) -> VectorLikeFunction:
+    return lambda x: x  # STUB
+
+
+def _generate_mod_nasa_window_top_border(slice_fit_df: pd.DataFrame, sigma: float) -> VectorLikeFunction:
+    return lambda x: x  # STUB
 
 
 def _generate_nasa_gamma_fn(
