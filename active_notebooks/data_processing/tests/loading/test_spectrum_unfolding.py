@@ -2,8 +2,6 @@ from pathlib import Path
 from unittest.mock import PropertyMock
 
 import data_processing.loading.spectrum_unfolding as spec_unfold
-import numpy as np
-import pandas as pd
 import pytest
 from data_processing.loading.spectrum_unfolding import load_neutron_response_matrix
 from pyfakefs.fake_filesystem import FakeFilesystem
