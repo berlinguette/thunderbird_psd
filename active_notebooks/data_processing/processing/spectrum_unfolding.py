@@ -48,13 +48,9 @@ class Histogram2D:
         x_edges_size, *_ = x_mids_shape
         y_edges_size, *_ = y_mids_shape
         if counts_x_size != x_edges_size:
-            raise ValueError(
-                "X edges size must be equal to Counts size in x dimension"
-            )
+            raise ValueError("X edges size must be equal to Counts size in x dimension")
         if counts_y_size != y_edges_size:
-            raise ValueError(
-                "Y edges size must be equal to Counts size in y dimension"
-            )
+            raise ValueError("Y edges size must be equal to Counts size in y dimension")
 
         self._counts = counts
         self._x_mids = x_midpoints
@@ -109,7 +105,9 @@ def weight_factor(
         raise ValueError(f"Sigma does not match x-axis of R ({reason})")
     close_enough = _are_r_dimensions_close_enough(big_r)
     if not close_enough:
-        raise ValueError(f"Dimensions of R {big_r.counts.shape} are not within 1 order of magnitude")
+        raise ValueError(
+            f"Dimensions of R {big_r.counts.shape} are not within 1 order of magnitude"
+        )
 
     R = big_r.counts
     phi = big_phi.counts
@@ -163,8 +161,9 @@ def next_phi(
         raise ValueError(f"Sigma does not match x-axis of R ({reason})")
     close_enough = _are_r_dimensions_close_enough(big_r)
     if not close_enough:
-        raise ValueError(f"Dimensions of R {big_r.counts.shape} are not within 1 order of magnitude")
-
+        raise ValueError(
+            f"Dimensions of R {big_r.counts.shape} are not within 1 order of magnitude"
+        )
 
     big_w = weight_factor(big_r, big_phi, big_n, sigma=sigma)
 
@@ -227,8 +226,9 @@ def stopping_criteria(
         raise ValueError(f"Sigma does not match x-axis of R ({reason})")
     close_enough = _are_r_dimensions_close_enough(big_r)
     if not close_enough:
-        raise ValueError(f"Dimensions of R {big_r.counts.shape} are not within 1 order of magnitude")
-
+        raise ValueError(
+            f"Dimensions of R {big_r.counts.shape} are not within 1 order of magnitude"
+        )
 
     R = big_r.counts
     phi = big_phi.counts
@@ -280,7 +280,7 @@ def unfold_spectrum(
         GRAVEL algorithm early
     :type max_iterations: int
     :raises ValueError: if dimensions do not match (N with R's x-axis, Phi with R's
-        y-axis), or if 
+        y-axis), or if
     :raises RuntimeError: when stopping criteria is not met within the maximum number of
         iterations
     :return: _description_
@@ -305,8 +305,9 @@ def unfold_spectrum(
         raise ValueError(f"Sigma does not match x-axis of R ({reason})")
     close_enough = _are_r_dimensions_close_enough(big_r)
     if not close_enough:
-        raise ValueError(f"Dimensions of R {big_r.counts.shape} are not within 1 order of magnitude")
-
+        raise ValueError(
+            f"Dimensions of R {big_r.counts.shape} are not within 1 order of magnitude"
+        )
 
     big_phi = starting_phi
     stop_value = 1 + tolerance
@@ -316,7 +317,7 @@ def unfold_spectrum(
     while chi_n > stop_value:
         big_phi = next_phi(big_r, big_phi, big_n, sigma=sigma)
         chi_n = stopping_criteria(big_r, big_phi, big_n, sigma=sigma)
-        
+
         iters += 1
         if iters >= max_iterations:
             raise RuntimeError(

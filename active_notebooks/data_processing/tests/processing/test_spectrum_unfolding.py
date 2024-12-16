@@ -8,7 +8,7 @@ from data_processing.processing.spectrum_unfolding import (
     weight_factor,
     next_phi,
     stopping_criteria,
-    unfold_spectrum
+    unfold_spectrum,
 )
 import pytest
 from math import pow
@@ -175,13 +175,13 @@ class TestAreRDimensionsCloseEnough:
     def test_close_enough(self, _array_generator):
         m = 10
         n = 100
-        r = Histogram2D(np.ones((m,n)), _array_generator(m), _array_generator(n))
+        r = Histogram2D(np.ones((m, n)), _array_generator(m), _array_generator(n))
         assert _are_r_dimensions_close_enough(r)
-    
+
     def test_not_close_enough(self, _array_generator):
         m = 10
         n = 101
-        r = Histogram2D(np.ones((m,n)), _array_generator(m), _array_generator(n))
+        r = Histogram2D(np.ones((m, n)), _array_generator(m), _array_generator(n))
         assert not _are_r_dimensions_close_enough(r)
 
 
@@ -243,14 +243,16 @@ class TestWeightFactor:
         big_phi = Histogram(np.ones(2), _array_generator(2, 4))
         with pytest.raises(ValueError):
             weight_factor(big_r, big_n, big_phi)
-            
+
     def test_r_dimensions_close_enough(self, _array_generator):
-        big_r = Histogram2D(np.ones((101, 10)), _array_generator(101), _array_generator(10))
+        big_r = Histogram2D(
+            np.ones((101, 10)), _array_generator(101), _array_generator(10)
+        )
         big_n = Histogram(np.ones(101), _array_generator(101))
         big_phi = Histogram(np.ones(10), _array_generator(10))
         with pytest.raises(ValueError):
             weight_factor(big_r, big_phi, big_n)
-            
+
     def test_sigma_size_mismatch(self, _array_generator):
         big_r = Histogram2D(np.ones((3, 2)), _array_generator(3), _array_generator(2))
         big_n = Histogram(np.ones(3), _array_generator(3))
@@ -333,7 +335,9 @@ class TestNextPhi:
             next_phi(big_r, big_n, big_phi)
 
     def test_r_dimensions_close_enough(self, _array_generator):
-        big_r = Histogram2D(np.ones((101, 10)), _array_generator(101), _array_generator(10))
+        big_r = Histogram2D(
+            np.ones((101, 10)), _array_generator(101), _array_generator(10)
+        )
         big_n = Histogram(np.ones(101), _array_generator(101))
         big_phi = Histogram(np.ones(10), _array_generator(10))
         with pytest.raises(ValueError):
@@ -369,9 +373,7 @@ class TestStoppingCriteria:
         DOF = (m - 1) * (n - 1)
         expected = (m * (n - 1) * (n - 1)) / DOF
 
-        big_r = Histogram2D(
-            np.ones((m, n)), _array_generator(m), _array_generator(n)
-        )
+        big_r = Histogram2D(np.ones((m, n)), _array_generator(m), _array_generator(n))
         big_n = Histogram(np.ones(m), _array_generator(m))
         big_phi = Histogram(np.ones(n), _array_generator(n))
         chi_n = stopping_criteria(big_r, big_phi, big_n)
@@ -384,16 +386,14 @@ class TestStoppingCriteria:
         n = 2
         sigma_val = 2
         DOF = (m - 1) * (n - 1)
-        expected = (m * (n-1) * (n-1)) / (sigma_val * sigma_val * DOF)
+        expected = (m * (n - 1) * (n - 1)) / (sigma_val * sigma_val * DOF)
 
-        big_r = Histogram2D(
-            np.ones((m, n)), _array_generator(m), _array_generator(n)
-        )
+        big_r = Histogram2D(np.ones((m, n)), _array_generator(m), _array_generator(n))
         big_n = Histogram(np.ones(m), _array_generator(m))
         big_phi = Histogram(np.ones(n), _array_generator(n))
         sigma = Histogram(np.full(m, sigma_val), _array_generator(m))
         chi_n = stopping_criteria(big_r, big_phi, big_n, sigma=sigma)
-        
+
         assert chi_n == expected
 
     def test_N_size_mismatch(self, _array_generator):
@@ -437,7 +437,9 @@ class TestStoppingCriteria:
             stopping_criteria(big_r, big_n, big_phi)
 
     def test_r_dimensions_close_enough(self, _array_generator):
-        big_r = Histogram2D(np.ones((101, 10)), _array_generator(101), _array_generator(10))
+        big_r = Histogram2D(
+            np.ones((101, 10)), _array_generator(101), _array_generator(10)
+        )
         big_n = Histogram(np.ones(101), _array_generator(101))
         big_phi = Histogram(np.ones(10), _array_generator(10))
         with pytest.raises(ValueError):
@@ -471,43 +473,37 @@ class TestUnfoldSpectrum:
         m = 3
         n = 2
 
-        big_r = Histogram2D(
-            np.ones((m, n)), _array_generator(m), _array_generator(n)
-        )
+        big_r = Histogram2D(np.ones((m, n)), _array_generator(m), _array_generator(n))
         big_n = Histogram(np.ones(m), _array_generator(m))
         unfolded_phi = unfold_spectrum(big_n, big_r)
-        
+
         assert unfolded_phi.counts.shape[0] == big_r.counts.shape[1]
         assert (unfolded_phi.midpoints == big_r.y_midpoints).all()
-    
+
     def test_sigma(self, _array_generator):
         m = 3
         n = 2
 
-        big_r = Histogram2D(
-            np.ones((m, n)), _array_generator(m), _array_generator(n)
-        )
+        big_r = Histogram2D(np.ones((m, n)), _array_generator(m), _array_generator(n))
         big_n = Histogram(np.ones(m), _array_generator(m))
         sigma = Histogram(np.full(m, 0.5), _array_generator(m))
         unfolded_phi = unfold_spectrum(big_n, big_r, sigma=sigma)
-        
+
         assert unfolded_phi.counts.shape[0] == big_r.counts.shape[1]
         assert (unfolded_phi.midpoints == big_r.y_midpoints).all()
-    
+
     def test_starting_phi(self, _array_generator):
         m = 3
         n = 2
 
-        big_r = Histogram2D(
-            np.ones((m, n)), _array_generator(m), _array_generator(n)
-        )
+        big_r = Histogram2D(np.ones((m, n)), _array_generator(m), _array_generator(n))
         big_n = Histogram(np.ones(m), _array_generator(m))
         starting_phi = Histogram(np.full(n, 0.5), _array_generator(n))
         unfolded_phi = unfold_spectrum(big_n, big_r, starting_phi=starting_phi)
-        
+
         assert unfolded_phi.counts.shape[0] == big_r.counts.shape[1]
         assert (unfolded_phi.midpoints == big_r.y_midpoints).all()
-    
+
     def test_tolerance(self, _array_generator):
         m = 3
         n = 2
@@ -518,24 +514,22 @@ class TestUnfoldSpectrum:
         )
         big_n = Histogram(np.full(m, fill_value), _array_generator(m))
         unfolded_phi = unfold_spectrum(big_n, big_r, tolerance=1000000)
-        
+
         assert unfolded_phi.counts.shape[0] == big_r.counts.shape[1]
         assert (unfolded_phi.midpoints == big_r.y_midpoints).all()
         print(unfolded_phi.counts)
         assert (unfolded_phi.counts == 1).all()
-    
+
     def test_max_iterations(self, _array_generator):
         m = 3
         n = 2
 
-        big_r = Histogram2D(
-            np.ones((m, n)), _array_generator(m), _array_generator(n)
-        )
+        big_r = Histogram2D(np.ones((m, n)), _array_generator(m), _array_generator(n))
         big_n = Histogram(np.ones(m), _array_generator(m))
-        
+
         with pytest.raises(RuntimeError):
             unfold_spectrum(big_n, big_r, max_iterations=1)
-    
+
     def test_N_size_mismatch(self, _array_generator):
         big_r = Histogram2D(np.ones((3, 2)), _array_generator(3), _array_generator(2))
         big_n = Histogram(np.ones(4), _array_generator(4))
@@ -553,7 +547,7 @@ class TestUnfoldSpectrum:
         big_n = Histogram(np.ones(3), _array_generator(2, 5))
         with pytest.raises(ValueError):
             unfold_spectrum(big_n, big_r)
-            
+
     def test_phi_size_mismatch(self, _array_generator):
         big_r = Histogram2D(np.ones((3, 2)), _array_generator(3), _array_generator(2))
         big_n = Histogram(np.ones(3), _array_generator(3))
@@ -573,13 +567,15 @@ class TestUnfoldSpectrum:
         big_phi = Histogram(np.ones(2), _array_generator(2, 4))
         with pytest.raises(ValueError):
             unfold_spectrum(big_n, big_r, starting_phi=big_phi)
-       
+
     def test_r_dimensions_close_enough(self, _array_generator):
-        big_r = Histogram2D(np.ones((101, 10)), _array_generator(101), _array_generator(10))
+        big_r = Histogram2D(
+            np.ones((101, 10)), _array_generator(101), _array_generator(10)
+        )
         big_n = Histogram(np.ones(101), _array_generator(101))
         with pytest.raises(ValueError):
             unfold_spectrum(big_n, big_r)
-            
+
     def test_sigma_size_mismatch(self, _array_generator):
         big_r = Histogram2D(np.ones((3, 2)), _array_generator(3), _array_generator(2))
         big_n = Histogram(np.ones(3), _array_generator(3))
