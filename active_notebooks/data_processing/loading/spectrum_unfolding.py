@@ -38,7 +38,6 @@ def load_neutron_response_matrix(
 
         np_cps = new_df["NPS"].to_numpy()
         np_Ls = mids.to_numpy()
-        print(np_Ls)
 
         response_sim_data.append((source_e, np_cps))
         if response_Ls is None:
