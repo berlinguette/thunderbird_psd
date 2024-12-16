@@ -4,109 +4,73 @@ from math import log10
 
 
 class Histogram:
-    def __init__(self, counts: ndarray, edges: ndarray):
+    def __init__(self, counts: ndarray, midpoints: ndarray):
         counts_shape = counts.shape
         if len(counts_shape) != 1:
             raise ValueError("Counts must be 1-dimensional")
 
-        edges_shape = edges.shape
-        if len(edges_shape) != 1:
+        mids_shape = midpoints.shape
+        if len(mids_shape) != 1:
             raise ValueError("Edges must be 1-dimensional")
 
         counts_size, *_ = counts_shape
-        edges_size, *_ = edges_shape
-        if counts_size + 1 != edges_size:
-            raise ValueError("Edges size must be 1 more than Counts size")
+        edges_size, *_ = mids_shape
+        if counts_size != edges_size:
+            raise ValueError("Edges size must be equal to Counts size")
 
         self._counts = counts
-        self._edges = edges
+        self._mids = midpoints
 
     @property
     def counts(self) -> ndarray:
         return self._counts
 
     @property
-    def edges(self) -> ndarray:
-        return self._edges
-
-    def right_edges(self) -> ndarray:
-        return self._edges[1:]
-
-    def left_edges(self) -> ndarray:
-        return self._edges[:-1]
-
     def midpoints(self) -> ndarray:
-        return (self.right_edges() + self.left_edges()) / 2
-
-    def widths(self) -> ndarray:
-        return self.right_edges() - self.left_edges()
+        return self._mids
 
 
 class Histogram2D:
-    def __init__(self, counts: ndarray, x_edges: ndarray, y_edges: ndarray):
+    def __init__(self, counts: ndarray, x_midpoints: ndarray, y_midpoints: ndarray):
         counts_shape = counts.shape
         if len(counts_shape) != 2:
             raise ValueError("Counts must be 2-dimensional")
 
-        x_edges_shape = x_edges.shape
-        if len(x_edges_shape) != 1:
+        x_mids_shape = x_midpoints.shape
+        if len(x_mids_shape) != 1:
             raise ValueError("X edges must be 1-dimensional")
 
-        y_edges_shape = y_edges.shape
-        if len(y_edges_shape) != 1:
+        y_mids_shape = y_midpoints.shape
+        if len(y_mids_shape) != 1:
             raise ValueError("Y edges must be 1-dimensional")
 
         counts_x_size, counts_y_size, *_ = counts_shape
-        x_edges_size, *_ = x_edges_shape
-        y_edges_size, *_ = y_edges_shape
-        if counts_x_size + 1 != x_edges_size:
+        x_edges_size, *_ = x_mids_shape
+        y_edges_size, *_ = y_mids_shape
+        if counts_x_size != x_edges_size:
             raise ValueError(
-                "X edges size must be 1 greater than counts size in x dimension"
+                "X edges size must be equal to Counts size in x dimension"
             )
-        if counts_y_size + 1 != y_edges_size:
+        if counts_y_size != y_edges_size:
             raise ValueError(
-                "Y edges size must be 1 greater than counts size in y dimension"
+                "Y edges size must be equal to Counts size in y dimension"
             )
 
         self._counts = counts
-        self._x_edges = x_edges
-        self._y_edges = y_edges
+        self._x_mids = x_midpoints
+        self._y_mids = y_midpoints
 
     @property
     def counts(self) -> ndarray:
         return self._counts
 
     @property
-    def x_edges(self) -> ndarray:
-        return self._x_edges
+    def x_midpoints(self) -> ndarray:
+        return self._x_mids
 
     @property
-    def y_edges(self) -> ndarray:
-        return self._y_edges
-
-    def right_edges_x(self) -> ndarray:
-        return self._x_edges[1:]
-
-    def left_edges_x(self) -> ndarray:
-        return self._x_edges[:-1]
-
-    def right_edges_y(self) -> ndarray:
-        return self._y_edges[1:]
-
-    def left_edges_y(self) -> ndarray:
-        return self._y_edges[:-1]
-
-    def midpoints_x(self) -> ndarray:
-        return (self.right_edges_x() + self.left_edges_x()) / 2
-
-    def midpoints_y(self) -> ndarray:
-        return (self.right_edges_y() + self.left_edges_y()) / 2
-
-    def widths_x(self) -> ndarray:
-        return self.right_edges_x() - self.left_edges_x()
-
-    def widths_y(self) -> ndarray:
-        return self.right_edges_y() - self.left_edges_y()
+    def y_midpoints(self) -> ndarray:
+        return self._y_mids
 
 
 def weight_factor(
@@ -132,7 +96,7 @@ def weight_factor(
     :rtype: Histogram2D
     """
     if sigma is None:
-        sigma = Histogram(np.sqrt(big_n.counts), big_n.edges)
+        sigma = Histogram(np.sqrt(big_n.counts), big_n.midpoints)
 
     compatible, reason = _are_histograms_compatible_2d(big_r, big_n, 0)
     if not compatible:
@@ -160,7 +124,7 @@ def weight_factor(
     denom = np.sum(R * phi, axis=1, keepdims=True)
     right = np.square(N) / np.square(error)
 
-    return Histogram2D((numer / denom) * right, big_r.x_edges, big_r.y_edges)
+    return Histogram2D((numer / denom) * right, big_r.x_midpoints, big_r.y_midpoints)
 
 
 def next_phi(
@@ -186,7 +150,7 @@ def next_phi(
     :rtype: Histogram
     """
     if sigma is None:
-        sigma = Histogram(np.sqrt(big_n.counts), big_n.edges)
+        sigma = Histogram(np.sqrt(big_n.counts), big_n.midpoints)
 
     compatible, reason = _are_histograms_compatible_2d(big_r, big_n, 0)
     if not compatible:
@@ -220,7 +184,7 @@ def next_phi(
     exp_denom = np.sum(W, axis=0, keepdims=True)
     exp_result = np.exp(exp_numer / exp_denom)
 
-    return Histogram((phi * exp_result).reshape(-1), big_phi.edges)
+    return Histogram((phi * exp_result).reshape(-1), big_phi.midpoints)
 
 
 def stopping_criteria(
@@ -250,7 +214,7 @@ def stopping_criteria(
     :rtype: float
     """
     if sigma is None:
-        sigma = Histogram(np.sqrt(big_n.counts), big_n.edges)
+        sigma = Histogram(np.sqrt(big_n.counts), big_n.midpoints)
 
     compatible, reason = _are_histograms_compatible_2d(big_r, big_n, 0)
     if not compatible:
@@ -323,11 +287,11 @@ def unfold_spectrum(
     :rtype: Histogram
     """
     if sigma is None:
-        sigma = Histogram(np.sqrt(big_n.counts), big_n.edges)
+        sigma = Histogram(np.sqrt(big_n.counts), big_n.midpoints)
     if starting_phi is None:
         big_r_y_size = big_r.counts.shape[1]
         uniform_phi = np.ones(big_r_y_size)
-        uniform_phi_edges = big_r.y_edges
+        uniform_phi_edges = big_r.y_midpoints
         starting_phi = Histogram(uniform_phi, uniform_phi_edges)
 
     compatible, reason = _are_histograms_compatible_2d(big_r, big_n, 0)
@@ -367,7 +331,7 @@ def _are_histograms_compatible(a: Histogram, b: Histogram) -> tuple[bool, str]:
     b_size, *_ = b.counts.shape
     if a_size != b_size:
         return False, "Sizes do not match"
-    if not all(a.edges == b.edges):
+    if not all(a.midpoints == b.midpoints):
         return False, "Bin edges do not match"
     return True, ""
 
@@ -379,8 +343,8 @@ def _are_histograms_compatible_2d(
     b_size, *_ = b.counts.shape
     if a_size != b_size:
         return False, "Sizes do not match"
-    a_edges = a.x_edges if axis == 0 else a.y_edges
-    if not all(a_edges == b.edges):
+    a_edges = a.x_midpoints if axis == 0 else a.y_midpoints
+    if not all(a_edges == b.midpoints):
         return False, "Bin edges do not match"
     return True, ""
 
