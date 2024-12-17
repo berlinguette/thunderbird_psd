@@ -1,15 +1,17 @@
-from numpy import ndarray
-import numpy as np
 from math import log10
 from typing import TypeVar
+
+import numpy as np
+from numpy import ndarray
 
 
 class Histogram:
     # TODO add docstrings where missing
     """Stores data for a histogram.
-    
+
     This includes counts and midpoints for each bin.
     """
+
     def __init__(self, counts: ndarray, midpoints: ndarray):
         """Create a new Histogram.
 
@@ -20,7 +22,7 @@ class Histogram:
         :raises ValueError: if counts are not 1-dimensional
         :raises ValueError: if midpoints are not 1-dimensional
         :raises ValueError: if midpoints and counts are not the same size
-        """        
+        """
         counts_shape = counts.shape
         if len(counts_shape) != 1:
             raise ValueError("Counts must be 1-dimensional")
@@ -43,7 +45,7 @@ class Histogram:
 
         :return: histogram counts
         :rtype: ndarray
-        """        
+        """
         return self._counts
 
     @property
@@ -52,18 +54,19 @@ class Histogram:
 
         :return: histogram bin midpoints
         :rtype: ndarray
-        """        
+        """
         return self._mids
 
 
 class Histogram2D:
     """Stores data for a 2-dimensional histogram.
-    
+
     This includes counts and midpoints (on both axes) for each bin.
-    
+
     We define the x and y axes based on the order in numpy's shape property, so the
     x axis is actually the column axis, while the y axis is the row axis
-    """    
+    """
+
     def __init__(self, counts: ndarray, x_midpoints: ndarray, y_midpoints: ndarray):
         """Create a new Histogram2D.
 
@@ -76,11 +79,11 @@ class Histogram2D:
         :raises ValueError: if counts are not 2-dimensional
         :raises ValueError: if x axis midpoints are not 1-dimensional
         :raises ValueError: if y axis midpoints are not 1-dimensional
-        :raises ValueError: if x axis midpoints are not the same size as count's x 
+        :raises ValueError: if x axis midpoints are not the same size as count's x
             dimension
         :raises ValueError: if y axis midpoints are not the same size as counts' y
             dimension
-        """        
+        """
         counts_shape = counts.shape
         if len(counts_shape) != 2:
             raise ValueError("Counts must be 2-dimensional")
@@ -111,7 +114,7 @@ class Histogram2D:
 
         :return: histogram counts
         :rtype: ndarray
-        """        
+        """
         return self._counts
 
     @property
@@ -120,7 +123,7 @@ class Histogram2D:
 
         :return: histogram bin midpoints for the x axis
         :rtype: ndarray
-        """        
+        """
         return self._x_mids
 
     @property
@@ -129,7 +132,7 @@ class Histogram2D:
 
         :return: _description_
         :rtype: ndarray
-        """        
+        """
         return self._y_mids
 
 
@@ -372,7 +375,7 @@ def unfold_spectrum(
         raise ValueError(
             f"Dimensions of R {big_r.counts.shape} are not within 1 order of magnitude"
         )
-        
+
     new_r, new_phi, new_sigma = strip_zeroes(big_r, big_n, sigma=sigma)
 
     big_phi = starting_phi
@@ -395,13 +398,17 @@ def unfold_spectrum(
 
 
 T = TypeVar("T", Histogram, None)
-def strip_zeroes(big_r: Histogram2D, big_n: Histogram, sigma: T = None) -> tuple[Histogram2D, Histogram, T]:
+
+
+def strip_zeroes(
+    big_r: Histogram2D, big_n: Histogram, sigma: T = None
+) -> tuple[Histogram2D, Histogram, T]:
     """Strips any zero channels from incoming spectrum unfolding data.
-    
+
     Zero channels in the neutron response spectrum (N) are removed, as well as matching
     bin midpoints. The corresponding channels on the x axis of the neutron response
     matrix (R) are also removed, as well as the matching bin midpoints on the x axis.
-    
+
     If sigma is provided, matching channels and bin midpoints will be removed.
 
     :param big_r: Neutron response matrix
@@ -415,7 +422,7 @@ def strip_zeroes(big_r: Histogram2D, big_n: Histogram, sigma: T = None) -> tuple
     :raises ValueError: if sigma (if provided) is incompatible with R's x axis
     :return: _description_
     :rtype: tuple[Histogram2D, Histogram, T]
-    """    
+    """
     compatible, reason = _are_histograms_compatible_2d(big_r, big_n, 0)
     if not compatible:
         raise ValueError(f"N does not match x-axis of R ({reason})")
@@ -423,35 +430,35 @@ def strip_zeroes(big_r: Histogram2D, big_n: Histogram, sigma: T = None) -> tuple
         compatible, reason = _are_histograms_compatible_2d(big_r, sigma, 0)
         if not compatible:
             raise ValueError(f"Sigma does not match x-axis of R ({reason})")
-    
+
     R_counts = big_r.counts.copy()
     R_x_mids = big_r.x_midpoints.copy()
     N_counts = big_n.counts.copy()
     N_mids = big_n.midpoints.copy()
-    
+
     nonzero_mask = N_counts != 0
-    R_counts = R_counts[nonzero_mask,:]
+    R_counts = R_counts[nonzero_mask, :]
     R_x_mids = R_x_mids[nonzero_mask]
     N_counts = N_counts[nonzero_mask]
     N_mids = N_mids[nonzero_mask]
-    
+
     new_R = Histogram2D(R_counts, R_x_mids, big_r.y_midpoints)
     new_N = Histogram(N_counts, N_mids)
-    
+
     if sigma is None:
-        return new_R, new_N, None # type: ignore
+        return new_R, new_N, None  # type: ignore
     else:
         sig_counts = sigma.counts.copy()
         sig_mids = sigma.midpoints.copy()
         sig_counts = sig_counts[nonzero_mask]
         sig_mids = sig_mids[nonzero_mask]
         new_sigma = Histogram(sig_counts, sig_mids)
-        return new_R, new_N, new_sigma # type: ignore
+        return new_R, new_N, new_sigma  # type: ignore
 
 
 def _are_histograms_compatible(a: Histogram, b: Histogram) -> tuple[bool, str]:
     """Determine if two Histograms are compatible.
-    
+
     Histograms are compatible if:
     - Counts have the same shape
     - Midpoints have the same shape and values
@@ -462,7 +469,7 @@ def _are_histograms_compatible(a: Histogram, b: Histogram) -> tuple[bool, str]:
     :type b: Histogram
     :return: Whether Histograms are compatible, and a reason if not compatible
     :rtype: tuple[bool, str]
-    """    
+    """
     a_size, *_ = a.counts.shape
     b_size, *_ = b.counts.shape
     if a_size != b_size:
@@ -476,7 +483,7 @@ def _are_histograms_compatible_2d(
     a: Histogram2D, b: Histogram, axis: int
 ) -> tuple[bool, str]:
     """Determine if a Histogram2D and a Histogram are compatible on a given axis.
-    
+
     Histograms are compatible on an axis if:
     - Counts have the same shape
     - Midpoints have the same shape and values
@@ -487,7 +494,7 @@ def _are_histograms_compatible_2d(
     :type b: Histogram
     :return: Whether Histograms are compatible, and a reason if not compatible
     :rtype: tuple[bool, str]
-    """    
+    """
     a_size = a.counts.shape[axis]
     b_size, *_ = b.counts.shape
     if a_size != b_size:
@@ -500,7 +507,7 @@ def _are_histograms_compatible_2d(
 
 def _are_r_dimensions_close_enough(r: Histogram2D) -> bool:
     """Determine if dimensions of neutron response matrix (R) are sufficiently close.
-    
+
     The GRAVEL algorithm requires that the dimensions of R must be within one order of
     magnitude for the algorithm to work.
 
@@ -508,6 +515,6 @@ def _are_r_dimensions_close_enough(r: Histogram2D) -> bool:
     :type r: Histogram2D
     :return: Whether the dimensions of R are close enough to each other
     :rtype: bool
-    """    
+    """
     x_size, y_size = r.counts.shape
     return abs(log10(x_size) - log10(y_size)) <= 1
