@@ -247,8 +247,18 @@ def next_phi(
     ln_denom = np.sum(R * phi, axis=1, keepdims=True)
     ln_result = np.log(N / ln_denom)
     exp_numer = np.sum(W * ln_result, axis=0, keepdims=True)
+    exp_numer = np.nan_to_num(exp_numer)
     exp_denom = np.sum(W, axis=0, keepdims=True)
-    exp_result = np.exp(exp_numer / exp_denom)
+    
+    # where denom is 0, change denom to 1, numer to 0
+    # this makes frac = 0, and exp(frac) = 1
+    # as used in https://github.com/tylerdolezal/Neutron-Unfolding/blob/main/gravel.py, ln 36-39
+    denom_mask = exp_denom == 0
+    exp_numer[denom_mask] = 0
+    exp_denom[denom_mask] = 1
+    
+    exp_frac = exp_numer / exp_denom
+    exp_result = np.exp(exp_frac)
 
     return Histogram((phi * exp_result).reshape(-1), big_phi.midpoints)
 
@@ -376,18 +386,21 @@ def unfold_spectrum(
             f"Dimensions of R {big_r.counts.shape} are not within 1 order of magnitude"
         )
 
-    new_r, new_phi, new_sigma = strip_zeroes(big_r, big_n, sigma=sigma)
+    new_r, new_n, new_sigma = strip_zeroes(big_r, big_n, sigma=sigma)
 
     big_phi = starting_phi
     stop_value = 1 + tolerance
     iters = 0
-    chi_n = stopping_criteria(new_r, new_phi, big_n, sigma=new_sigma)
+    chi_n = stopping_criteria(new_r, big_phi, new_n, sigma=new_sigma)
+    sc_text_len = len(str(chi_n))
+    iter_text_len = len(str(max_iterations))
 
     while chi_n > stop_value:
-        print(chi_n)
-        big_phi = next_phi(new_r, new_phi, big_n, sigma=new_sigma)
-        chi_n = stopping_criteria(new_r, new_phi, big_n, sigma=new_sigma)
+        big_phi = next_phi(new_r, big_phi, new_n, sigma=new_sigma)
+        chi_n = stopping_criteria(new_r, big_phi, new_n, sigma=new_sigma)
 
+        if iters % 100 == 0:
+            print(f"Iter. {iters: {iter_text_len}d}: SC = {chi_n: {sc_text_len}.2f}")
         iters += 1
         if iters >= max_iterations:
             raise RuntimeError(
