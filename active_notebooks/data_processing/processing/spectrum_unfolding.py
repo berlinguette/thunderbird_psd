@@ -372,16 +372,18 @@ def unfold_spectrum(
         raise ValueError(
             f"Dimensions of R {big_r.counts.shape} are not within 1 order of magnitude"
         )
+        
+    new_r, new_phi, new_sigma = strip_zeroes(big_r, big_n, sigma=sigma)
 
     big_phi = starting_phi
     stop_value = 1 + tolerance
     iters = 0
-    chi_n = stopping_criteria(big_r, big_phi, big_n, sigma=sigma)
+    chi_n = stopping_criteria(new_r, new_phi, big_n, sigma=new_sigma)
 
     while chi_n > stop_value:
         print(chi_n)
-        big_phi = next_phi(big_r, big_phi, big_n, sigma=sigma)
-        chi_n = stopping_criteria(big_r, big_phi, big_n, sigma=sigma)
+        big_phi = next_phi(new_r, new_phi, big_n, sigma=new_sigma)
+        chi_n = stopping_criteria(new_r, new_phi, big_n, sigma=new_sigma)
 
         iters += 1
         if iters >= max_iterations:
