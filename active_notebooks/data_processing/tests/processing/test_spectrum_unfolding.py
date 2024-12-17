@@ -1,17 +1,19 @@
+from math import pow
+
 import numpy as np
+import pytest
 from data_processing.processing.spectrum_unfolding import (
     Histogram,
     Histogram2D,
     _are_histograms_compatible,
     _are_histograms_compatible_2d,
     _are_r_dimensions_close_enough,
-    weight_factor,
     next_phi,
     stopping_criteria,
+    strip_zeroes,
     unfold_spectrum,
+    weight_factor,
 )
-import pytest
-from math import pow
 
 
 @pytest.fixture
@@ -183,6 +185,56 @@ class TestAreRDimensionsCloseEnough:
         n = 101
         r = Histogram2D(np.ones((m, n)), _array_generator(m), _array_generator(n))
         assert not _are_r_dimensions_close_enough(r)
+
+
+class TestStripZeroes:
+    def test_good_path(self, _array_generator_2d, _array_generator):
+        big_R = Histogram2D(
+            _array_generator_2d((4, 3)), _array_generator(4), _array_generator(3)
+        )
+        big_N = Histogram(np.array([0, 1, 1, 0]), _array_generator(4))
+        new_R, new_N, new_sigma = strip_zeroes(big_R, big_N)
+        assert (new_R.counts == np.array([[1, 2, 3], [2, 3, 4]])).all()
+        assert (new_R.x_midpoints == np.array([1, 2])).all()
+        assert (new_R.y_midpoints == big_R.y_midpoints).all()
+        assert (new_N.counts == np.array([1, 1])).all()
+        assert (new_N.midpoints == np.array([1, 2])).all()
+        assert new_sigma is None
+
+    def test_with_sigma(self, _array_generator_2d, _array_generator):
+        big_R = Histogram2D(
+            _array_generator_2d((4, 3)), _array_generator(4), _array_generator(3)
+        )
+        big_N = Histogram(np.array([0, 1, 1, 0]), _array_generator(4))
+        sigma = Histogram(_array_generator(4), _array_generator(4))
+        new_R, new_N, new_sigma = strip_zeroes(big_R, big_N, sigma=sigma)
+        assert (new_R.counts == np.array([[1, 2, 3], [2, 3, 4]])).all()
+        assert (new_R.x_midpoints == np.array([1, 2])).all()
+        assert (new_R.y_midpoints == big_R.y_midpoints).all()
+        assert (new_N.counts == np.array([1, 1])).all()
+        assert (new_N.midpoints == np.array([1, 2])).all()
+        assert isinstance(new_sigma, Histogram)
+        assert (new_sigma.counts == np.array([1, 2])).all()
+        assert (new_sigma.midpoints == np.array([1, 2])).all()
+
+    def test_N_incompatible(self, _array_generator_2d, _array_generator):
+        big_R = Histogram2D(
+            _array_generator_2d((4, 3)), _array_generator(4), _array_generator(3)
+        )
+        big_N = Histogram(_array_generator(5), _array_generator(5))
+        with pytest.raises(ValueError) as excinfo:
+            strip_zeroes(big_R, big_N)
+        assert "N" in str(excinfo.value)
+
+    def test_sigma_incompatible(self, _array_generator_2d, _array_generator):
+        big_R = Histogram2D(
+            _array_generator_2d((4, 3)), _array_generator(4), _array_generator(3)
+        )
+        big_N = Histogram(_array_generator(4), _array_generator(4))
+        sigma = Histogram(_array_generator(5), _array_generator(5))
+        with pytest.raises(ValueError) as excinfo:
+            strip_zeroes(big_R, big_N, sigma=sigma)
+        assert "Sigma" in str(excinfo.value)
 
 
 class TestWeightFactor:
