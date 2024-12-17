@@ -527,10 +527,11 @@ class TestUnfoldSpectrum:
 
         big_r = Histogram2D(np.ones((m, n)), _array_generator(m), _array_generator(n))
         big_n = Histogram(np.ones(m), _array_generator(m))
-        unfolded_phi = unfold_spectrum(big_n, big_r)
+        unfolded_phi, errors = unfold_spectrum(big_n, big_r)
 
         assert unfolded_phi.counts.shape[0] == big_r.counts.shape[1]
         assert (unfolded_phi.midpoints == big_r.y_midpoints).all()
+        assert len(errors) <= 500
 
     def test_sigma(self, _array_generator):
         m = 3
@@ -539,7 +540,7 @@ class TestUnfoldSpectrum:
         big_r = Histogram2D(np.ones((m, n)), _array_generator(m), _array_generator(n))
         big_n = Histogram(np.ones(m), _array_generator(m))
         sigma = Histogram(np.full(m, 0.5), _array_generator(m))
-        unfolded_phi = unfold_spectrum(big_n, big_r, sigma=sigma)
+        unfolded_phi, _ = unfold_spectrum(big_n, big_r, sigma=sigma)
 
         assert unfolded_phi.counts.shape[0] == big_r.counts.shape[1]
         assert (unfolded_phi.midpoints == big_r.y_midpoints).all()
@@ -551,7 +552,7 @@ class TestUnfoldSpectrum:
         big_r = Histogram2D(np.ones((m, n)), _array_generator(m), _array_generator(n))
         big_n = Histogram(np.ones(m), _array_generator(m))
         starting_phi = Histogram(np.full(n, 0.5), _array_generator(n))
-        unfolded_phi = unfold_spectrum(big_n, big_r, starting_phi=starting_phi)
+        unfolded_phi, _ = unfold_spectrum(big_n, big_r, starting_phi=starting_phi)
 
         assert unfolded_phi.counts.shape[0] == big_r.counts.shape[1]
         assert (unfolded_phi.midpoints == big_r.y_midpoints).all()
@@ -565,7 +566,7 @@ class TestUnfoldSpectrum:
             np.full((m, n), fill_value), _array_generator(m), _array_generator(n)
         )
         big_n = Histogram(np.full(m, fill_value), _array_generator(m))
-        unfolded_phi = unfold_spectrum(big_n, big_r, tolerance=1000000)
+        unfolded_phi, _ = unfold_spectrum(big_n, big_r, tolerance=1000000)
 
         assert unfolded_phi.counts.shape[0] == big_r.counts.shape[1]
         assert (unfolded_phi.midpoints == big_r.y_midpoints).all()
@@ -579,8 +580,8 @@ class TestUnfoldSpectrum:
         big_r = Histogram2D(np.ones((m, n)), _array_generator(m), _array_generator(n))
         big_n = Histogram(np.ones(m), _array_generator(m))
 
-        with pytest.raises(RuntimeError):
-            unfold_spectrum(big_n, big_r, max_iterations=1)
+        _, errors = unfold_spectrum(big_n, big_r, max_iterations=1)
+        assert len(errors) == 1
 
     def test_N_size_mismatch(self, _array_generator):
         big_r = Histogram2D(np.ones((3, 2)), _array_generator(3), _array_generator(2))

@@ -249,14 +249,14 @@ def next_phi(
     exp_numer = np.sum(W * ln_result, axis=0, keepdims=True)
     exp_numer = np.nan_to_num(exp_numer)
     exp_denom = np.sum(W, axis=0, keepdims=True)
-    
+
     # where denom is 0, change denom to 1, numer to 0
     # this makes frac = 0, and exp(frac) = 1
     # as used in https://github.com/tylerdolezal/Neutron-Unfolding/blob/main/gravel.py, ln 36-39
     denom_mask = exp_denom == 0
     exp_numer[denom_mask] = 0
     exp_denom[denom_mask] = 1
-    
+
     exp_frac = exp_numer / exp_denom
     exp_result = np.exp(exp_frac)
 
@@ -335,7 +335,7 @@ def unfold_spectrum(
     sigma: Histogram | None = None,
     tolerance: float = 0.1,
     max_iterations: int = 500,
-) -> Histogram:
+) -> tuple[Histogram, list[float]]:
     """Unfold neutron response spectrum into neutron spectrum.
 
     This function performs the GRAVEL algorithm iteratively, as seen in [CITATION HERE].
@@ -357,11 +357,9 @@ def unfold_spectrum(
         GRAVEL algorithm early
     :type max_iterations: int
     :raises ValueError: if dimensions do not match (N with R's x-axis, Phi with R's
-        y-axis), or if
-    :raises RuntimeError: when stopping criteria is not met within the maximum number of
-        iterations
-    :return: _description_
-    :rtype: Histogram
+        y-axis), or if dimensions are not close enough
+    :return: Unfolded spectrum, and list of stopping criteria values
+    :rtype: tuple[Histogram, list[float]]
     """
     if sigma is None:
         sigma = Histogram(np.sqrt(big_n.counts), big_n.midpoints)
@@ -391,6 +389,8 @@ def unfold_spectrum(
     big_phi = starting_phi
     stop_value = 1 + tolerance
     iters = 0
+    errors = []
+
     chi_n = stopping_criteria(new_r, big_phi, new_n, sigma=new_sigma)
     sc_text_len = len(str(chi_n))
     iter_text_len = len(str(max_iterations))
@@ -398,16 +398,15 @@ def unfold_spectrum(
     while chi_n > stop_value:
         big_phi = next_phi(new_r, big_phi, new_n, sigma=new_sigma)
         chi_n = stopping_criteria(new_r, big_phi, new_n, sigma=new_sigma)
+        errors.append(chi_n)
 
         if iters % 100 == 0:
             print(f"Iter. {iters: {iter_text_len}d}: SC = {chi_n: {sc_text_len}.2f}")
         iters += 1
         if iters >= max_iterations:
-            raise RuntimeError(
-                "Spectrum could not be unfolded within max allowable iterations"
-            )
+            break
 
-    return big_phi
+    return big_phi, errors
 
 
 T = TypeVar("T", Histogram, None)
