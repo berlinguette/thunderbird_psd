@@ -1,6 +1,7 @@
 from numpy import ndarray
 import numpy as np
 from math import log10
+from typing import TypeVar
 
 
 class Histogram:
@@ -315,6 +316,7 @@ def unfold_spectrum(
     chi_n = stopping_criteria(big_r, big_phi, big_n, sigma=sigma)
 
     while chi_n > stop_value:
+        print(chi_n)
         big_phi = next_phi(big_r, big_phi, big_n, sigma=sigma)
         chi_n = stopping_criteria(big_r, big_phi, big_n, sigma=sigma)
 
@@ -325,6 +327,41 @@ def unfold_spectrum(
             )
 
     return big_phi
+
+
+T = TypeVar("T", Histogram, None)
+def strip_zeroes(big_r: Histogram2D, big_n: Histogram, sigma: T = None) -> tuple[Histogram2D, Histogram, T]:
+    compatible, reason = _are_histograms_compatible_2d(big_r, big_n, 0)
+    if not compatible:
+        raise ValueError(f"N does not match x-axis of R ({reason})")
+    if sigma is not None:
+        compatible, reason = _are_histograms_compatible_2d(big_r, sigma, 0)
+        if not compatible:
+            raise ValueError(f"Sigma does not match x-axis of R ({reason})")
+    
+    R_counts = big_r.counts.copy()
+    R_x_mids = big_r.x_midpoints.copy()
+    N_counts = big_n.counts.copy()
+    N_mids = big_n.midpoints.copy()
+    
+    nonzero_mask = N_counts != 0
+    R_counts = R_counts[nonzero_mask,:]
+    R_x_mids = R_x_mids[nonzero_mask]
+    N_counts = N_counts[nonzero_mask]
+    N_mids = N_mids[nonzero_mask]
+    
+    new_R = Histogram2D(R_counts, R_x_mids, big_r.y_midpoints)
+    new_N = Histogram(N_counts, N_mids)
+    
+    if sigma is None:
+        return new_R, new_N, None # type: ignore
+    else:
+        sig_counts = sigma.counts.copy()
+        sig_mids = sigma.midpoints.copy()
+        sig_counts = sig_counts[nonzero_mask]
+        sig_mids = sig_mids[nonzero_mask]
+        new_sigma = Histogram(sig_counts, sig_mids)
+        return new_R, new_N, new_sigma # type: ignore
 
 
 def _are_histograms_compatible(a: Histogram, b: Histogram) -> tuple[bool, str]:
