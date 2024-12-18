@@ -188,26 +188,60 @@ class TestAreRDimensionsCloseEnough:
 
 
 class TestStripZeroes:
-    def test_good_path(self, _array_generator_2d, _array_generator):
+    def test_N_strip_only(self, _array_generator_2d, _array_generator):
         big_R = Histogram2D(
             _array_generator_2d((4, 3)), _array_generator(4), _array_generator(3)
         )
         big_N = Histogram(np.array([0, 1, 1, 0]), _array_generator(4))
-        new_R, new_N, new_sigma = strip_zeroes(big_R, big_N)
+        big_phi = Histogram(_array_generator(3), _array_generator(3))
+        new_R, new_N, new_phi, new_sigma = strip_zeroes(big_R, big_N, big_phi)
         assert (new_R.counts == np.array([[1, 2, 3], [2, 3, 4]])).all()
         assert (new_R.x_midpoints == np.array([1, 2])).all()
         assert (new_R.y_midpoints == big_R.y_midpoints).all()
         assert (new_N.counts == np.array([1, 1])).all()
         assert (new_N.midpoints == np.array([1, 2])).all()
+        assert (new_phi.counts == big_phi.counts).all()
+        assert (new_phi.midpoints == big_phi.midpoints).all()
         assert new_sigma is None
+        
+    def test_R_strip_only(self, _array_generator_2d, _array_generator):
+        R_array = _array_generator_2d((4,3))
+        R_array[:,1] = 0
+        big_R = Histogram2D(R_array, _array_generator(4), _array_generator(3))
+        big_N = Histogram(_array_generator(1,5), _array_generator(4))
+        big_phi = Histogram(_array_generator(3), _array_generator(3))
+        new_R, new_N, new_phi, _ = strip_zeroes(big_R, big_N, big_phi)
+        assert (new_R.counts == np.array([[0,2],[1,3],[2,4],[3,5]])).all()
+        assert (new_R.x_midpoints == big_R.x_midpoints).all()
+        assert (new_R.y_midpoints == np.array([0,2])).all()
+        assert (new_N.counts == big_N.counts).all()
+        assert (new_N.counts == big_N.counts).all()
+        assert (new_phi.counts == np.array([0,2])).all()
+        assert (new_phi.midpoints == np.array([0,2])).all()
+    
+    def test_strip_both(self, _array_generator_2d, _array_generator):
+        R_array = _array_generator_2d((4,3))
+        R_array[:,1] = 0
+        big_R = Histogram2D(R_array, _array_generator(4), _array_generator(3))
+        big_N = Histogram(np.array([0, 1, 1, 0]), _array_generator(4))
+        big_phi = Histogram(_array_generator(3), _array_generator(3))
+        new_R, new_N, new_phi, _ = strip_zeroes(big_R, big_N, big_phi)
+        assert (new_R.counts == np.array([[1,3],[2,4]])).all()
+        assert (new_R.x_midpoints == np.array([1,2])).all()
+        assert (new_R.y_midpoints == np.array([0,2])).all()
+        assert (new_N.counts == np.array([1, 1])).all()
+        assert (new_N.midpoints == np.array([1, 2])).all()
+        assert (new_phi.counts == np.array([0,2])).all()
+        assert (new_phi.midpoints == np.array([0,2])).all()
 
     def test_with_sigma(self, _array_generator_2d, _array_generator):
         big_R = Histogram2D(
             _array_generator_2d((4, 3)), _array_generator(4), _array_generator(3)
         )
         big_N = Histogram(np.array([0, 1, 1, 0]), _array_generator(4))
+        big_phi = Histogram(_array_generator(3), _array_generator(3))
         sigma = Histogram(_array_generator(4), _array_generator(4))
-        new_R, new_N, new_sigma = strip_zeroes(big_R, big_N, sigma=sigma)
+        new_R, new_N, _, new_sigma = strip_zeroes(big_R, big_N, big_phi, sigma=sigma)
         assert (new_R.counts == np.array([[1, 2, 3], [2, 3, 4]])).all()
         assert (new_R.x_midpoints == np.array([1, 2])).all()
         assert (new_R.y_midpoints == big_R.y_midpoints).all()
@@ -222,18 +256,30 @@ class TestStripZeroes:
             _array_generator_2d((4, 3)), _array_generator(4), _array_generator(3)
         )
         big_N = Histogram(_array_generator(5), _array_generator(5))
+        big_phi = Histogram(_array_generator(3), _array_generator(3))
         with pytest.raises(ValueError) as excinfo:
-            strip_zeroes(big_R, big_N)
+            strip_zeroes(big_R, big_N, big_phi)
         assert "N" in str(excinfo.value)
+    
+    def test_phi_incompatible(self, _array_generator_2d, _array_generator):
+        big_R = Histogram2D(
+            _array_generator_2d((4, 3)), _array_generator(4), _array_generator(3)
+        )
+        big_N = Histogram(_array_generator(4), _array_generator(4))
+        big_phi = Histogram(_array_generator(4), _array_generator(4))
+        with pytest.raises(ValueError) as excinfo:
+            strip_zeroes(big_R, big_N, big_phi)
+        assert "Phi" in str(excinfo.value)
 
     def test_sigma_incompatible(self, _array_generator_2d, _array_generator):
         big_R = Histogram2D(
             _array_generator_2d((4, 3)), _array_generator(4), _array_generator(3)
         )
         big_N = Histogram(_array_generator(4), _array_generator(4))
+        big_phi = Histogram(_array_generator(3), _array_generator(3))
         sigma = Histogram(_array_generator(5), _array_generator(5))
         with pytest.raises(ValueError) as excinfo:
-            strip_zeroes(big_R, big_N, sigma=sigma)
+            strip_zeroes(big_R, big_N, big_phi, sigma=sigma)
         assert "Sigma" in str(excinfo.value)
 
 

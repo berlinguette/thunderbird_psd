@@ -144,7 +144,7 @@ class UnfoldingProcessInfo(TypedDict):
 
 def weight_factor(
     big_r: Histogram2D,
-    big_phi: Histogram,
+    new_phi: Histogram,
     big_n: Histogram,
     sigma: Histogram | None = None,
 ) -> Histogram2D:
@@ -152,8 +152,8 @@ def weight_factor(
 
     :param big_r: Neutron response matrix
     :type big_r: Histogram2D
-    :param big_phi: Neutron spectrum calculated in the previous GRAVEL iteration
-    :type big_phi: Histogram
+    :param new_phi: Neutron spectrum calculated in the previous GRAVEL iteration
+    :type new_phi: Histogram
     :param big_n: Neutron response spectrum
     :type big_n: Histogram
     :param sigma: Estimation of error in the neutron response spectrum,
@@ -170,7 +170,7 @@ def weight_factor(
     compatible, reason = _are_histograms_compatible_2d(big_r, big_n, 0)
     if not compatible:
         raise ValueError(f"N does not match x-axis of R ({reason})")
-    compatible, reason = _are_histograms_compatible_2d(big_r, big_phi, 1)
+    compatible, reason = _are_histograms_compatible_2d(big_r, new_phi, 1)
     if not compatible:
         raise ValueError(f"Phi does not match y-axis of R ({reason})")
     compatible, reason = _are_histograms_compatible_2d(big_r, sigma, 0)
@@ -183,7 +183,7 @@ def weight_factor(
         )
 
     R = big_r.counts
-    phi = big_phi.counts
+    phi = new_phi.counts
     N = big_n.counts
     error = sigma.counts
 
@@ -200,7 +200,7 @@ def weight_factor(
 
 def next_phi(
     big_r: Histogram2D,
-    big_phi: Histogram,
+    new_phi: Histogram,
     big_n: Histogram,
     sigma: Histogram | None = None,
 ) -> Histogram:
@@ -208,8 +208,8 @@ def next_phi(
 
     :param big_r: Neutron response matrix
     :type big_r: Histogram2D
-    :param big_phi: Neutron spectrum calculated in the previous GRAVEL iteration
-    :type big_phi: Histogram
+    :param new_phi: Neutron spectrum calculated in the previous GRAVEL iteration
+    :type new_phi: Histogram
     :param big_n: Neutron response spectrum
     :type big_n: Histogram
     :param sigma: Estimation of error in the neutron response spectrum,
@@ -226,7 +226,7 @@ def next_phi(
     compatible, reason = _are_histograms_compatible_2d(big_r, big_n, 0)
     if not compatible:
         raise ValueError(f"N does not match x-axis of R ({reason})")
-    compatible, reason = _are_histograms_compatible_2d(big_r, big_phi, 1)
+    compatible, reason = _are_histograms_compatible_2d(big_r, new_phi, 1)
     if not compatible:
         raise ValueError(f"Phi does not match y-axis of R ({reason})")
     compatible, reason = _are_histograms_compatible_2d(big_r, sigma, 0)
@@ -238,10 +238,10 @@ def next_phi(
             f"Dimensions of R {big_r.counts.shape} are not within 1 order of magnitude"
         )
 
-    big_w = weight_factor(big_r, big_phi, big_n, sigma=sigma)
+    big_w = weight_factor(big_r, new_phi, big_n, sigma=sigma)
 
     R = big_r.counts
-    phi = big_phi.counts
+    phi = new_phi.counts
     N = big_n.counts
     error = sigma.counts
     W = big_w.counts
@@ -266,12 +266,12 @@ def next_phi(
     exp_frac = exp_numer / exp_denom
     exp_result = np.exp(exp_frac)
 
-    return Histogram((phi * exp_result).reshape(-1), big_phi.midpoints)
+    return Histogram((phi * exp_result).reshape(-1), new_phi.midpoints)
 
 
 def stopping_criteria(
     big_r: Histogram2D,
-    big_phi: Histogram,
+    new_phi: Histogram,
     big_n: Histogram,
     sigma: Histogram | None = None,
 ) -> float:
@@ -283,8 +283,8 @@ def stopping_criteria(
 
     :param big_r: Neutron response matrix
     :type big_r: Histogram2D
-    :param big_phi: Neutron spectrum calculated in the previous GRAVEL iteration
-    :type big_phi: Histogram
+    :param new_phi: Neutron spectrum calculated in the previous GRAVEL iteration
+    :type new_phi: Histogram
     :param big_n: Neutron response spectrum
     :type big_n: Histogram
     :param sigma: Estimation of error in the neutron response spectrum,
@@ -301,7 +301,7 @@ def stopping_criteria(
     compatible, reason = _are_histograms_compatible_2d(big_r, big_n, 0)
     if not compatible:
         raise ValueError(f"N does not match x-axis of R ({reason})")
-    compatible, reason = _are_histograms_compatible_2d(big_r, big_phi, 1)
+    compatible, reason = _are_histograms_compatible_2d(big_r, new_phi, 1)
     if not compatible:
         raise ValueError(f"Phi does not match y-axis of R ({reason})")
     compatible, reason = _are_histograms_compatible_2d(big_r, sigma, 0)
@@ -314,7 +314,7 @@ def stopping_criteria(
         )
 
     R = big_r.counts
-    phi = big_phi.counts
+    phi = new_phi.counts
     N = big_n.counts
     error = sigma.counts
 
@@ -377,6 +377,7 @@ def unfold_spectrum(
         uniform_phi = np.ones(big_r_y_size)
         uniform_phi_edges = big_r.y_midpoints
         starting_phi = Histogram(uniform_phi, uniform_phi_edges)
+    print(f"starting_phi mids: {starting_phi.midpoints}")
 
     compatible, reason = _are_histograms_compatible_2d(big_r, big_n, 0)
     if not compatible:
@@ -393,26 +394,29 @@ def unfold_spectrum(
             f"Dimensions of R {big_r.counts.shape} are not within 1 order of magnitude"
         )
 
-    new_r, new_n, new_sigma = strip_zeroes(big_r, big_n, sigma=sigma)
+    new_r, new_n, new_phi, new_sigma = strip_zeroes(
+        big_r, big_n, starting_phi, sigma=sigma
+    )
+    print(f"new_r y mids: {new_r.y_midpoints}")
+    print(f"new_phi mids: {new_phi.midpoints}")
 
-    big_phi = starting_phi
     stop_value = 1 + tolerance
     iters = 0
     errors = []
     phis = []
     weights = []
 
-    chi_n = stopping_criteria(new_r, big_phi, new_n, sigma=new_sigma)
+    chi_n = stopping_criteria(new_r, new_phi, new_n, sigma=new_sigma)
     sc_text_len = len(str(chi_n))
     iter_text_len = len(str(max_iterations))
 
     while chi_n > stop_value:
-        weight = weight_factor(new_r, big_phi, new_n, sigma=new_sigma)
-        big_phi = next_phi(new_r, big_phi, new_n, sigma=new_sigma)
-        chi_n = stopping_criteria(new_r, big_phi, new_n, sigma=new_sigma)
+        weight = weight_factor(new_r, new_phi, new_n, sigma=new_sigma)
+        new_phi = next_phi(new_r, new_phi, new_n, sigma=new_sigma)
+        chi_n = stopping_criteria(new_r, new_phi, new_n, sigma=new_sigma)
         if full_info:
             errors.append(chi_n)
-            phis.append(big_phi)
+            phis.append(new_phi)
             weights.append(weight)
 
         if iters % 100 == 0:
@@ -426,15 +430,15 @@ def unfold_spectrum(
         if full_info
         else None
     )
-    return big_phi, unfolding_info
+    return new_phi, unfolding_info
 
 
 T = TypeVar("T", Histogram, None)
 
 
 def strip_zeroes(
-    big_r: Histogram2D, big_n: Histogram, sigma: T = None
-) -> tuple[Histogram2D, Histogram, T]:
+    big_r: Histogram2D, big_n: Histogram, starting_phi: Histogram, sigma: T = None
+) -> tuple[Histogram2D, Histogram, Histogram, T]:
     """Strips any zero channels from incoming spectrum unfolding data.
 
     Zero channels in the neutron response spectrum (N) are removed, as well as matching
@@ -447,17 +451,24 @@ def strip_zeroes(
     :type big_r: Histogram2D
     :param big_n: Neutron response spectrum
     :type big_n: Histogram
+    :param starting_phi: Initial neutron spectrum guess
+    :type starting_phi: Histogram
     :param sigma: Estimation of error in the neutron response spectrum, or None,
         defaults to None
     :type sigma: T (Histogram or None), optional
     :raises ValueError: if N is incompatible with R's x axis
+    :raises ValueError: if phi is incompatible with R's y axis
     :raises ValueError: if sigma (if provided) is incompatible with R's x axis
-    :return: _description_
-    :rtype: tuple[Histogram2D, Histogram, T]
+    :return: Zero-stripped R, N, and phi, and zero-stripped sigma (if provided, or None
+        if not)
+    :rtype: tuple[Histogram2D, Histogram, Histogram, T]
     """
     compatible, reason = _are_histograms_compatible_2d(big_r, big_n, 0)
     if not compatible:
         raise ValueError(f"N does not match x-axis of R ({reason})")
+    compatible, reason = _are_histograms_compatible_2d(big_r, starting_phi, 1)
+    if not compatible:
+        raise ValueError(f"Phi does not match y-axis of R ({reason})")
     if sigma is not None:
         compatible, reason = _are_histograms_compatible_2d(big_r, sigma, 0)
         if not compatible:
@@ -465,27 +476,39 @@ def strip_zeroes(
 
     R_counts = big_r.counts.copy()
     R_x_mids = big_r.x_midpoints.copy()
+    R_y_mids = big_r.y_midpoints.copy()
     N_counts = big_n.counts.copy()
     N_mids = big_n.midpoints.copy()
+    phi_counts = starting_phi.counts.copy()
+    phi_mids = starting_phi.midpoints.copy()
 
+    # strip L channels where count = 0 (and matching in R)
     nonzero_mask = N_counts != 0
     R_counts = R_counts[nonzero_mask, :]
     R_x_mids = R_x_mids[nonzero_mask]
     N_counts = N_counts[nonzero_mask]
     N_mids = N_mids[nonzero_mask]
 
-    new_R = Histogram2D(R_counts, R_x_mids, big_r.y_midpoints)
+    # strip R slices where sum = 0 (and matching in starting_phi)
+    zerosum_mask = np.sum(R_counts, axis=0) != 0
+    R_counts = R_counts[:, zerosum_mask]
+    R_y_mids = R_y_mids[zerosum_mask]
+    phi_counts = phi_counts[zerosum_mask]
+    phi_mids = phi_mids[zerosum_mask]
+
+    new_R = Histogram2D(R_counts, R_x_mids, R_y_mids)
     new_N = Histogram(N_counts, N_mids)
+    new_phi = Histogram(phi_counts, phi_mids)
 
     if sigma is None:
-        return new_R, new_N, None  # type: ignore
+        return new_R, new_N, new_phi, None  # type: ignore
     else:
         sig_counts = sigma.counts.copy()
         sig_mids = sigma.midpoints.copy()
         sig_counts = sig_counts[nonzero_mask]
         sig_mids = sig_mids[nonzero_mask]
         new_sigma = Histogram(sig_counts, sig_mids)
-        return new_R, new_N, new_sigma  # type: ignore
+        return new_R, new_N, new_phi, new_sigma  # type: ignore
 
 
 def _are_histograms_compatible(a: Histogram, b: Histogram) -> tuple[bool, str]:
