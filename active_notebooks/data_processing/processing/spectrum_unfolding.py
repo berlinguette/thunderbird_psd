@@ -411,9 +411,10 @@ def unfold_spectrum(
         weight = weight_factor(new_r, big_phi, new_n, sigma=new_sigma)
         big_phi = next_phi(new_r, big_phi, new_n, sigma=new_sigma)
         chi_n = stopping_criteria(new_r, big_phi, new_n, sigma=new_sigma)
-        errors.append(chi_n)
-        phis.append(big_phi)
-        weights.append(weight)
+        if full_info:
+            errors.append(chi_n)
+            phis.append(big_phi)
+            weights.append(weight)
 
         if iters % 100 == 0:
             print(f"Iter. {iters: {iter_text_len}d}: SC = {chi_n: {sc_text_len}.2f}")
