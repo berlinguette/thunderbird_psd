@@ -1,9 +1,8 @@
 from math import log10
-from typing import TypeVar, TypedDict
+from typing import TypedDict, TypeVar
 
 import numpy as np
 from numpy import ndarray
-
 
 
 class Histogram:
@@ -342,7 +341,7 @@ def unfold_spectrum(
     sigma: Histogram | None = None,
     tolerance: float = 0.1,
     max_iterations: int = 500,
-    full_info: bool = False
+    full_info: bool = False,
 ) -> tuple[Histogram, UnfoldingProcessInfo | None]:
     """Unfold neutron response spectrum into neutron spectrum.
 
@@ -422,7 +421,11 @@ def unfold_spectrum(
         if iters >= max_iterations:
             break
 
-    unfolding_info = UnfoldingProcessInfo(errors=errors, phis=phis, weights=weights) if full_info else None
+    unfolding_info = (
+        UnfoldingProcessInfo(errors=errors, phis=phis, weights=weights)
+        if full_info
+        else None
+    )
     return big_phi, unfolding_info
 
 
