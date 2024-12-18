@@ -1,8 +1,9 @@
 from math import log10
-from typing import TypeVar
+from typing import TypeVar, TypedDict
 
 import numpy as np
 from numpy import ndarray
+
 
 
 class Histogram:
@@ -134,6 +135,12 @@ class Histogram2D:
         :rtype: ndarray
         """
         return self._y_mids
+
+
+class UnfoldingProcessInfo(TypedDict):
+    errors: list[float]
+    phis: list[ndarray]
+    weights: list[ndarray]
 
 
 def weight_factor(
@@ -335,7 +342,8 @@ def unfold_spectrum(
     sigma: Histogram | None = None,
     tolerance: float = 0.1,
     max_iterations: int = 500,
-) -> tuple[Histogram, list[float]]:
+    full_info: bool = False
+) -> tuple[Histogram, UnfoldingProcessInfo | None]:
     """Unfold neutron response spectrum into neutron spectrum.
 
     This function performs the GRAVEL algorithm iteratively, as seen in [CITATION HERE].
@@ -351,15 +359,17 @@ def unfold_spectrum(
         defaults to None (root of neutron response spectrum)
     :type sigma: Histogram | None, optional
     :param tolerance: How close stopping criteria value must be to stopping value (1)
-        to stop the GRAVEL algorithm
-    :type tolerance: float
+        to stop the GRAVEL algorithm, defaults to 0.1
+    :type tolerance: float, optional
     :param max_iterations: Maximum number of iterations to perform before stopping the
-        GRAVEL algorithm early
-    :type max_iterations: int
-    :raises ValueError: if dimensions do not match (N with R's x-axis, Phi with R's
-        y-axis), or if dimensions are not close enough
-    :return: Unfolded spectrum, and list of stopping criteria values
-    :rtype: tuple[Histogram, list[float]]
+        GRAVEL algorithm early, defaults to 500
+    :type max_iterations: int, optional
+    :param full_info: Whether to return extra data (errors, neutron spectra, weight
+        factors) collected during the unfolding process, defaults to False
+    :type full_info: bool, optional
+    :return: Unfolded spectrum, and (if full_info is True) a dictionary of intermediate
+        data collected during the unfolding process (or None if full_info is False)
+    :rtype: tuple[Histogram, UnfoldingProcessInfo | None]
     """
     if sigma is None:
         sigma = Histogram(np.sqrt(big_n.counts), big_n.midpoints)
@@ -390,15 +400,20 @@ def unfold_spectrum(
     stop_value = 1 + tolerance
     iters = 0
     errors = []
+    phis = []
+    weights = []
 
     chi_n = stopping_criteria(new_r, big_phi, new_n, sigma=new_sigma)
     sc_text_len = len(str(chi_n))
     iter_text_len = len(str(max_iterations))
 
     while chi_n > stop_value:
+        weight = weight_factor(new_r, big_phi, new_n, sigma=new_sigma)
         big_phi = next_phi(new_r, big_phi, new_n, sigma=new_sigma)
         chi_n = stopping_criteria(new_r, big_phi, new_n, sigma=new_sigma)
         errors.append(chi_n)
+        phis.append(big_phi)
+        weights.append(weight)
 
         if iters % 100 == 0:
             print(f"Iter. {iters: {iter_text_len}d}: SC = {chi_n: {sc_text_len}.2f}")
@@ -406,7 +421,8 @@ def unfold_spectrum(
         if iters >= max_iterations:
             break
 
-    return big_phi, errors
+    unfolding_info = UnfoldingProcessInfo(errors=errors, phis=phis, weights=weights) if full_info else None
+    return big_phi, unfolding_info
 
 
 T = TypeVar("T", Histogram, None)
