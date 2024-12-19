@@ -203,36 +203,36 @@ class TestStripZeroes:
         assert (new_phi.counts == big_phi.counts).all()
         assert (new_phi.midpoints == big_phi.midpoints).all()
         assert new_sigma is None
-        
+
     def test_R_strip_only(self, _array_generator_2d, _array_generator):
-        R_array = _array_generator_2d((4,3))
-        R_array[:,1] = 0
+        R_array = _array_generator_2d((4, 3))
+        R_array[:, 1] = 0
         big_R = Histogram2D(R_array, _array_generator(4), _array_generator(3))
-        big_N = Histogram(_array_generator(1,5), _array_generator(4))
+        big_N = Histogram(_array_generator(1, 5), _array_generator(4))
         big_phi = Histogram(_array_generator(3), _array_generator(3))
         new_R, new_N, new_phi, _ = strip_zeroes(big_R, big_N, big_phi)
-        assert (new_R.counts == np.array([[0,2],[1,3],[2,4],[3,5]])).all()
+        assert (new_R.counts == np.array([[0, 2], [1, 3], [2, 4], [3, 5]])).all()
         assert (new_R.x_midpoints == big_R.x_midpoints).all()
-        assert (new_R.y_midpoints == np.array([0,2])).all()
+        assert (new_R.y_midpoints == np.array([0, 2])).all()
         assert (new_N.counts == big_N.counts).all()
         assert (new_N.counts == big_N.counts).all()
-        assert (new_phi.counts == np.array([0,2])).all()
-        assert (new_phi.midpoints == np.array([0,2])).all()
-    
+        assert (new_phi.counts == np.array([0, 2])).all()
+        assert (new_phi.midpoints == np.array([0, 2])).all()
+
     def test_strip_both(self, _array_generator_2d, _array_generator):
-        R_array = _array_generator_2d((4,3))
-        R_array[:,1] = 0
+        R_array = _array_generator_2d((4, 3))
+        R_array[:, 1] = 0
         big_R = Histogram2D(R_array, _array_generator(4), _array_generator(3))
         big_N = Histogram(np.array([0, 1, 1, 0]), _array_generator(4))
         big_phi = Histogram(_array_generator(3), _array_generator(3))
         new_R, new_N, new_phi, _ = strip_zeroes(big_R, big_N, big_phi)
-        assert (new_R.counts == np.array([[1,3],[2,4]])).all()
-        assert (new_R.x_midpoints == np.array([1,2])).all()
-        assert (new_R.y_midpoints == np.array([0,2])).all()
+        assert (new_R.counts == np.array([[1, 3], [2, 4]])).all()
+        assert (new_R.x_midpoints == np.array([1, 2])).all()
+        assert (new_R.y_midpoints == np.array([0, 2])).all()
         assert (new_N.counts == np.array([1, 1])).all()
         assert (new_N.midpoints == np.array([1, 2])).all()
-        assert (new_phi.counts == np.array([0,2])).all()
-        assert (new_phi.midpoints == np.array([0,2])).all()
+        assert (new_phi.counts == np.array([0, 2])).all()
+        assert (new_phi.midpoints == np.array([0, 2])).all()
 
     def test_with_sigma(self, _array_generator_2d, _array_generator):
         big_R = Histogram2D(
@@ -260,7 +260,7 @@ class TestStripZeroes:
         with pytest.raises(ValueError) as excinfo:
             strip_zeroes(big_R, big_N, big_phi)
         assert "N" in str(excinfo.value)
-    
+
     def test_phi_incompatible(self, _array_generator_2d, _array_generator):
         big_R = Histogram2D(
             _array_generator_2d((4, 3)), _array_generator(4), _array_generator(3)
@@ -578,7 +578,7 @@ class TestUnfoldSpectrum:
         assert unfolded_phi.counts.shape[0] == big_r.counts.shape[1]
         assert (unfolded_phi.midpoints == big_r.y_midpoints).all()
         assert info is None
-        
+
     def test_full_info(self, _array_generator):
         m = 3
         n = 2
@@ -593,6 +593,7 @@ class TestUnfoldSpectrum:
         assert len(info["errors"]) <= 500
         assert len(info["errors"]) == len(info["phis"])
         assert len(info["errors"]) == len(info["weights"])
+        assert len(info["errors"]) == len(info["chis"])
 
     def test_sigma(self, _array_generator):
         m = 3

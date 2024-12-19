@@ -138,6 +138,7 @@ class Histogram2D:
 
 class UnfoldingProcessInfo(TypedDict):
     errors: list[float]
+    chis: list[float]
     phis: list[ndarray]
     weights: list[ndarray]
 
@@ -339,7 +340,7 @@ def unfold_spectrum(
     big_r: Histogram2D,
     starting_phi: Histogram | None = None,
     sigma: Histogram | None = None,
-    tolerance: float = 0.1,
+    tolerance: float = 0.01,
     max_iterations: int = 500,
     full_info: bool = False,
 ) -> tuple[Histogram, UnfoldingProcessInfo | None]:
@@ -397,33 +398,45 @@ def unfold_spectrum(
         big_r, big_n, starting_phi, sigma=sigma
     )
 
-    stop_value = 1 + tolerance
+    # stop_value = 1 + tolerance
     iters = 0
-    errors = []
+    chis = []
     phis = []
     weights = []
-
-    chi_n = stopping_criteria(new_r, new_phi, new_n, sigma=new_sigma)
-    sc_text_len = len(str(chi_n))
+    errors = []
     iter_text_len = len(str(max_iterations))
 
-    while chi_n > stop_value:
+    chi_n = stopping_criteria(new_r, new_phi, new_n, sigma=new_sigma)
+    chi_last = chi_n
+    delta_chi_last = 1
+    delta_delta = 1
+
+    while delta_delta > tolerance:
         weight = weight_factor(new_r, new_phi, new_n, sigma=new_sigma)
         new_phi = next_phi(new_r, new_phi, new_n, sigma=new_sigma)
         chi_n = stopping_criteria(new_r, new_phi, new_n, sigma=new_sigma)
+
+        delta_chi = chi_n - chi_last
+        delta_delta = abs(delta_chi - delta_chi_last)
+        chi_last = chi_n
+        delta_chi_last = delta_chi
+
         if full_info:
-            errors.append(chi_n)
+            chis.append(chi_n)
             phis.append(new_phi)
             weights.append(weight)
+            errors.append(delta_chi)
 
-        if iters % 100 == 0:
-            print(f"Iter. {iters: {iter_text_len}d}: SC = {chi_n: {sc_text_len}.2f}")
+        if iters % 10 == 0:
+            print(
+                f"Iter. {iters: {iter_text_len}d}: chi = {chi_n:.3g}, rel_rate = {delta_delta: .3g}"
+            )
         iters += 1
         if iters >= max_iterations:
             break
 
     unfolding_info = (
-        UnfoldingProcessInfo(errors=errors, phis=phis, weights=weights)
+        UnfoldingProcessInfo(errors=errors, chis=chis, phis=phis, weights=weights)
         if full_info
         else None
     )
