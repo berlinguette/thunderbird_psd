@@ -377,7 +377,6 @@ def unfold_spectrum(
         uniform_phi = np.ones(big_r_y_size)
         uniform_phi_edges = big_r.y_midpoints
         starting_phi = Histogram(uniform_phi, uniform_phi_edges)
-    print(f"starting_phi mids: {starting_phi.midpoints}")
 
     compatible, reason = _are_histograms_compatible_2d(big_r, big_n, 0)
     if not compatible:
@@ -397,8 +396,6 @@ def unfold_spectrum(
     new_r, new_n, new_phi, new_sigma = strip_zeroes(
         big_r, big_n, starting_phi, sigma=sigma
     )
-    print(f"new_r y mids: {new_r.y_midpoints}")
-    print(f"new_phi mids: {new_phi.midpoints}")
 
     stop_value = 1 + tolerance
     iters = 0
