@@ -5,12 +5,17 @@ import pytest
 from data_processing.processing.spectrum_unfolding import (
     Histogram,
     Histogram2D,
+    NDHistogram,
     _are_histograms_compatible,
     _are_histograms_compatible_2d,
     _are_r_dimensions_close_enough,
+    _is_n_compatible,
+    _is_phi_compatible,
+    _new_are_r_dimensions_close_enough,
     next_phi,
     stopping_criteria,
     strip_zeroes,
+    clean_data,
     unfold_spectrum,
     weight_factor,
 )
@@ -118,6 +123,41 @@ class TestHistogram2D:
             Histogram2D(np.ones((4, 3)), np.ones(4), np.ones(2))
 
 
+class TestNDHistogram:
+    def test_inits(self):
+        counts = np.ones((4, 3))
+        midpoints = [np.ones(4), np.ones(3)]
+        histogram = NDHistogram(counts, midpoints)
+        assert (counts == histogram.counts).all()
+        assert all(
+            [
+                (expected == actual).all()
+                for expected, actual in zip(midpoints, histogram.midpoints)
+            ]
+        )
+
+    def test_midpoints_wrong_dimensions(self):
+        counts = np.ones((4, 3))
+        midpoints = [np.ones(3)]
+        with pytest.raises(ValueError) as excinfo:
+            NDHistogram(counts, midpoints)
+        assert "dimensions" in str(excinfo.value)
+
+    def test_midpoints_not_1D(self):
+        counts = np.ones((4, 3))
+        midpoints = [np.ones((4, 1)), np.ones(3)]
+        with pytest.raises(ValueError) as excinfo:
+            NDHistogram(counts, midpoints)
+        assert "1-dimensional" in str(excinfo.value)
+
+    def test_midpoints_wrong_length(self):
+        counts = np.ones((4, 3))
+        midpoints = [np.ones(4), np.ones(4)]
+        with pytest.raises(ValueError) as excinfo:
+            NDHistogram(counts, midpoints)
+        assert "size" in str(excinfo.value)
+
+
 class TestAreHistogramsCompatible:
     def test_compatible(self, _array_generator):
         a = Histogram(_array_generator(5), _array_generator(5))
@@ -173,6 +213,83 @@ class TestAreHistogramsCompatible2D:
         assert not compatible
 
 
+class TestIsNCompatible:
+    @pytest.mark.parametrize("N_n", [1, 3])
+    def test_is_compatible(self, _array_generator, N_n):
+        r = NDHistogram(np.ones((4, 3)), [_array_generator(4), _array_generator(3)])
+        n = NDHistogram(np.ones((4, N_n)), [_array_generator(4), _array_generator(N_n)])
+        compatible, reason = _is_n_compatible(r, n)
+        assert compatible
+        assert reason == ""
+
+    @pytest.mark.parametrize(
+        "N_m,N_n", [(5, 1), (3, 1), (5, 3), (3, 3), (4, 2), (4, 4)]
+    )
+    def test_no_shape_match(self, _array_generator, N_m, N_n):
+        r = NDHistogram(np.ones((4, 3)), [_array_generator(4), _array_generator(3)])
+        n = NDHistogram(
+            np.ones((N_m, N_n)), [_array_generator(N_m), _array_generator(N_n)]
+        )
+        compatible, reason = _is_n_compatible(r, n)
+        assert not compatible
+        assert "Shapes" in reason
+
+    @pytest.mark.parametrize("start,end", [(1, 5), (2, 6)])
+    def test_no_axis_0_mids_match(self, _array_generator, start, end):
+        r = NDHistogram(np.ones((4, 3)), [_array_generator(4), _array_generator(3)])
+        n = NDHistogram(
+            np.ones((end - start, 3)),
+            [_array_generator(start, end), _array_generator(3)],
+        )
+        compatible, reason = _is_n_compatible(r, n)
+        assert not compatible
+        assert "Midpoints" in reason
+        assert "axis 0" in reason
+
+    @pytest.mark.parametrize("start,end", [(1, 4), (2, 5)])
+    def test_no_axis_1_mids_match(self, _array_generator, start, end):
+        r = NDHistogram(np.ones((4, 3)), [_array_generator(4), _array_generator(3)])
+        n = NDHistogram(
+            np.ones((4, end - start)),
+            [_array_generator(4), _array_generator(start, end)],
+        )
+        compatible, reason = _is_n_compatible(r, n)
+        assert not compatible
+        assert "Midpoints" in reason
+        assert "axis 1" in reason
+
+
+class TestIsPhiCompatible:
+    def test_is_compatible(self, _array_generator):
+        r = NDHistogram(np.ones((4, 3)), [_array_generator(4), _array_generator(3)])
+        phi = NDHistogram(np.ones((1, 3)), [_array_generator(1), _array_generator(3)])
+        compatible, reason = _is_phi_compatible(r, phi)
+        assert compatible
+        assert reason == ""
+
+    @pytest.mark.parametrize("N_m,N_n", [(2, 3), (1, 2), (1, 4)])
+    def test_no_shape_match(self, _array_generator, N_m, N_n):
+        r = NDHistogram(np.ones((4, 3)), [_array_generator(4), _array_generator(3)])
+        phi = NDHistogram(
+            np.ones((N_m, N_n)), [_array_generator(N_m), _array_generator(N_n)]
+        )
+        compatible, reason = _is_phi_compatible(r, phi)
+        assert not compatible
+        assert "Shapes" in reason
+
+    @pytest.mark.parametrize("start, end", [(1, 4), (2, 5)])
+    def test_no_mids_match(self, _array_generator, start, end):
+        r = NDHistogram(np.ones((4, 3)), [_array_generator(4), _array_generator(3)])
+        phi = NDHistogram(
+            np.ones((1, end - start)),
+            [_array_generator(1), _array_generator(start, end)],
+        )
+        compatible, reason = _is_phi_compatible(r, phi)
+        assert not compatible
+        assert "Midpoints" in reason
+        assert "axis 1" in reason
+
+
 class TestAreRDimensionsCloseEnough:
     def test_close_enough(self, _array_generator):
         m = 10
@@ -185,6 +302,20 @@ class TestAreRDimensionsCloseEnough:
         n = 101
         r = Histogram2D(np.ones((m, n)), _array_generator(m), _array_generator(n))
         assert not _are_r_dimensions_close_enough(r)
+
+
+class TestNewAreRDimensionsCloseEnough:
+    def test_close_enough(self, _array_generator):
+        m = 10
+        n = 100
+        r = NDHistogram(np.ones((m, n)), [_array_generator(m), _array_generator(n)])
+        assert _new_are_r_dimensions_close_enough(r)
+
+    def test_not_close_enough(self, _array_generator):
+        m = 10
+        n = 101
+        r = NDHistogram(np.ones((m, n)), [_array_generator(m), _array_generator(n)])
+        assert not _new_are_r_dimensions_close_enough(r)
 
 
 class TestStripZeroes:
@@ -281,6 +412,248 @@ class TestStripZeroes:
         with pytest.raises(ValueError) as excinfo:
             strip_zeroes(big_R, big_N, big_phi, sigma=sigma)
         assert "Sigma" in str(excinfo.value)
+
+
+class TestCleanData:
+    @pytest.mark.parametrize(
+        "r_array,n_array,r_ex,n_ex,phi_ex",
+        [
+            (
+                [[1, 2, 3], [4, 5, 6]],
+                [1, 2],
+                [[1, 2, 3], [4, 5, 6]],
+                [[1], [2]],
+                [[0, 1, 2]],
+            ),
+            (
+                [[1, 2, 3], [4, 5, 6]],
+                [0, 2],
+                [[4, 5, 6]],
+                [[2]],
+                [[0, 1, 2]],
+            ),
+            (
+                [[1, 0, 3], [4, 0, 6]],
+                [1, 2],
+                [[1, 3], [4, 6]],
+                [[1], [2]],
+                [[0, 2]],
+            ),
+            (
+                [[1, 0, 3], [4, 0, 6]],
+                [0, 2],
+                [[4, 6]],
+                [[2]],
+                [[0, 2]],
+            ),
+            (
+                [[1, 0, 3], [4, 0, 6], [0, 0, 0]],
+                [1, 2, 3],
+                [[1, 3], [4, 6]],
+                [[1], [2]],
+                [[0, 1]],
+            ),
+            (
+                [[1, 2, 3], [4, 0, 6]],
+                [0, 2],
+                [[4, 6]],
+                [[2]],
+                [[0, 2]],
+            ),
+        ],
+    )
+    def test_good_path(
+        self,
+        _array_generator,
+        r_array: list[list[float]],
+        n_array: list[float],
+        r_ex: list[list[float]],
+        n_ex: list[list[float]],
+        phi_ex: list[list[float]],
+    ):
+        r_counts = np.array(r_array)
+        r_size0, r_size1, *_ = r_counts.shape
+        n_counts = np.array([n_array]).T  # starts as (1,m), we want (m,1)
+        n_size0, n_size1, *_ = n_counts.shape
+        phi_counts = _array_generator(r_size1).reshape(1, -1)
+
+        r = NDHistogram(
+            r_counts, [_array_generator(r_size0), _array_generator(r_size1)]
+        )
+        n = NDHistogram(
+            n_counts, [_array_generator(n_size0), _array_generator(n_size1)]
+        )
+        phi = NDHistogram(phi_counts, [_array_generator(1), _array_generator(r_size1)])
+
+        r_clean, n_clean, phi_clean, maybe_sigma = clean_data(r, n, phi)
+        assert maybe_sigma is None
+
+        r_expected = np.array(r_ex)
+        n_expected = np.array(n_ex)
+        phi_expected = np.array(phi_ex)
+
+        for actual, expected in zip(
+            [r_clean, n_clean, phi_clean], [r_expected, n_expected, phi_expected]
+        ):
+            print(actual.counts)
+            print(expected)
+            assert actual.shape == expected.shape
+            assert (actual.counts == expected).all()
+
+    @pytest.mark.parametrize(
+        "r_array,n_array,sigma_ex",
+        [
+            ([[1, 2, 3], [4, 5, 6]], [1, 2], [[0.1], [0.2]]),
+            (
+                [[1, 2, 3], [4, 5, 6]],
+                [0, 2],
+                [[0.2]],
+            ),
+            (
+                [[1, 0, 3], [4, 0, 6]],
+                [1, 2],
+                [[0.1], [0.2]],
+            ),
+            (
+                [[1, 0, 3], [4, 0, 6]],
+                [0, 2],
+                [[0.2]],
+            ),
+            (
+                [[1, 2, 3], [4, 0, 6]],
+                [0, 2],
+                [[0.2]],
+            ),
+        ],
+    )
+    def test_sigma(
+        self,
+        _array_generator,
+        r_array: list[list[float]],
+        n_array: list[float],
+        sigma_ex: list[list[float]],
+    ):
+        r_counts = np.array(r_array)
+        r_size0, r_size1, *_ = r_counts.shape
+        n_counts = np.array([n_array]).T  # starts as (1,m), we want (m,1)
+        n_size0, n_size1, *_ = n_counts.shape
+        phi_counts = _array_generator(r_size1).reshape(1, -1)
+
+        sigma_array = [0.1, 0.2]
+        sigma_counts = np.array([sigma_array]).T
+        sig_size0, sig_size1, *_ = sigma_counts.shape
+
+        r = NDHistogram(
+            r_counts, [_array_generator(r_size0), _array_generator(r_size1)]
+        )
+        n = NDHistogram(
+            n_counts, [_array_generator(n_size0), _array_generator(n_size1)]
+        )
+        phi = NDHistogram(phi_counts, [_array_generator(1), _array_generator(r_size1)])
+        sigma = NDHistogram(
+            sigma_counts, [_array_generator(sig_size0), _array_generator(sig_size1)]
+        )
+
+        *_, sigma_clean = clean_data(r, n, phi, sigma=sigma)
+        assert sigma_clean is not None
+
+        sigma_expected = np.array(sigma_ex)
+        assert sigma_expected.shape == sigma_clean.shape
+        assert (sigma_expected == sigma_clean.counts).all()
+
+    @pytest.mark.parametrize(
+        "L_cut,r_ex,n_ex,phi_ex,sigma_ex",
+        [
+            (
+                0.9,
+                [[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]],
+                [[1], [2], [3]],
+                [[0, 1, 2, 3]],
+                [[0.1], [0.2], [0.3]],
+            ),
+            (
+                1,
+                [[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]],
+                [[1], [2], [3]],
+                [[0, 1, 2, 3]],
+                [[0.1], [0.2], [0.3]],
+            ),
+            (
+                1.1,
+                [[5, 6, 7, 8], [9, 10, 11, 12]],
+                [[2], [3]],
+                [[0, 1, 2, 3]],
+                [[0.2], [0.3]],
+            ),
+            (
+                2.0,
+                [[5, 6, 7, 8], [9, 10, 11, 12]],
+                [[2], [3]],
+                [[0, 1, 2, 3]],
+                [[0.2], [0.3]],
+            ),
+            (
+                2.1,
+                [[9, 10, 11, 12]],
+                [[3]],
+                [[0, 1, 2, 3]],
+                [[0.3]],
+            ),
+        ],
+    )
+    
+    
+    def test_L_cut(self, _array_generator, L_cut, r_ex, n_ex, phi_ex, sigma_ex):
+        r_array = [[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]]
+        n_array = [1, 2, 3]
+        sigma_array = [0.1, 0.2, 0.3]
+        r_counts = np.array(r_array)
+        r_size0, r_size1, *_ = r_counts.shape
+        n_counts = np.array([n_array]).T  # starts as (1,m), we want (m,1)
+        n_size0, n_size1, *_ = n_counts.shape
+        phi_counts = _array_generator(r_size1).reshape(1, -1)
+        sigma_counts = np.array([sigma_array]).T
+        sig_size0, sig_size1, *_ = sigma_counts.shape
+
+        r = NDHistogram(
+            r_counts, [_array_generator(1, r_size0 + 1), _array_generator(r_size1)]
+        )
+        n = NDHistogram(
+            n_counts, [_array_generator(1, n_size0 + 1), _array_generator(n_size1)]
+        )
+        phi = NDHistogram(phi_counts, [_array_generator(1), _array_generator(r_size1)])
+        sigma = NDHistogram(
+            sigma_counts, [_array_generator(1, sig_size0+1), _array_generator(sig_size1)]
+        )
+        print(L_cut)
+        print(r.midpoints)
+
+        r_clean, n_clean, phi_clean, sigma_clean = clean_data(
+            r, n, phi, sigma=sigma, L_cut=L_cut
+        )
+
+        r_expected = np.array(r_ex)
+        n_expected = np.array(n_ex)
+        phi_expected = np.array(phi_ex)
+        sigma_expected = np.array(sigma_ex)
+
+        for actual, expected in zip(
+            [r_clean, n_clean, phi_clean, sigma_clean],
+            [r_expected, n_expected, phi_expected, sigma_expected],
+        ):
+            print(actual.counts)
+            print(expected)
+            assert actual.shape == expected.shape
+            assert (actual.counts == expected).all()
+
+    def test_N_incompatible(self):
+        pass
+
+    def test_phi_incompatible(self):
+        pass
+
+    def test_sigma_incompatible(self):
+        pass
 
 
 class TestWeightFactor:
