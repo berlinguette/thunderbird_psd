@@ -784,6 +784,19 @@ class TestUnfoldSpectrum:
         assert unfolded_phi.shape == (1, n)
         assert (unfolded_phi.midpoints[1] == big_r.midpoints[1]).all()
 
+    def test_L_cut(self, _array_generator):
+        m = 3
+        n = 2
+
+        big_r = NDHistogram(np.ones((m, n)), [_array_generator(m), _array_generator(n)])
+        big_n = NDHistogram(np.ones((m, 1)), [_array_generator(m), _array_generator(1)])
+        unfolded_phi, full_info = unfold_spectrum(big_r, big_n, full_info=True, L_cut=1)
+        
+        assert unfolded_phi.shape == (1, n)
+        assert (unfolded_phi.midpoints[1] == big_r.midpoints[1]).all()
+        assert full_info is not None
+        assert full_info["weights"][0].shape == (m-1, n)
+
     def test_tolerance(self, _array_generator):
         m = 3
         n = 2

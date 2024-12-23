@@ -264,6 +264,7 @@ def unfold_spectrum(
     n: NDHistogram,
     phi0: NDHistogram | None = None,
     sigma: NDHistogram | None = None,
+    L_cut: float | None = None,
     tolerance: float = 0.01,
     max_iterations: int = 500,
     full_info: bool = False,
@@ -282,6 +283,10 @@ def unfold_spectrum(
     :param sigma: Estimation of error in the neutron response spectrum,
         defaults to None (root of neutron response spectrum)
     :type sigma: NDHistogram | None, optional
+    :param L_cut: if not None, light outputs to remove from N before stripping zeroes;
+        defaults to None (i.e. no removal)
+    :type L_cut: float | None, optional
+    :param L_cut: Light levels to cut out
     :param tolerance: How close stopping criteria value must be to stopping value (1)
         to stop the GRAVEL algorithm, defaults to 0.1
     :type tolerance: float, optional
@@ -307,7 +312,7 @@ def unfold_spectrum(
         phi_mids = [phi_mids0, phi_mids1]
         phi0 = NDHistogram(uniform_phi, phi_mids)
 
-    new_r, new_n, new_phi0, new_sigma = clean_data(r, n, phi0, sigma=sigma)
+    new_r, new_n, new_phi0, new_sigma = clean_data(r, n, phi0, sigma=sigma, L_cut=L_cut)
 
     compatible, reason = _is_n_compatible(new_r, new_n)
     if not compatible:
@@ -406,7 +411,7 @@ def clean_data(
         defaults to None
     :type sigma: NDHistogram | None, optional
     :param L_cut: if not None, light outputs to remove from N before stripping zeroes;
-        defaults to None (i.e. )
+        defaults to None (i.e. no removal)
     :type L_cut: float | None, optional
     :raises ValueError: if N is incompatible with R's x axis
     :raises ValueError: if phi is incompatible with R's y axis
