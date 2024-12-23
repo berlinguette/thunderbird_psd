@@ -33,8 +33,8 @@ def test_good_path(fs: FakeFilesystem):
     fs.create_file("test_dir/output_1.txt", contents=contents1)
     fs.create_file("test_dir/output_2.txt", contents=contents2)
     R = load_neutron_response_matrix(Path(test_dir))
-    assert R.counts.shape == (1400, 2)
-    assert all([x == y for x, y in zip(list(R.y_midpoints), [1, 2])])
+    assert R.shape == (1400, 2)
+    assert all([x == y for x, y in zip(list(R.midpoints[1]), [1, 2])])
     E_sums = R.counts.sum(axis=0)
     assert all(E_sums == (9 + 21 + 37 + 44 + 64))
 
