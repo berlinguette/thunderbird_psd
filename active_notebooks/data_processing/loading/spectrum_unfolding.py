@@ -2,12 +2,12 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from data_processing.processing.spectrum_unfolding import Histogram2D
+from data_processing.processing.spectrum_unfolding import NDHistogram
 
 
 def load_neutron_response_matrix(
     dir: Path, min_L: float = 0, max_L: float = 7, L_bin_widths: float = 0.005
-) -> Histogram2D:
+) -> NDHistogram:
     widths = [15, 15, 20, 15, 15, 15, 15, 15]
     output_files = [file for file in dir.iterdir() if "output" in file.stem]
     if len(output_files) <= 0:
@@ -48,4 +48,4 @@ def load_neutron_response_matrix(
 
     np_R = np.array(response_histos).T
     np_Es = np.array(response_Es)
-    return Histogram2D(np_R, np_Ls, np_Es)
+    return NDHistogram(np_R, [np_Ls, np_Es])
