@@ -307,16 +307,18 @@ def unfold_spectrum(
         phi_mids = [phi_mids0, phi_mids1]
         phi0 = NDHistogram(uniform_phi, phi_mids)
 
-    compatible, reason = _is_n_compatible(r, n)
+    new_r, new_n, new_phi0, new_sigma = clean_data(r, n, phi0, sigma=sigma)
+
+    compatible, reason = _is_n_compatible(new_r, new_n)
     if not compatible:
         raise ValueError(f"R and N are incompatible: {reason}")
-    compatible, reason = _is_phi_compatible(r, phi0)
+    compatible, reason = _is_phi_compatible(new_r, new_phi0)
     if not compatible:
         raise ValueError(f"R and Phi are incompatible: {reason}")
-    compatible, reason = _is_n_compatible(r, sigma)
+    compatible, reason = _is_n_compatible(new_r, new_sigma)
     if not compatible:
         raise ValueError(f"R and Sigma are incompatible: {reason}")
-    close = _are_r_dimensions_close_enough(r)
+    close = _are_r_dimensions_close_enough(new_r)
     if not close:
         raise ValueError(
             f"Dimensions of R {r.shape} are not within 1 order of magnitude"
@@ -329,16 +331,18 @@ def unfold_spectrum(
     errors = []
     iter_text_len = len(str(max_iterations))
 
-    chi_n = stopping_criteria(r, n, phi0, sigma=sigma)
-    phi_k = NDHistogram(phi0.counts.copy(), [mids.copy() for mids in phi0.midpoints])
+    chi_n = stopping_criteria(new_r, new_n, new_phi0, sigma=new_sigma)
+    phi_k = NDHistogram(
+        new_phi0.counts.copy(), [mids.copy() for mids in new_phi0.midpoints]
+    )
     chi_last = chi_n
     delta_chi_last = 1
     delta_delta = 1
 
     while delta_delta > tolerance:
-        weight = weight_factor(r, n, phi_k, sigma=sigma)
-        new_phi = next_phi(r, n, phi_k, sigma=sigma)
-        chi_n = stopping_criteria(r, n, phi_k, sigma=sigma)
+        weight = weight_factor(new_r, new_n, phi_k, sigma=new_sigma)
+        new_phi = next_phi(new_r, new_n, phi_k, sigma=new_sigma)
+        chi_n = stopping_criteria(new_r, new_n, phi_k, sigma=new_sigma)
 
         delta_chi = chi_n - chi_last
         delta_delta = abs(delta_chi - delta_chi_last)
