@@ -349,7 +349,7 @@ def unfold_spectrum(
             chis.append(chi_n)
             phis.append(new_phi)
             weights.append(weight)
-            errors.append(delta_chi)
+            errors.append(delta_delta)
 
         if iters % 10 == 0:
             print(
