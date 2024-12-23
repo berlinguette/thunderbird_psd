@@ -137,8 +137,8 @@ def next_phi(
     :type big_r: NDHistogram
     :param big_n: Neutron response spectrum
     :type big_n: NDHistogram
-    :param new_phi: Neutron spectrum calculated in the previous GRAVEL iteration
-    :type new_phi: NDHistogram
+    :param phi: Neutron spectrum calculated in the previous GRAVEL iteration
+    :type phi: NDHistogram
     :param sigma: Estimation of error in the neutron response spectrum,
         defaults to None (root of neutron response spectrum)
     :type sigma: NDHistogram | None, optional
@@ -341,7 +341,7 @@ def unfold_spectrum(
 
     while delta_delta > tolerance:
         weight = weight_factor(new_r, new_n, phi_k, sigma=new_sigma)
-        new_phi = next_phi(new_r, new_n, phi_k, sigma=new_sigma)
+        phi_k = next_phi(new_r, new_n, phi_k, sigma=new_sigma)
         chi_n = stopping_criteria(new_r, new_n, phi_k, sigma=new_sigma)
 
         delta_chi = chi_n - chi_last
@@ -351,7 +351,7 @@ def unfold_spectrum(
 
         if full_info:
             chis.append(chi_n)
-            phis.append(new_phi)
+            phis.append(phi_k)
             weights.append(weight)
             errors.append(delta_delta)
 
