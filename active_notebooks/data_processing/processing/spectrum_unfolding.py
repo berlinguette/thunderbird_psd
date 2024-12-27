@@ -465,7 +465,10 @@ def clean_data(
     reduced_E_mids = np.array([E_mids.mean()])
 
     new_r = NDHistogram(R_counts, [L_mids, E_mids])
-    new_n = NDHistogram(N_counts, [L_mids, reduced_E_mids])
+    if N_counts.shape[1] == 1:
+        new_n = NDHistogram(N_counts, [L_mids, reduced_E_mids])
+    else:
+        new_n = NDHistogram(N_counts, [L_mids, E_mids])
     new_phi = NDHistogram(phi_counts, [reduced_L_mids, E_mids])
 
     if sigma is None:

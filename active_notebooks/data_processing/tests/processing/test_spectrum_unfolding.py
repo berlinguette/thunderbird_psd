@@ -57,7 +57,24 @@ class TestNDHistogram:
                 for expected, actual in zip(midpoints, histogram.midpoints)
             ]
         )
-
+    
+    @pytest.mark.parametrize("midpoints,exc_text_list", [
+        ([np.ones(3)], "dimensions"),
+        ([np.ones(4), np.ones(3), np.ones(5)], ["dimensions"]),
+        ([np.ones((4,1)), np.ones(3)], ["1-dimensional"]),
+        ([np.ones((1,4)), np.ones(3)], ["1-dimensional"]),
+        ([np.ones(4), np.ones((3,1))], ["1-dimensional"]),
+        ([np.ones(4), np.ones((1,3))], ["1-dimensional"]),
+        ([np.ones(3), np.ones(3)], ["size", "axis 0"]),
+        ([np.ones(4), np.ones(4)], ["size", "axis 1"]),
+    ])
+    def test_midpoints_bad(self, midpoints, exc_text_list):
+        counts = np.ones((4,3))
+        with pytest.raises(ValueError) as excinfo:
+            NDHistogram(counts, midpoints)
+        for exc_text in exc_text_list:
+            assert exc_text in str(excinfo.value)
+        
     def test_midpoints_wrong_dimensions(self):
         counts = np.ones((4, 3))
         midpoints = [np.ones(3)]
@@ -177,42 +194,49 @@ class TestCleanData:
         [
             (
                 [[1, 2, 3], [4, 5, 6]],
-                [1, 2],
+                [[1], [2]],
                 [[1, 2, 3], [4, 5, 6]],
                 [[1], [2]],
                 [[0, 1, 2]],
             ),
             (
                 [[1, 2, 3], [4, 5, 6]],
-                [0, 2],
+                [[1, 2, 3], [2, 4, 6]],
+                [[1, 2, 3], [4, 5, 6]],
+                [[1, 2, 3], [2, 4, 6]],
+                [[0, 1, 2]],
+            ),
+            (
+                [[1, 2, 3], [4, 5, 6]],
+                [[0], [2]],
                 [[4, 5, 6]],
                 [[2]],
                 [[0, 1, 2]],
             ),
             (
                 [[1, 0, 3], [4, 0, 6]],
-                [1, 2],
+                [[1], [2]],
                 [[1, 3], [4, 6]],
                 [[1], [2]],
                 [[0, 2]],
             ),
             (
                 [[1, 0, 3], [4, 0, 6]],
-                [0, 2],
+                [[0], [2]],
                 [[4, 6]],
                 [[2]],
                 [[0, 2]],
             ),
             (
                 [[1, 0, 3], [4, 0, 6], [0, 0, 0]],
-                [1, 2, 3],
+                [[1], [2], [3]],
                 [[1, 3], [4, 6]],
                 [[1], [2]],
                 [[0, 2]],
             ),
             (
                 [[1, 2, 3], [4, 0, 6]],
-                [0, 2],
+                [[0], [2]],
                 [[4, 6]],
                 [[2]],
                 [[0, 2]],
@@ -230,7 +254,7 @@ class TestCleanData:
     ):
         r_counts = np.array(r_array)
         r_size0, r_size1, *_ = r_counts.shape
-        n_counts = np.array([n_array]).T  # starts as (1,m), we want (m,1)
+        n_counts = np.array(n_array)
         n_size0, n_size1, *_ = n_counts.shape
         phi_counts = _array_generator(r_size1).reshape(1, -1)
 
