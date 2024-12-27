@@ -457,6 +457,8 @@ def clean_data(
     R_counts = R_counts[R_L_mask, :]
     R_counts = R_counts[:, R_E_mask]
     N_counts = N_counts[R_L_mask, :]
+    if N_counts.shape[1] != 1:
+        N_counts = N_counts[:, R_E_mask]
     phi_counts = phi_counts[:, R_E_mask]
     L_mids = L_mids[R_L_mask]
     E_mids = E_mids[R_E_mask]
