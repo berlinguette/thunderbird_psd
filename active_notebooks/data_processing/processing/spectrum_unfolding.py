@@ -481,7 +481,12 @@ def clean_data(
             sig_counts = sig_counts[L_cut_mask, :]
         sig_counts = sig_counts[L_mask, :]
         sig_counts = sig_counts[R_L_mask, :]
-        new_sigma = NDHistogram(sig_counts, [L_mids, reduced_E_mids])
+        if sig_counts.shape[1] != 1:
+            sig_counts = sig_counts[:, R_E_mask]
+            sig_mids = [L_mids, E_mids]
+        else:
+            sig_mids = [L_mids, reduced_E_mids]
+        new_sigma = NDHistogram(sig_counts, sig_mids)
         return new_r, new_n, new_phi, new_sigma  # type: ignore
 
 
