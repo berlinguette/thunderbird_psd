@@ -57,24 +57,27 @@ class TestNDHistogram:
                 for expected, actual in zip(midpoints, histogram.midpoints)
             ]
         )
-    
-    @pytest.mark.parametrize("midpoints,exc_text_list", [
-        ([np.ones(3)], "dimensions"),
-        ([np.ones(4), np.ones(3), np.ones(5)], ["dimensions"]),
-        ([np.ones((4,1)), np.ones(3)], ["1-dimensional"]),
-        ([np.ones((1,4)), np.ones(3)], ["1-dimensional"]),
-        ([np.ones(4), np.ones((3,1))], ["1-dimensional"]),
-        ([np.ones(4), np.ones((1,3))], ["1-dimensional"]),
-        ([np.ones(3), np.ones(3)], ["size", "axis 0"]),
-        ([np.ones(4), np.ones(4)], ["size", "axis 1"]),
-    ])
+
+    @pytest.mark.parametrize(
+        "midpoints,exc_text_list",
+        [
+            ([np.ones(3)], "dimensions"),
+            ([np.ones(4), np.ones(3), np.ones(5)], ["dimensions"]),
+            ([np.ones((4, 1)), np.ones(3)], ["1-dimensional"]),
+            ([np.ones((1, 4)), np.ones(3)], ["1-dimensional"]),
+            ([np.ones(4), np.ones((3, 1))], ["1-dimensional"]),
+            ([np.ones(4), np.ones((1, 3))], ["1-dimensional"]),
+            ([np.ones(3), np.ones(3)], ["size", "axis 0"]),
+            ([np.ones(4), np.ones(4)], ["size", "axis 1"]),
+        ],
+    )
     def test_midpoints_bad(self, midpoints, exc_text_list):
-        counts = np.ones((4,3))
+        counts = np.ones((4, 3))
         with pytest.raises(ValueError) as excinfo:
             NDHistogram(counts, midpoints)
         for exc_text in exc_text_list:
             assert exc_text in str(excinfo.value)
-        
+
     def test_midpoints_wrong_dimensions(self):
         counts = np.ones((4, 3))
         midpoints = [np.ones(3)]
@@ -245,7 +248,6 @@ class TestCleanData:
                 [[1, 2, 3], [4, 5, 6]],
                 [[0, 0, 0], [2, 4, 6]],
                 [[4, 5, 6]],
-                # [[2]],
                 [[2, 4, 6]],
                 [[0, 1, 2]],
             ),
@@ -253,7 +255,6 @@ class TestCleanData:
                 [[1, 0, 3], [4, 0, 6]],
                 [[1, 2, 3], [2, 4, 6]],
                 [[1, 3], [4, 6]],
-                # [[1], [2]],
                 [[1, 3], [2, 6]],
                 [[0, 2]],
             ),
@@ -261,7 +262,6 @@ class TestCleanData:
                 [[1, 0, 3], [4, 0, 6]],
                 [[0, 0, 0], [2, 4, 6]],
                 [[4, 6]],
-                # [[2]],
                 [[2, 6]],
                 [[0, 2]],
             ),
@@ -269,7 +269,6 @@ class TestCleanData:
                 [[1, 0, 3], [4, 0, 6], [0, 0, 0]],
                 [[1, 2, 3], [2, 4, 6], [3, 6, 9]],
                 [[1, 3], [4, 6]],
-                # [[1], [2]],
                 [[1, 3], [2, 6]],
                 [[0, 2]],
             ),
@@ -277,7 +276,6 @@ class TestCleanData:
                 [[1, 2, 3], [4, 0, 6]],
                 [[0, 0, 0], [2, 4, 6]],
                 [[4, 6]],
-                # [[2]],
                 [[2, 6]],
                 [[0, 2]],
             ),
@@ -287,7 +285,7 @@ class TestCleanData:
         self,
         _array_generator,
         r_array: list[list[float]],
-        n_array: list[float],
+        n_array: list[list[float]],
         r_ex: list[list[float]],
         n_ex: list[list[float]],
         phi_ex: list[list[float]],
@@ -889,11 +887,11 @@ class TestUnfoldSpectrum:
         big_r = NDHistogram(np.ones((m, n)), [_array_generator(m), _array_generator(n)])
         big_n = NDHistogram(np.ones((m, 1)), [_array_generator(m), _array_generator(1)])
         unfolded_phi, full_info = unfold_spectrum(big_r, big_n, full_info=True, L_cut=1)
-        
+
         assert unfolded_phi.shape == (1, n)
         assert (unfolded_phi.midpoints[1] == big_r.midpoints[1]).all()
         assert full_info is not None
-        assert full_info["weights"][0].shape == (m-1, n)
+        assert full_info["weights"][0].shape == (m - 1, n)
 
     def test_tolerance(self, _array_generator):
         m = 3
