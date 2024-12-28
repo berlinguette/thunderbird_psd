@@ -320,28 +320,62 @@ class TestCleanData:
             assert (actual.counts == expected).all()
 
     @pytest.mark.parametrize(
-        "r_array,n_array,sigma_ex",
+        "r_array,n_array,sigma_array,sigma_ex",
         [
-            ([[1, 2, 3], [4, 5, 6]], [1, 2], [[0.1], [0.2]]),
+            ([[1, 2, 3], [4, 5, 6]], [[1], [2]], [[0.1], [0.2]], [[0.1], [0.2]]),
             (
                 [[1, 2, 3], [4, 5, 6]],
-                [0, 2],
+                [[0], [2]],
+                [[0.1], [0.2]],
                 [[0.2]],
             ),
             (
                 [[1, 0, 3], [4, 0, 6]],
-                [1, 2],
+                [[1], [2]],
+                [[0.1], [0.2]],
                 [[0.1], [0.2]],
             ),
             (
                 [[1, 0, 3], [4, 0, 6]],
-                [0, 2],
+                [[0], [2]],
+                [[0.1], [0.2]],
                 [[0.2]],
             ),
             (
                 [[1, 2, 3], [4, 0, 6]],
-                [0, 2],
+                [[0], [2]],
+                [[0.1], [0.2]],
                 [[0.2]],
+            ),
+            (
+                [[1, 2, 3], [4, 5, 6]],
+                [[1, 2, 3], [2, 4, 6]],
+                [[0.1, 0.2, 0.3], [0.2, 0.4, 0.6]],
+                [[0.1, 0.2, 0.3], [0.2, 0.4, 0.6]],
+            ),
+            (
+                [[1, 2, 3], [4, 5, 6]],
+                [[0, 0, 0], [2, 4, 6]],
+                [[0.1, 0.2, 0.3], [0.2, 0.4, 0.6]],
+                [[0.2, 0.4, 0.6]],
+            ),
+            (
+                [[1, 0, 3], [4, 0, 6]],
+                [[1, 2, 3], [2, 4, 6]],
+                [[0.1, 0.2, 0.3], [0.2, 0.4, 0.6]],
+                [[0.1, 0.3], [0.2, 0.6]],
+            ),
+            (
+                [[1, 0, 3], [4, 0, 6]],
+                [[0, 0, 0], [2, 4, 6]],
+                [[0.1, 0.2, 0.3], [0.2, 0.4, 0.6]],
+                [[0.2, 0.6]],
+            ),
+            (
+                [[1, 2, 3], [4, 0, 6]],
+                [[0, 0, 0], [2, 4, 6]],
+                [[0.1, 0.2, 0.3], [0.2, 0.4, 0.6]],
+                [[0.2, 0.6]],
             ),
         ],
     )
@@ -349,17 +383,17 @@ class TestCleanData:
         self,
         _array_generator,
         r_array: list[list[float]],
-        n_array: list[float],
+        n_array: list[list[float]],
+        sigma_array: list[list[float]],
         sigma_ex: list[list[float]],
     ):
         r_counts = np.array(r_array)
         r_size0, r_size1, *_ = r_counts.shape
-        n_counts = np.array([n_array]).T  # starts as (1,m), we want (m,1)
+        n_counts = np.array(n_array)
         n_size0, n_size1, *_ = n_counts.shape
         phi_counts = _array_generator(r_size1).reshape(1, -1)
 
-        sigma_array = [0.1, 0.2]
-        sigma_counts = np.array([sigma_array]).T
+        sigma_counts = np.array(sigma_array)
         sig_size0, sig_size1, *_ = sigma_counts.shape
 
         r = NDHistogram(
