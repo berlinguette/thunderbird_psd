@@ -488,6 +488,60 @@ def clean_data(
             sig_mids = [L_mids, reduced_E_mids]
         new_sigma = NDHistogram(sig_counts, sig_mids)
         return new_r, new_n, new_phi, new_sigma  # type: ignore
+    
+    
+def r_dot(r: NDHistogram, phi: NDHistogram) -> NDHistogram:
+    """Finds the sum (over axis 1) of the product between R and Phi.
+    
+    This is also the dot product between R and Phi.
+    
+    If the shape of R is (m, n), the shape of Phi must be (1, n) or an exception will be
+    raised. As well, the midpoints on axis 1 must be compatible.
+    
+    The shape of the output will be (m, 1).
+    
+    If any values in R or phi are NaN, they will be ignored during summation.
+
+    :param r: Neutron response matrix
+    :type r: NDHistogram
+    :param phi: Current neutron spectrum estimate
+    :type phi: NDHistogram
+    :raises ValueError: if R and Phi are not compatible
+    :return: Dot product of R and Phi
+    :rtype: NDHistogram
+    """
+    compatible, reason = _is_phi_compatible(r, phi)
+    if not compatible:
+        raise ValueError(f"R and Phi are incompatible: {reason}")
+    
+    _r = r.counts
+    _phi = phi.counts
+    
+    L_mids, E_mids = r.midpoints
+    reduced_E_mids = np.array([E_mids.mean()])
+    
+    r_dot_counts = np.nansum(_r * _phi, axis=1, keepdims=True)
+    result = NDHistogram(r_dot_counts, [L_mids, reduced_E_mids])
+    
+    return result
+
+
+def _nan_divide(a: np.ndarray, b: np.ndarray) -> np.ndarray:
+    """Divides two NDArrays such that all invalid divisions produce NaN values.
+    
+    As well, all warnings related to dividing by zero are suppressed.
+
+    :param a: _description_
+    :type a: np.ndarray
+    :param b: _description_
+    :type b: np.ndarray
+    :return: _description_
+    :rtype: np.ndarray
+    """
+    with np.errstate(divide="ignore", invalid="ignore"):
+        quotient = a / b
+    quotient = np.nan_to_num(quotient, nan=np.nan, posinf=np.nan, neginf=np.nan)
+    return quotient
 
 
 def _is_n_compatible(r: NDHistogram, n: NDHistogram) -> tuple[bool, str]:
