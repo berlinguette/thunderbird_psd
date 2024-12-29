@@ -209,17 +209,17 @@ def stopping_criteria(
     Degrees of freedom for neutron response matrix R is (m-1)*(n-1), where m and n are
     the dimensions of R.
 
-    :param big_r: Neutron response matrix
-    :type big_r: NDHistogram
-    :param big_n: Neutron response spectrum
-    :type big_n: NDHistogram
-    :param new_phi: Neutron spectrum calculated in the previous GRAVEL iteration
-    :type new_phi: NDHistogram
+    :param r: Neutron response matrix
+    :type r: NDHistogram
+    :param n: Neutron response spectrum
+    :type n: NDHistogram
+    :param phi: Neutron spectrum calculated in the previous GRAVEL iteration
+    :type phi: NDHistogram
     :param sigma: Estimation of error in the neutron response spectrum,
         defaults to None (root of neutron response spectrum)
     :type sigma: NDHistogram | None, optional
-    :raises ValueError: if dimensions do not match (N with R's x-axis, Phi with R's
-        y-axis)
+    :raises ValueError: if dimensions do not match (N/sigma with R's x-axis, Phi with 
+        R's y-axis)
     :return: Stopping criteria value
     :rtype: float
     """
@@ -527,15 +527,15 @@ def r_dot(r: NDHistogram, phi: NDHistogram) -> NDHistogram:
 
 
 def _nan_divide(a: np.ndarray, b: np.ndarray) -> np.ndarray:
-    """Divides two NDArrays such that all invalid divisions produce NaN values.
+    """Divides two NDArrays (a/b) such that all invalid divisions produce NaN values.
     
     As well, all warnings related to dividing by zero are suppressed.
 
-    :param a: _description_
+    :param a: divident array
     :type a: np.ndarray
-    :param b: _description_
+    :param b: divisor array
     :type b: np.ndarray
-    :return: _description_
+    :return: quotient array
     :rtype: np.ndarray
     """
     with np.errstate(divide="ignore", invalid="ignore"):
