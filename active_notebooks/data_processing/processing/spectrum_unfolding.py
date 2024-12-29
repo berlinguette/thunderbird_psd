@@ -488,6 +488,71 @@ def clean_data(
             sig_mids = [L_mids, reduced_E_mids]
         new_sigma = NDHistogram(sig_counts, sig_mids)
         return new_r, new_n, new_phi, new_sigma  # type: ignore
+
+
+def cut_low_l(r: NDHistogram, n: NDHistogram, L_cut: float | None = None, sigma: T = None) -> tuple[NDHistogram, NDHistogram, T]:
+    """Cuts out lower L values from relevant histograms.
+    
+    Any L channels that are lower than the provided cutoff value are identified. The 
+    corresponding rows and midpoints are then removed from the provided histograms.
+    
+    The L_cut value is made optional for compatibility with other functions in this
+    module. If not provided, no cut is made.
+    
+    :param r: Neutron response matrix
+    :type r: NDHistogram
+    :param n: Neutron response spectrum
+    :type n: NDHistogram
+    :param L_cut: Light output cutoff value, defaults to None (i.e. no cut)
+    :type L_cut: float | None, optional
+    :param sigma: Optional estimation of error in the neutron response spectrum,
+        defaults to None
+    :type sigma: NDHistogram | None, optional
+    :raises ValueError: if dimensions do not match (N or sigma with R's axis 0)
+    :return: L-cut R, N and sigma (if provided, or None if not)
+    :rtype: tuple[NDHistogram, NDHistogram, NDHistogram] (if sigma is provided)
+    :rtype: tuple[NDHistogram, NDHistogram, None] (if sigma is not provided)
+    """
+    compatible, reason = _is_n_compatible(r, n)
+    if not compatible:
+        raise ValueError(f"R and N are incompatible: {reason}")
+    if sigma is not None:
+        compatible, reason = _is_n_compatible(r, sigma)
+        if not compatible:
+            raise ValueError(f"R and Sigma are incompatible: {reason}")
+    
+    R_counts = r.counts.copy()
+    R_mids = [mids.copy() for mids in r.midpoints]
+    L_mids, R_E_mids, *_ = R_mids
+    N_counts = n.counts.copy()
+    N_mids = [mids.copy() for mids in n.midpoints]
+    _, N_E_mids, *_ = N_mids
+    
+    if sigma is None:
+        new_sigma = None
+    else:
+        sigma_counts = sigma.counts.copy()
+        sigma_mids = [mids.copy() for mids in sigma.midpoints]
+        new_sigma = NDHistogram(sigma_counts, sigma_mids)
+        
+    if L_cut is not None:
+        L_cut_mask = L_mids >= L_cut
+        N_counts = N_counts[L_cut_mask, :]
+        R_counts = R_counts[L_cut_mask, :]
+        L_mids = L_mids[L_cut_mask]
+        if new_sigma is not None:
+            sigma_counts = new_sigma.counts[L_cut_mask, :]
+            _, sigma_E_mids, *_ = new_sigma.midpoints
+            new_sigma = NDHistogram(sigma_counts, [L_mids, sigma_E_mids])
+    
+    new_r = NDHistogram(R_counts, [L_mids, R_E_mids])
+    new_n = NDHistogram(N_counts, [L_mids, N_E_mids])
+    
+    return (
+        new_r,
+        new_n,
+        new_sigma  # type: ignore
+    )
     
     
 def r_dot(r: NDHistogram, phi: NDHistogram) -> NDHistogram:
