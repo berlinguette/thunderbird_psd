@@ -118,8 +118,8 @@ def weight_factor(
     _sigma = sigma.counts
 
     numer = _R * _phi
-    denom = np.sum(_R * _phi, axis=1, keepdims=True)
-    right = np.square(_N) / np.square(_sigma)
+    denom = r_dot(r, phi).counts
+    right = _nan_divide(np.square(_N), np.square(_sigma))
     result = (numer / denom) * right
 
     return NDHistogram(result, r.midpoints)
@@ -172,20 +172,12 @@ def next_phi(
     _N = n.counts
     _W = w.counts
 
-    ln_denom = np.sum(_R * _phi, axis=1, keepdims=True)
-    ln_result = np.log(_N / ln_denom)
-    exp_numer = np.sum(_W * ln_result, axis=0, keepdims=True)
-    exp_numer = np.nan_to_num(exp_numer)
-    exp_denom = np.sum(_W, axis=0, keepdims=True)
+    ln_denom = r_dot(r, phi).counts
+    ln_result = np.log(_nan_divide(_N, ln_denom))
+    exp_numer = np.nansum(_W * ln_result, axis=0, keepdims=True)
+    exp_denom = np.nansum(_W, axis=0, keepdims=True)
 
-    # where denom is 0, change denom to 1, numer to 0
-    # this makes frac = 0, and exp(frac) = 1
-    # as used in https://github.com/tylerdolezal/Neutron-Unfolding/blob/main/gravel.py, ln 36-39
-    denom_mask = exp_denom == 0
-    exp_numer[denom_mask] = 0
-    exp_denom[denom_mask] = 1
-
-    exp_frac = exp_numer / exp_denom
+    exp_frac = _nan_divide(exp_numer, exp_denom)
     exp_result = np.exp(exp_frac)
     result = _phi * exp_result
 
@@ -218,7 +210,7 @@ def stopping_criteria(
     :param sigma: Estimation of error in the neutron response spectrum,
         defaults to None (root of neutron response spectrum)
     :type sigma: NDHistogram | None, optional
-    :raises ValueError: if dimensions do not match (N/sigma with R's x-axis, Phi with 
+    :raises ValueError: if dimensions do not match (N/sigma with R's x-axis, Phi with
         R's y-axis)
     :return: Stopping criteria value
     :rtype: float
@@ -249,10 +241,10 @@ def stopping_criteria(
     _m, _n = r.shape
     DOF = (_m - 1) * (_n - 1)
 
-    sum_numer = np.sum(_R * _phi, axis=1, keepdims=True)
+    sum_numer = np.nansum(_R * _phi, axis=1, keepdims=True)
     numer = np.square(sum_numer - _N)
-    frac = numer / np.square(_sigma)
-    chi_sq = np.sum(frac, axis=0, keepdims=True)
+    frac = _nan_divide(numer, np.square(_sigma))
+    chi_sq = np.nansum(frac, axis=0, keepdims=True)
     chi_sq = chi_sq.flatten().tolist()[0]
     result = chi_sq / DOF
 
@@ -312,7 +304,8 @@ def unfold_spectrum(
         phi_mids = [phi_mids0, phi_mids1]
         phi0 = NDHistogram(uniform_phi, phi_mids)
 
-    new_r, new_n, new_phi0, new_sigma = clean_data(r, n, phi0, sigma=sigma, L_cut=L_cut)
+    new_r, new_n, new_sigma = cut_low_l(r, n, sigma=sigma, L_cut=L_cut)
+    new_phi0 = NDHistogram(phi0.counts.copy(), [mids.copy() for mids in phi0.midpoints])
 
     compatible, reason = _is_n_compatible(new_r, new_n)
     if not compatible:

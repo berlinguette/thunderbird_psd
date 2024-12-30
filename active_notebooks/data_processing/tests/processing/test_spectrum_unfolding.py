@@ -941,6 +941,20 @@ class TestWeightFactor:
         W = weight_factor(big_r, big_n, big_phi, sigma=sigma)
         assert (W.counts == (1 / 8)).all()
 
+    def test_handles_zero_div(self, _array_generator):
+        r = NDHistogram(np.ones((3, 2)), [_array_generator(3), _array_generator(2)])
+        n = NDHistogram(np.ones((3, 1)), [_array_generator(3), _array_generator(1)])
+        phi = NDHistogram(np.ones((1, 2)), [_array_generator(1), _array_generator(2)])
+        sigma_counts = np.ones((3, 1))
+        sigma_counts[1, 0] = 0
+        sigma = NDHistogram(sigma_counts, [_array_generator(3), _array_generator(1)])
+        w = weight_factor(r, n, phi, sigma=sigma)
+        assert w.shape == r.shape
+        for actual_mids, expected_mids in zip(w.midpoints, r.midpoints):
+            assert (actual_mids == expected_mids).all()
+        assert ((w.counts == (1 / 2)) | np.isnan(w.counts)).all()
+        assert np.isnan(w.counts[1, 0])
+
     @pytest.mark.parametrize(
         "n_size,n_mids_args,phi_size,phi_mids_args,sigma_args,expected_text",
         [
@@ -1029,6 +1043,19 @@ class TestNextPhi:
 
         new_phi = next_phi(big_r, big_n, big_phi, sigma=sigma)
         assert (new_phi.counts == (1 / 2)).all()
+
+    def test_handles_zero_divide(self, _array_generator):
+        big_r = NDHistogram(np.ones((3, 2)), [_array_generator(3), _array_generator(2)])
+        big_n = NDHistogram(np.ones((3, 1)), [_array_generator(3), _array_generator(1)])
+        big_phi = NDHistogram(
+            np.ones((1, 2)), [_array_generator(1), _array_generator(2)]
+        )
+        sigma_counts = np.full((3, 1), 2)
+        sigma_counts[1, 0] = 0
+        sigma = NDHistogram(sigma_counts, [_array_generator(3), _array_generator(1)])
+
+        new_phi = next_phi(big_r, big_n, big_phi, sigma=sigma)
+        assert ((new_phi.counts == (1 / 2)) | np.isnan(new_phi.counts)).all()
 
     @pytest.mark.parametrize(
         "n_size,n_mids_args,phi_size,phi_mids_args,sigma_args,expected_text",
@@ -1126,6 +1153,25 @@ class TestStoppingCriteria:
         sigma = NDHistogram(
             np.full((m, 1), sigma_val), [_array_generator(m), _array_generator(1)]
         )
+        chi_n = stopping_criteria(big_r, big_n, big_phi, sigma=sigma)
+
+        assert chi_n == expected
+
+    def test_handles_zero_division(self, _array_generator):
+        m = 3
+        n = 2
+        sigma_val = 2
+        DOF = (m - 1) * (n - 1)
+        expected = ((m - 1) * (n - 1) * (n - 1)) / (sigma_val * sigma_val * DOF)
+
+        big_r = NDHistogram(np.ones((m, n)), [_array_generator(m), _array_generator(n)])
+        big_n = NDHistogram(np.ones((m, 1)), [_array_generator(m), _array_generator(1)])
+        big_phi = NDHistogram(
+            np.ones((1, n)), [_array_generator(1), _array_generator(n)]
+        )
+        sigma_counts = np.full((m, 1), sigma_val)
+        sigma_counts[m - 1, 0] = 0
+        sigma = NDHistogram(sigma_counts, [_array_generator(m), _array_generator(1)])
         chi_n = stopping_criteria(big_r, big_n, big_phi, sigma=sigma)
 
         assert chi_n == expected
@@ -1234,6 +1280,20 @@ class TestUnfoldSpectrum:
         sigma = NDHistogram(
             np.full((m, 1), 0.5), [_array_generator(m), _array_generator(1)]
         )
+        unfolded_phi, _ = unfold_spectrum(big_r, big_n, sigma=sigma)
+
+        assert unfolded_phi.shape == (1, n)
+        assert (unfolded_phi.midpoints[1] == big_r.midpoints[1]).all()
+
+    def test_handles_zero_division(self, _array_generator):
+        m = 3
+        n = 2
+
+        big_r = NDHistogram(np.ones((m, n)), [_array_generator(m), _array_generator(n)])
+        big_n = NDHistogram(np.ones((m, 1)), [_array_generator(m), _array_generator(1)])
+        sigma_counts = np.full((m, 1), 0.5)
+        sigma_counts[m - 1, 0] = 0
+        sigma = NDHistogram(sigma_counts, [_array_generator(m), _array_generator(1)])
         unfolded_phi, _ = unfold_spectrum(big_r, big_n, sigma=sigma)
 
         assert unfolded_phi.shape == (1, n)
