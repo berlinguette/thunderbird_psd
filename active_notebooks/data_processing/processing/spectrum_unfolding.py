@@ -490,15 +490,17 @@ def clean_data(
         return new_r, new_n, new_phi, new_sigma  # type: ignore
 
 
-def cut_low_l(r: NDHistogram, n: NDHistogram, L_cut: float | None = None, sigma: T = None) -> tuple[NDHistogram, NDHistogram, T]:
+def cut_low_l(
+    r: NDHistogram, n: NDHistogram, L_cut: float | None = None, sigma: T = None
+) -> tuple[NDHistogram, NDHistogram, T]:
     """Cuts out lower L values from relevant histograms.
-    
-    Any L channels that are lower than the provided cutoff value are identified. The 
+
+    Any L channels that are lower than the provided cutoff value are identified. The
     corresponding rows and midpoints are then removed from the provided histograms.
-    
+
     The L_cut value is made optional for compatibility with other functions in this
     module. If not provided, no cut is made.
-    
+
     :param r: Neutron response matrix
     :type r: NDHistogram
     :param n: Neutron response spectrum
@@ -520,21 +522,21 @@ def cut_low_l(r: NDHistogram, n: NDHistogram, L_cut: float | None = None, sigma:
         compatible, reason = _is_n_compatible(r, sigma)
         if not compatible:
             raise ValueError(f"R and Sigma are incompatible: {reason}")
-    
+
     R_counts = r.counts.copy()
     R_mids = [mids.copy() for mids in r.midpoints]
     L_mids, R_E_mids, *_ = R_mids
     N_counts = n.counts.copy()
     N_mids = [mids.copy() for mids in n.midpoints]
     _, N_E_mids, *_ = N_mids
-    
+
     if sigma is None:
         new_sigma = None
     else:
         sigma_counts = sigma.counts.copy()
         sigma_mids = [mids.copy() for mids in sigma.midpoints]
         new_sigma = NDHistogram(sigma_counts, sigma_mids)
-        
+
     if L_cut is not None:
         L_cut_mask = L_mids >= L_cut
         N_counts = N_counts[L_cut_mask, :]
@@ -544,27 +546,23 @@ def cut_low_l(r: NDHistogram, n: NDHistogram, L_cut: float | None = None, sigma:
             sigma_counts = new_sigma.counts[L_cut_mask, :]
             _, sigma_E_mids, *_ = new_sigma.midpoints
             new_sigma = NDHistogram(sigma_counts, [L_mids, sigma_E_mids])
-    
+
     new_r = NDHistogram(R_counts, [L_mids, R_E_mids])
     new_n = NDHistogram(N_counts, [L_mids, N_E_mids])
-    
-    return (
-        new_r,
-        new_n,
-        new_sigma  # type: ignore
-    )
-    
-    
+
+    return (new_r, new_n, new_sigma)  # type: ignore
+
+
 def r_dot(r: NDHistogram, phi: NDHistogram) -> NDHistogram:
     """Finds the sum (over axis 1) of the product between R and Phi.
-    
+
     This is also the dot product between R and Phi.
-    
+
     If the shape of R is (m, n), the shape of Phi must be (1, n) or an exception will be
     raised. As well, the midpoints on axis 1 must be compatible.
-    
+
     The shape of the output will be (m, 1).
-    
+
     If any values in R or phi are NaN, they will be ignored during summation.
 
     :param r: Neutron response matrix
@@ -578,22 +576,22 @@ def r_dot(r: NDHistogram, phi: NDHistogram) -> NDHistogram:
     compatible, reason = _is_phi_compatible(r, phi)
     if not compatible:
         raise ValueError(f"R and Phi are incompatible: {reason}")
-    
+
     _r = r.counts
     _phi = phi.counts
-    
+
     L_mids, E_mids = r.midpoints
     reduced_E_mids = np.array([E_mids.mean()])
-    
+
     r_dot_counts = np.nansum(_r * _phi, axis=1, keepdims=True)
     result = NDHistogram(r_dot_counts, [L_mids, reduced_E_mids])
-    
+
     return result
 
 
 def _nan_divide(a: np.ndarray, b: np.ndarray) -> np.ndarray:
     """Divides two NDArrays (a/b) such that all invalid divisions produce NaN values.
-    
+
     As well, all warnings related to dividing by zero are suppressed.
 
     :param a: divident array
