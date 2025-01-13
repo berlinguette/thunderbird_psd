@@ -251,6 +251,38 @@ class TestIsNCompatible:
         compatible, reason = _is_n_compatible(r, n)
         assert compatible
         assert reason == ""
+        
+    @pytest.mark.parametrize("N_n", [1, 3])
+    def test_mids0_close(self, _array_generator, N_n):
+        r_mids0 = _array_generator(4)
+        n_mids0 = r_mids0 + 1e-9
+        assert not (r_mids0 == n_mids0).all()
+        assert np.isclose(r_mids0, n_mids0).all()
+        
+        r = NDHistogram(np.ones((4, 3)), [r_mids0, _array_generator(3)])
+        n = NDHistogram(np.ones((4, N_n)), [n_mids0, _array_generator(N_n)])
+        compatible, reason = _is_n_compatible(r, n)
+        assert compatible
+        assert reason == ""
+        assert (r.midpoints[0] == r.midpoints[0]).all()
+        
+    def test_mids1_close(self, _array_generator):
+        r_mids1 = _array_generator(3)
+        n_mids1 = r_mids1 + 1e-9
+        assert not (r_mids1 == n_mids1).all()
+        assert np.isclose(r_mids1, n_mids1).all()
+        
+        r = NDHistogram(np.ones((4, 3)), [_array_generator(4), r_mids1])
+        n = NDHistogram(np.ones((4, 3)), [_array_generator(4), n_mids1])
+        compatible, reason = _is_n_compatible(r, n)
+        assert compatible
+        assert reason == ""
+        assert (r.midpoints[1] == r.midpoints[1]).all()
+        
+        n = NDHistogram(np.ones((4, 1)), [_array_generator(4), _array_generator(1)])
+        compatible, reason = _is_n_compatible(r, n)
+        assert compatible
+        assert reason == ""
 
     @pytest.mark.parametrize(
         "N_m,N_n", [(5, 1), (3, 1), (5, 3), (3, 3), (4, 2), (4, 4)]
@@ -296,6 +328,19 @@ class TestIsPhiCompatible:
         compatible, reason = _is_phi_compatible(r, phi)
         assert compatible
         assert reason == ""
+    
+    def test_mids_close(self, _array_generator):
+        r_mids1 = _array_generator(3)
+        phi_mids1 = r_mids1 + 1e-9
+        assert not (r_mids1 == phi_mids1).all()
+        assert np.isclose(r_mids1, phi_mids1).all()
+        
+        r = NDHistogram(np.ones((4, 3)), [_array_generator(4), r_mids1])
+        phi = NDHistogram(np.ones((1, 3)), [_array_generator(1), phi_mids1])
+        compatible, reason = _is_phi_compatible(r, phi)
+        assert compatible
+        assert reason == ""
+        assert (r.midpoints[1] == r.midpoints[1]).all()
 
     @pytest.mark.parametrize("N_m,N_n", [(2, 3), (1, 2), (1, 4)])
     def test_no_shape_match(self, _array_generator, N_m, N_n):

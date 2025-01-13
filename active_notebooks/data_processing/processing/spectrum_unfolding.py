@@ -624,13 +624,31 @@ def _is_n_compatible(r: NDHistogram, n: NDHistogram) -> tuple[bool, str]:
 
     R_mids0, R_mids1, *_ = r.midpoints
     N_mids0, N_mids1, *_ = n.midpoints
-    mids_match0 = len(R_mids0) == len(N_mids0) and (R_mids0 == N_mids0).all()
-    if not mids_match0:
+    # mids_match0 = len(R_mids0) == len(N_mids0) and (R_mids0 == N_mids0).all()
+    # if not mids_match0:
+    #     return False, "Midpoints on axis 0 do not match"
+    mids0_exact_match = (R_mids0 == N_mids0).all()
+    mids0_close_match = np.isclose(R_mids0, N_mids0).all()
+    mids0_match = len(R_mids0) == len(N_mids0) and (
+        mids0_exact_match or mids0_close_match
+    )
+    if mids0_match:
+        if mids0_close_match and not mids0_exact_match:
+            N_mids0 = R_mids0
+    else:
         return False, "Midpoints on axis 0 do not match"
 
     if N_n == R_n:
-        mids_match1 = len(R_mids1) == len(N_mids1) and (R_mids1 == N_mids1).all()
-        if not mids_match1:
+        # mids_match1 = len(R_mids1) == len(N_mids1) and (R_mids1 == N_mids1).all()
+        mids1_exact_match = (R_mids1 == N_mids1).all()
+        mids1_close_match = np.isclose(R_mids1, N_mids1).all()
+        mids1_match = len(R_mids1) == len(N_mids1) and (
+            mids1_exact_match or mids1_close_match
+        )
+        if mids1_match:
+            if mids1_close_match and not mids1_exact_match:
+                N_mids1 = R_mids1
+        else:
             return False, "Midpoints on axis 1 do not match"
 
     return True, ""
@@ -659,9 +677,20 @@ def _is_phi_compatible(r: NDHistogram, phi: NDHistogram) -> tuple[bool, str]:
 
     _, R_mids1, *_ = r.midpoints
     _, phi_mids1, *_ = phi.midpoints
-    mids_match = len(R_mids1) == len(phi_mids1) and (R_mids1 == phi_mids1).all()
-    if not mids_match:
-        return False, "Midpoints on axis 1 do not match"
+    # mids_match = len(R_mids1) == len(phi_mids1) and (R_mids1 == phi_mids1).all()
+    # if not mids_match:
+    #     return False, "Midpoints on axis 1 do not match"
+    
+    mids1_exact_match = (R_mids1 == phi_mids1).all()
+    mids1_close_match = np.isclose(R_mids1, phi_mids1).all()
+    mids1_match = len(R_mids1) == len(phi_mids1) and (
+        mids1_exact_match or mids1_close_match
+    )
+    if mids1_match:
+        if mids1_close_match and not mids1_exact_match:
+            N_mids1 = R_mids1
+    else:
+            return False, "Midpoints on axis 1 do not match"
 
     return True, ""
 
