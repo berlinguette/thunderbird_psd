@@ -120,7 +120,7 @@ def weight_factor(
     numer = _R * _phi
     denom = r_dot(r, phi).counts
     right = _nan_divide(np.square(_N), np.square(_sigma))
-    result = (numer / denom) * right
+    result = _nan_divide(numer, denom) * right
 
     return NDHistogram(result, r.midpoints)
 
@@ -173,7 +173,10 @@ def next_phi(
     _W = w.counts
 
     ln_denom = r_dot(r, phi).counts
-    ln_result = np.log(_nan_divide(_N, ln_denom))
+    ln_frac = _nan_divide(_N, ln_denom)
+    with np.errstate(invalid="ignore", divide="ignore"):
+        ln_result = np.log(ln_frac)
+        ln_result = np.nan_to_num(ln_result, nan=np.nan, posinf=np.nan, neginf=np.nan)
     exp_numer = np.nansum(_W * ln_result, axis=0, keepdims=True)
     exp_denom = np.nansum(_W, axis=0, keepdims=True)
 
