@@ -4,3 +4,4 @@ from .neutron_distribution_generation_strategy import (
     NeutronDistributionGenerationStrategy,
 )
 from .squarish_strategy import SquarishGenerationStrategy
+from .basic_cut_strategy import BasicCutStrategy
