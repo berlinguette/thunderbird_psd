@@ -120,7 +120,6 @@ def load_caen_csvs(
         full_df = full_df.join(flags_df)
     if get_signals:
         signals_dtypes = {k: "uint32" for k in signal_cols}
-        print([x for x in full_df["109"].unique()])
         full_df = full_df.astype(signals_dtypes)
 
     # TODO remove duplicate timetags (after benchmarking)

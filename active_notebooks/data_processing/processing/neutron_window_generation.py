@@ -88,8 +88,8 @@ def _generate_nasa_window_top_border(
 ) -> VectorLikeFunction:
     return _generate_nasa_gamma_fn(slice_fit_df, sigma, offset=window_offset)
 
-
 def _generate_nasa_gamma_fn(
+
     slice_fit_df: pd.DataFrame, sigma: float, offset: float = 0, use_filter: bool = False
 ) -> VectorLikeFunction:
     gamma_mu_series = get_df_col(slice_fit_df, SliceFitDataframeColumn.GAMMA_MU)

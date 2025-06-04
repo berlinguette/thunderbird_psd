@@ -281,7 +281,6 @@ def unfold_spectrum(
     :param L_cut: if not None, light outputs to remove from N before stripping zeroes;
         defaults to None (i.e. no removal)
     :type L_cut: float | None, optional
-    :param L_cut: Light levels to cut out
     :param tolerance: How close stopping criteria value must be to stopping value (1)
         to stop the GRAVEL algorithm, defaults to 0.1
     :type tolerance: float, optional
