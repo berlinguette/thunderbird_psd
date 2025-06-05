@@ -121,3 +121,4 @@ active_notebooks/pulse_height_distribution/*
 active_notebooks/outputs/*
 active_notebooks/response_matrix*/*
 active_notebooks/unfolding_test/*
+active_notebooks/manuscript_plot_generators/*
