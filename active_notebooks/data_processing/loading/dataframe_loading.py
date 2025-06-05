@@ -91,7 +91,11 @@ def load_caen_csvs(
         full_df = _process_psd_data(full_df)
     if wanted_data in ["signals", "all"]:
         signals_dtypes = {k: "int32" for k in signal_cols}
-        full_df = full_df.astype(signals_dtypes)
+        try:
+            full_df = full_df.astype(signals_dtypes)
+        except OverflowError:
+            signals_dtypes = {k: "uint64" for k in signals_dtypes.keys()}
+            full_df = full_df.astype(signals_dtypes)
     # TODO remove duplicate timetags (after benchmarking)
     full_df = full_df.dropna()
 
