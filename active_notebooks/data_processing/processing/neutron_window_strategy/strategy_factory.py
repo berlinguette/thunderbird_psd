@@ -5,7 +5,8 @@ from data_processing.processing.neutron_window_strategy.concrete_strategies impo
     LoadingStrategy,
     NasaGenerationStrategy,
     NeutronDistributionGenerationStrategy,
-    SquarishGenerationStrategy
+    SquarishGenerationStrategy,
+    BasicCutStrategy
 )
 from data_processing.types import NeutronWindowSettings, WindowType
 
@@ -36,5 +37,7 @@ class NeutronStrategyFactory:
             return NeutronDistributionGenerationStrategy(settings)
         elif window_type == "squarish":
             return SquarishGenerationStrategy(settings)
+        elif window_type == "basic_cut":
+            return BasicCutStrategy(settings)
         else:
             raise ValueError(f"Unsupported window type: {window_type}")
