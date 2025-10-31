@@ -1,5 +1,6 @@
 from data_processing.paths import get_parq_root
 from data_processing.helpers.get_input_with_default import get_input_with_default
+from time import sleep
 
 def input_experiment_ids() -> list[str]:
     done = False
@@ -16,8 +17,16 @@ def input_experiment_ids() -> list[str]:
 
         for exp_ids in possible_ids:
             tb_id, old_id = exp_ids
-            tb_id_valid = get_parq_root(tb_id).is_dir()
-            old_id_valid = get_parq_root(old_id).is_dir()
+            try:
+                tb_id_valid = get_parq_root(tb_id).is_dir()
+                old_id_valid = get_parq_root(old_id).is_dir()
+            except OSError as e:
+                print("Encountered OSError")
+                print(e)
+                print("Retrying in 3 seconds")
+                sleep(3)
+                tb_id_valid = get_parq_root(tb_id).is_dir()
+                old_id_valid = get_parq_root(old_id).is_dir()
             if tb_id_valid:
                 if old_id_valid:
                     which_id_input = get_input_with_default(f"Do you want to use {tb_id} instead of {old_id}? [Y/n]", "y", str)
