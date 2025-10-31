@@ -113,14 +113,23 @@ class SquarishGenerationSettings(NamedTuple):
     aspect_ratio: float = 2.5/0.5  # width/height
 
 
+class MixedDistributionGenerationSettings(NamedTuple):
+    gamma_sigma: float = 3,
+    neutron_sigma: float = 3,
+    lower_energy_bound: float = 0.1966,
+    upper_energy_bound: float = 0.688
+
+
 class BasicCutSettings(NamedTuple):
     bottom: float
+    top: float | None = None
 
 
 NeutronWindowSettings = (
     NasaGenerationSettings |
     NeutronDistributionGenerationSettings |
     SquarishGenerationSettings |
+    MixedDistributionGenerationSettings |
     BasicCutSettings |
     str
 )
@@ -129,6 +138,7 @@ SpecificNeutronWindowSettings = TypeVar(
     NasaGenerationSettings,
     NeutronDistributionGenerationSettings,
     SquarishGenerationSettings,
+    MixedDistributionGenerationSettings,
     BasicCutSettings,
     str,
 )
@@ -148,7 +158,7 @@ class CalibrationParams(NamedTuple):
     p2: float
 
 
-WindowType = Literal["nasa", "n_distro", "squarish", "basic_cut"]
+WindowType = Literal["nasa", "n_distro", "mixed_distro", "squarish", "basic_cut"]
 SliceFitStyle = Literal["bounds", "peak_finder"]
 NumberedSlice = tuple[int, Any]
 SliceFitResult = tuple[FitResult, FitErrorResult]

@@ -10,6 +10,7 @@ from .neutron_window_generation import (
 from .neutron_window_strategy import (
     AbstractNeutronStrategy,
     LoadingStrategy,
+    MixedDistributionGenerationStrategy,
     NasaGenerationStrategy,
     NeutronDistributionGenerationStrategy,
     NeutronStrategyFactory,

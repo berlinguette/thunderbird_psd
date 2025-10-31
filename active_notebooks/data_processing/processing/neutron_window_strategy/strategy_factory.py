@@ -5,6 +5,7 @@ from data_processing.processing.neutron_window_strategy.concrete_strategies impo
     LoadingStrategy,
     NasaGenerationStrategy,
     NeutronDistributionGenerationStrategy,
+    MixedDistributionGenerationStrategy,
     SquarishGenerationStrategy,
     BasicCutStrategy
 )
@@ -35,6 +36,8 @@ class NeutronStrategyFactory:
             return NasaGenerationStrategy(settings)
         elif window_type == "n_distro":
             return NeutronDistributionGenerationStrategy(settings)
+        elif window_type == "mixed_distro":
+            return MixedDistributionGenerationStrategy(settings)
         elif window_type == "squarish":
             return SquarishGenerationStrategy(settings)
         elif window_type == "basic_cut":

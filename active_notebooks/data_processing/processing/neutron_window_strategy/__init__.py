@@ -3,6 +3,7 @@ from .concrete_strategies import (
     LoadingStrategy,
     NasaGenerationStrategy,
     NeutronDistributionGenerationStrategy,
+    MixedDistributionGenerationStrategy,
     SquarishGenerationStrategy,
 )
 from .strategy_factory import NeutronStrategyFactory
