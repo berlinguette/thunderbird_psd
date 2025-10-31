@@ -24,6 +24,7 @@ def load_parquet_psd(experiment_name: str, with_flags: bool = False) -> pd.DataF
     psd_folder = paths.get_parq_root(experiment_name)
 
     # Load PSD data to "psd_report" DataFrame
+    # TODO retry on PermissionError
     psd_df = (
         pd.read_parquet(psd_folder, columns=col_names)
         .pipe(_process_psd_data, with_flags=with_flags)
@@ -38,6 +39,7 @@ def load_parquet_psd(experiment_name: str, with_flags: bool = False) -> pd.DataF
 def load_parquet_signals(experiment_name: str) -> pd.DataFrame:
     signals_folder = paths.get_signals_root(experiment_name)
 
+    # TODO retry on PermissionError
     signals_data = pd.read_parquet(signals_folder)
     return signals_data
 
