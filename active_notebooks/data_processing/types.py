@@ -100,6 +100,9 @@ class NasaGenerationSettings(NamedTuple):
 
 class NeutronDistributionGenerationSettings(NamedTuple):
     sigma: float = 3
+    lower_energy_bound: float = 0.1966,
+    upper_energy_bound: float = 0.688,
+    recalculate_lower_energy_bound: bool = False,
     fom_energy_range: tuple[float, float] = (0.10, 0.35)
 
 

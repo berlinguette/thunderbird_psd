@@ -17,6 +17,9 @@ class NeutronDistributionGenerationStrategy(AbstractNeutronStrategy):
         return generate_n_distro_neutron_window(
             df,
             sigma=window_settings.sigma,
+            lower_energy_bound=window_settings.lower_energy_bound,
+            upper_energy_bound=window_settings.upper_energy_bound,
+            recalculate_lower_energy_bound=window_settings.recalculate_lower_energy_bound,
             fom_energy_range=window_settings.fom_energy_range,
         )
 

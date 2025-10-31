@@ -29,16 +29,21 @@ def generate_nasa_neutron_window(
 def generate_n_distro_neutron_window(
     slice_fit_df: pd.DataFrame,
     sigma: float = 3,
+    lower_energy_bound: float = 0.1966,
+    upper_energy_bound: float = 0.688,  # keVee, Compton edge + detector resolution
+    recalculate_lower_energy_bound: bool= False,
     fom_energy_range: tuple[float, float] = (0.10, 0.35),
 ) -> WindowBorders:
     energy_bin_left_edges = get_df_col(
         slice_fit_df, SliceFitDataframeColumn.SLICE_ENERGY_MINIMUM
     )
     energy_bin_midpoints = _get_energy_midpoints(slice_fit_df)
-    left_border = _generate_window_left_border(
-        slice_fit_df, energy_bin_midpoints, fom_energy_range=fom_energy_range
-    )
-    right_border = 0.688  # keVee, Compton edge + detector resolution
+    left_border = lower_energy_bound
+    if recalculate_lower_energy_bound:
+        left_border = _generate_window_left_border(
+            slice_fit_df, energy_bin_midpoints, fom_energy_range=fom_energy_range
+        )
+    right_border = upper_energy_bound
     bottom_border = _generate_new_window_bottom_border(
         slice_fit_df, energy_bin_left_edges, sigma
     )
@@ -56,6 +61,23 @@ def generate_rectangle_neutron_window(left: float, bottom: float, width: float, 
     bottom_border = interp1d([left, right], [bottom, bottom], bounds_error=False)
     top_border = interp1d([left, right], [top, top], bounds_error=False)
     return WindowBorders(left=left, right=right, bottom=bottom_border, top=top_border)
+
+
+def generate_mixed_distro_neutron_window(
+    slice_fit_df: pd.DataFrame,
+    gamma_sigma: float = 3,
+    neutron_sigma: float = 3,
+    lower_energy_bound: float = 0.1966,
+    upper_energy_bound: float = 0.688    
+) -> WindowBorders:
+    energy_bin_left_edges = get_df_col(
+        slice_fit_df, SliceFitDataframeColumn.SLICE_ENERGY_MINIMUM
+    )
+    bottom_border = _generate_nasa_window_bottom_border(slice_fit_df, gamma_sigma)
+    top_border = _generate_new_window_top_border(slice_fit_df, energy_bin_left_edges, neutron_sigma)
+    return WindowBorders(
+        left=lower_energy_bound, right=upper_energy_bound, bottom=bottom_border, top=top_border
+    )
 
 
 def _generate_window_left_border(
