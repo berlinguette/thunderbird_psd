@@ -5,3 +5,4 @@ from .window_loading import (
     load_neutron_window,
     load_side_borders,
 )
+from .spectrum_unfolding import load_neutron_response_matrix
