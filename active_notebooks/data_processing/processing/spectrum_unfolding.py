@@ -66,10 +66,12 @@ class NDHistogram:
 
 
 class UnfoldingProcessInfo(TypedDict):
-    errors: list[float]
+    # errors: list[float]
     chis: list[float]
     phis: list[ndarray]
+    delta_Is: list[float]
     weights: list[ndarray]
+    test_spectrums: list[NDHistogram]
 
 
 def weight_factor(
@@ -185,7 +187,7 @@ def next_phi(
     result = _phi * exp_result
 
     r_mid0, r_mid1, *_ = r.midpoints
-    phi_mid0 = np.array([r_mid0.mean])
+    phi_mid0 = np.array([r_mid0.mean()])
     phi_mid1 = r_mid1.copy()
     phi_mids = [phi_mid0, phi_mid1]
 
@@ -196,13 +198,13 @@ def stopping_criteria(
     r: NDHistogram,
     n: NDHistogram,
     phi: NDHistogram,
-    sigma: NDHistogram | None = None,
+    sigma: NDHistogram | None = None
 ) -> float:
     """Calculate the stopping criteria value for this iteration of the GRAVEL algorithm.
 
     The stopping criteria value is chi^2 divided by the degrees of freedom.
-    Degrees of freedom for neutron response matrix R is (m-1)*(n-1), where m and n are
-    the dimensions of R.
+    Degrees of freedom for the current iteration's energy spectrum phi is m, where m
+    is the dimensions of phi.
 
     :param r: Neutron response matrix
     :type r: NDHistogram
@@ -218,6 +220,9 @@ def stopping_criteria(
     :return: Stopping criteria value
     :rtype: float
     """
+    # TODO would it help to limit the range when summing over m?
+    # We know our detector can only manage approx. 0.15-1.8 MeVee
+    # so why not have SC only take that range into account?
     if sigma is None:
         sigma = NDHistogram(np.sqrt(n.counts), n.midpoints)
 
@@ -242,7 +247,8 @@ def stopping_criteria(
     _sigma = sigma.counts
 
     _m, _n = r.shape
-    DOF = (_m - 1) * (_n - 1)
+    # DOF = (_m - 1) * (_n - 1)
+    DOF = _m
 
     sum_numer = np.nansum(_R * _phi, axis=1, keepdims=True)
     numer = np.square(sum_numer - _N)
@@ -254,15 +260,103 @@ def stopping_criteria(
     return result
 
 
+def stability_criteria(
+    past_phi: NDHistogram,
+    current_phi: NDHistogram,
+    E_min: float | None = None,
+    E_max: float | None = None
+) -> float:
+    """Calculate the stability criteria value for this iteration of the GRAVEL algorithm.
+
+    This criteria is found in "GRAVEL unfolding of gamma-ray spectra of CeBr3 detectors
+    and related uncertainties", H Donbrowski, 2023 JINST 18 P07005. In this paper, it is
+    designated deltaI.
+
+    It is possible to calculate this value over a restricted energy range. This may be needed
+    to match detector resolution limits.
+
+    :param past_phi: Neutron spectrum calculated in the previous GRAVEL iteration
+    :type past_phi: NDHistogram
+    :param current_phi: Neutron spectrum calculated in the current GRAVEL iteration
+    :type current_phi: NDHistogram
+    :param E_min: Lower limit of restricted integration range, or None if no limits,
+        defaults to None
+    :type E_min: float | None, optional
+    :param E_max: Upper limit of restricted integration range, or None if no limits,
+        defaults to None
+    :type E_max: float | None, optional
+    :return: Stability criteria value
+    :rtype: float
+    """
+
+    if past_phi.shape != current_phi.shape:
+        return ValueError("Given phi values do not have the same shape")
+    _, past_mids1, *_ = past_phi.midpoints
+    _, now_mids1, *_ = current_phi.midpoints
+    mids_match, *_ = _are_midpoints_compatible(past_mids1, now_mids1)
+    if not mids_match:
+        return ValueError("Given phi values do not have matching midpoints")
+    
+    if E_min is None:
+        E_min_idx = None
+    else:
+        mids_geq_emin = past_mids1 >= E_min
+        if not mids_geq_emin.any():
+            raise ValueError(
+                "Given E_min overly restricts integration range, preventing proper integration"
+            )
+        else:
+            E_min_idx = np.argmax(mids_geq_emin)
+    
+    if E_max is None:
+        E_max_idx = None
+    else:
+        mids_gt_emax = past_mids1 > E_max
+        if mids_gt_emax.all():
+            raise ValueError(
+                "Given E_max overly restricts integration range, preventing proper integration"
+            )
+        elif not mids_gt_emax.any():
+            E_max_idx = None
+        else:
+            E_max_idx = np.argmax(mids_gt_emax)
+    
+    past_phi_counts = past_phi.counts
+    now_phi_counts = current_phi.counts
+    if E_min_idx is not None:
+        if E_max_idx is not None:
+            past_counts_cut = past_phi_counts[:, E_min_idx:E_max_idx]
+            now_counts_cut = now_phi_counts[:, E_min_idx:E_max_idx]
+        else:
+            past_counts_cut = past_phi_counts[:, E_min_idx:]
+            now_counts_cut = now_phi_counts[:, E_min_idx:]
+    else:
+        if E_max_idx is not None:
+            past_counts_cut = past_phi_counts[:, :E_max_idx]
+            now_counts_cut = now_phi_counts[:, :E_max_idx]
+        else:
+            past_counts_cut = past_phi_counts
+            now_counts_cut = now_phi_counts
+
+    past_integ = np.nansum(past_counts_cut)
+    now_integ = np.nansum(now_counts_cut)
+    deltaI = (now_integ - past_integ) / past_integ
+    return deltaI
+
+
 def unfold_spectrum(
     r: NDHistogram,
     n: NDHistogram,
     phi0: NDHistogram | None = None,
     sigma: NDHistogram | None = None,
     L_cut: float | None = None,
-    tolerance: float = 0.01,
+    apply_nan_each_iter: bool = False,
     max_iterations: int = 500,
+    stability_E_min: float | None = None,
+    stability_E_max: float | None = None,
     full_info: bool = False,
+    report_progress: bool = True,
+    progress_report_interval: int = 10
 ) -> tuple[NDHistogram, UnfoldingProcessInfo | None]:
     """Unfold neutron response spectrum into neutron spectrum.
 
@@ -281,15 +375,27 @@ def unfold_spectrum(
     :param L_cut: if not None, light outputs to remove from N before stripping zeroes;
         defaults to None (i.e. no removal)
     :type L_cut: float | None, optional
-    :param tolerance: How close stopping criteria value must be to stopping value (1)
-        to stop the GRAVEL algorithm, defaults to 0.1
-    :type tolerance: float, optional
+    :param apply_nan_each_iter: Whether to convert zeros to NaN values in the unfolded spectrum
+        each iteration, defaults to False
+    :type apply_nan_each_iter: bool, optional
     :param max_iterations: Maximum number of iterations to perform before stopping the
         GRAVEL algorithm early, defaults to 500
     :type max_iterations: int, optional
+    :param stability_E_min: Lower limit of restricted integration range for stability criteria,
+        or None if no limits, defaults to None
+    :type stability_E_min: float | None, optional
+    :param stability_E_max: Upper limit of restricted integration range for stability criteria,
+        or None if no limits, defaults to None
+    :type stability_E_max: float | None, optional
     :param full_info: Whether to return extra data (errors, neutron spectra, weight
         factors) collected during the unfolding process, defaults to False
     :type full_info: bool, optional
+    :param report_progress: Whether to print unfolding progress (iteration, chi value,
+        delta I value), defaults to True
+    :type report_progress: bool, optional
+    :param progress_report_interval: How often (in iterations) to report progress,
+        defaults to every 10 iterations
+    :type progress_report_interval: int, optional
     :return: Unfolded spectrum, and (if full_info is True) a dictionary of intermediate
         data collected during the unfolding process (or None if full_info is False)
     :rtype: tuple[Histogram, UnfoldingProcessInfo | None]
@@ -326,47 +432,62 @@ def unfold_spectrum(
 
     iters = 0
     chis = []
+    delta_Is = []
     phis = []
     weights = []
-    errors = []
+    test_spectrums = []
+    # errors = []
     iter_text_len = len(str(max_iterations))
 
     chi_n = stopping_criteria(new_r, new_n, new_phi0, sigma=new_sigma)
     phi_k = NDHistogram(
         new_phi0.counts.copy(), [mids.copy() for mids in new_phi0.midpoints]
     )
-    chi_last = chi_n
-    delta_chi_last = 1
-    delta_delta = 1
+    phi_last_k = phi_k
+    # chi_last = chi_n
+    # delta_chi_last = 1
+    # delta_delta = 1
 
-    while delta_delta > tolerance:
+    for iters in range(max_iterations):
         weight = weight_factor(new_r, new_n, phi_k, sigma=new_sigma)
         phi_k = next_phi(new_r, new_n, phi_k, sigma=new_sigma)
+        if apply_nan_each_iter:
+            phi_k = zero_to_nan(phi_k)
         chi_n = stopping_criteria(new_r, new_n, phi_k, sigma=new_sigma)
+        delta_I = stability_criteria(phi_last_k, phi_k, stability_E_min, stability_E_max)
+        test_spectrum = r_dot(new_r, phi_k)
 
-        delta_chi = chi_n - chi_last
-        delta_delta = abs(delta_chi - delta_chi_last)
-        chi_last = chi_n
-        delta_chi_last = delta_chi
+        # delta_chi = chi_n - chi_last
+        # delta_delta = abs(delta_chi - delta_chi_last)
+        # chi_last = chi_n
+        # delta_chi_last = delta_chi
+        phi_last_k = phi_k
 
         if full_info:
             chis.append(chi_n)
             phis.append(phi_k)
+            delta_Is.append(delta_I)
             weights.append(weight)
-            errors.append(delta_delta)
+            test_spectrums.append(test_spectrum)
+            # errors.append(delta_delta)
 
-        if iters % 10 == 0:
-            print(
-                f"Iter. {iters: {iter_text_len}d}: chi = {chi_n:.3g}, rel_rate = {delta_delta: .3g}"
-            )
-        iters += 1
-        if iters >= max_iterations:
-            break
+        if report_progress:
+            if iters % progress_report_interval == 0:
+                print(
+                    # f"Iter. {iters: {iter_text_len}d}: chi = {chi_n:.3g}, rel_rate = {delta_delta: .3g}"
+                    f"Iter. {iters: {iter_text_len}d}: chi = {chi_n:.3g}, deltaI = {delta_I:.3g}"
+                )
 
     unfolding_info = (
-        UnfoldingProcessInfo(errors=errors, chis=chis, phis=phis, weights=weights)
-        if full_info
-        else None
+        UnfoldingProcessInfo(
+            # errors=errors,
+            chis=chis,
+            phis=phis,
+            delta_Is=delta_Is,
+            weights=weights,
+            test_spectrums=test_spectrums
+        )
+        if full_info else None
     )
     return phi_k, unfolding_info
 
@@ -485,6 +606,25 @@ def clean_data(
         return new_r, new_n, new_phi, new_sigma  # type: ignore
 
 
+def zero_to_nan(x: NDHistogram) -> NDHistogram:
+    """Converts all zero counts to NaN.
+
+    According to Dombrowski, H., 2024, Radiation Protection Dosimetry 200(1)
+    (DOI 10.1093/rpd/ncad251), "the unfolding of channels or matrix elements which are
+    equal to zero does not work and has to be skipped by any unfolding code".
+    Converting zeroes to Numpy's NaN value allows us to skip these zeroes while still
+    preserving vectorization and allowing efficient calculation.
+
+    :param x: Input histogram
+    :type x: NDHistogram
+    :return: Histogram where zero counts are converted to Numpy NaN values
+    :rtype: NDHistogram
+    """
+    x_counts = x.counts
+    new_counts = np.where(x_counts==0, np.nan, x_counts)
+    return NDHistogram(new_counts, x.midpoints)
+
+
 def cut_low_l(
     r: NDHistogram, n: NDHistogram, L_cut: float | None = None, sigma: T = None
 ) -> tuple[NDHistogram, NDHistogram, T]:
@@ -551,7 +691,8 @@ def cut_low_l(
 def r_dot(r: NDHistogram, phi: NDHistogram) -> NDHistogram:
     """Finds the sum (over axis 1) of the product between R and Phi.
 
-    This is also the dot product between R and Phi.
+    This is also the dot product between R and Phi, and is known in some sources as
+    the test spectrum (Dombrowski, 2024, DOI 10.1093/rpd/ncad251).
 
     If the shape of R is (m, n), the shape of Phi must be (1, n) or an exception will be
     raised. As well, the midpoints on axis 1 must be compatible.
@@ -629,28 +770,32 @@ def _is_n_compatible(r: NDHistogram, n: NDHistogram) -> tuple[bool, str]:
     # mids_match0 = len(R_mids0) == len(N_mids0) and (R_mids0 == N_mids0).all()
     # if not mids_match0:
     #     return False, "Midpoints on axis 0 do not match"
-    mids0_exact_match = (R_mids0 == N_mids0).all()
-    mids0_close_match = np.isclose(R_mids0, N_mids0).all()
-    mids0_match = len(R_mids0) == len(N_mids0) and (
-        mids0_exact_match or mids0_close_match
-    )
-    if mids0_match:
-        if mids0_close_match and not mids0_exact_match:
-            N_mids0 = R_mids0
-    else:
+    mids0_match, *_ = _are_midpoints_compatible(R_mids0, N_mids0)
+    # mids0_exact_match = (R_mids0 == N_mids0).all()
+    # mids0_close_match = np.isclose(R_mids0, N_mids0).all()
+    # mids0_match = len(R_mids0) == len(N_mids0) and (
+    #     mids0_exact_match or mids0_close_match
+    # )
+    # if mids0_match:
+    #     if mids0_close_match and not mids0_exact_match:
+    #         N_mids0 = R_mids0
+    # else:
+    if not mids0_match:
         return False, "Midpoints on axis 0 do not match"
 
     if N_n == R_n:
         # mids_match1 = len(R_mids1) == len(N_mids1) and (R_mids1 == N_mids1).all()
-        mids1_exact_match = (R_mids1 == N_mids1).all()
-        mids1_close_match = np.isclose(R_mids1, N_mids1).all()
-        mids1_match = len(R_mids1) == len(N_mids1) and (
-            mids1_exact_match or mids1_close_match
-        )
-        if mids1_match:
-            if mids1_close_match and not mids1_exact_match:
-                N_mids1 = R_mids1
-        else:
+        mids1_match, *_ = _are_midpoints_compatible(R_mids1, N_mids1)
+        # mids1_exact_match = (R_mids1 == N_mids1).all()
+        # mids1_close_match = np.isclose(R_mids1, N_mids1).all()
+        # mids1_match = len(R_mids1) == len(N_mids1) and (
+        #     mids1_exact_match or mids1_close_match
+        # )
+        # if mids1_match:
+        #     if mids1_close_match and not mids1_exact_match:
+        #         N_mids1 = R_mids1
+        # else:
+        if not mids1_match:
             return False, "Midpoints on axis 1 do not match"
 
     return True, ""
@@ -683,15 +828,17 @@ def _is_phi_compatible(r: NDHistogram, phi: NDHistogram) -> tuple[bool, str]:
     # if not mids_match:
     #     return False, "Midpoints on axis 1 do not match"
     
-    mids1_exact_match = (R_mids1 == phi_mids1).all()
-    mids1_close_match = np.isclose(R_mids1, phi_mids1).all()
-    mids1_match = len(R_mids1) == len(phi_mids1) and (
-        mids1_exact_match or mids1_close_match
-    )
-    if mids1_match:
-        if mids1_close_match and not mids1_exact_match:
-            N_mids1 = R_mids1
-    else:
+    # mids1_exact_match = (R_mids1 == phi_mids1).all()
+    # mids1_close_match = np.isclose(R_mids1, phi_mids1).all()
+    # mids1_match = len(R_mids1) == len(phi_mids1) and (
+    #     mids1_exact_match or mids1_close_match
+    # )
+    mids1_match = _are_midpoints_compatible(R_mids1, phi_mids1)
+    # if mids1_match:
+    #     if mids1_close_match and not mids1_exact_match:
+    #         N_mids1 = R_mids1
+    # else:
+    if not mids1_match:
             return False, "Midpoints on axis 1 do not match"
 
     return True, ""
@@ -712,3 +859,29 @@ def _are_r_dimensions_close_enough(r: NDHistogram) -> bool:
         raise ValueError("R must be 2-dimensional")
     x_size, y_size = r.shape
     return abs(log10(x_size) - log10(y_size)) <= 1
+
+def _are_midpoints_compatible(
+        mids_a: np.ndarray, mids_b: np.ndarray
+    ) -> tuple[bool, bool, bool]:
+    """Determine if midpoints (for a given axis of a NDHistogram) match.
+
+    Midpoints are considered to match if their lengths are equal, and if
+    their corresponding values are exact matches or close matches.
+    Exact match means the values are identical.
+    Close match means the difference in values is negligibly small.
+
+    :param mids_a: The first array of midpoints
+    :type mids_a: ndarray
+    :param mids_b: The second array of midpoints
+    :type mids_b: ndarray
+    :return: Tuple with the following values - Whether the midpoints matched,
+        whether the midpoint values were exact matches, whether the midpoint
+        values were close matches
+    :rtype: tuple[bool, bool, bool]
+    """
+    mids_exact_match = (mids_a == mids_b).all()
+    mids_close_match = np.isclose(mids_a, mids_b).all()
+    mids_match = len(mids_a) == len(mids_b) and (
+        mids_exact_match or mids_close_match
+    )
+    return (mids_match, mids_exact_match, mids_close_match)

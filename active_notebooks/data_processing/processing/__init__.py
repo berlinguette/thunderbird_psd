@@ -25,3 +25,14 @@ from .slice_fitting import (
     split_params,
     unpack_slice_fit_pool_results,
 )
+from .spectrum_unfolding import (
+    NDHistogram,
+    UnfoldingProcessInfo,
+    weight_factor,
+    next_phi,
+    stopping_criteria,
+    unfold_spectrum,
+    clean_data,
+    cut_low_l,
+    r_dot
+)
