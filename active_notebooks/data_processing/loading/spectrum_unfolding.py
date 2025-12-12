@@ -7,7 +7,7 @@ import pandas as pd
 from data_processing.processing.spectrum_unfolding import NDHistogram
 
 
-filestem_pattern = re.compile(r"neutron_(\d\.\d{3})_MeV")
+filestem_pattern = re.compile(r"neutron_(\d+\.\d+)_MeV")
 
 
 def load_neutron_response_matrix(
