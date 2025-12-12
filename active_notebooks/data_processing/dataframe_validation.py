@@ -10,6 +10,7 @@ class DetectorDataframeColumn(Enum):
     RECALIBRATED_ENERGY = "RECALIB_ENERGY"
     ENERGYSHORT = "ENERGYSHORT"
     ENERGY = "ENERGY"
+    PULSE_HEIGHT = "PULSE_HEIGHT"
     TIMETAG = "TIMETAG"
     FLAGS = "FLAGS"
     PSD = "tail / total"

@@ -153,10 +153,14 @@ DictKey = TypeVar("DictKey")
 DictValue = TypeVar("DictValue")
 
 
-class CalibrationParams(NamedTuple):
+class LinearCalibrationParams(NamedTuple):
     p1: float
     p2: float
 
+class LogCurveCalibrationParams(NamedTuple):
+    a: float
+    b: float
+    c: float
 
 WindowType = Literal["nasa", "n_distro", "mixed_distro", "squarish", "basic_cut"]
 SliceFitStyle = Literal["bounds", "peak_finder"]
