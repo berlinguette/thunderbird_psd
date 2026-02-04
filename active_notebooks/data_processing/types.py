@@ -100,9 +100,9 @@ class NasaGenerationSettings(NamedTuple):
 
 class NeutronDistributionGenerationSettings(NamedTuple):
     sigma: float = 3
-    lower_energy_bound: float = 0.1966,
-    upper_energy_bound: float = 0.688,
-    recalculate_lower_energy_bound: bool = False,
+    lower_energy_bound: float = 0.1966
+    upper_energy_bound: float = 0.688
+    recalculate_lower_energy_bound: bool = False
     fom_energy_range: tuple[float, float] = (0.10, 0.35)
 
 
@@ -114,9 +114,9 @@ class SquarishGenerationSettings(NamedTuple):
 
 
 class MixedDistributionGenerationSettings(NamedTuple):
-    gamma_sigma: float = 3,
-    neutron_sigma: float = 3,
-    lower_energy_bound: float = 0.1966,
+    gamma_sigma: float = 3
+    neutron_sigma: float = 3
+    lower_energy_bound: float = 0.1966
     upper_energy_bound: float = 0.688
 
 
@@ -144,10 +144,12 @@ SpecificNeutronWindowSettings = TypeVar(
 )
 
 
-Kwargs = dict[str, Any]
+StrAnyDict = dict[str, Any]
 GraphData = dict[Literal["x"] | Literal["y"], Series]
-GraphingFunction = Callable[[Figure, Axes, GraphData, Kwargs], Axes]
+GraphingFunction = Callable[[Figure, Axes, GraphData, StrAnyDict], Axes]
+GraphingFunction2 = Callable[[Axes, GraphData, StrAnyDict], tuple[Axes, StrAnyDict]]
 AxesMatrix = list[list[Axes]]
+BorderSettings = tuple[WindowBorders, str, StrAnyDict]
 
 DictKey = TypeVar("DictKey")
 DictValue = TypeVar("DictValue")

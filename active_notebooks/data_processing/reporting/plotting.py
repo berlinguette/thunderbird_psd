@@ -1,9 +1,10 @@
 from math import ceil
 
-import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib import colormaps
-from matplotlib.colors import Colormap
+from matplotlib.colors import Colormap, Normalize, LogNorm
+from matplotlib.collections import QuadMesh
+from matplotlib.patches import Patch
 import numpy as np
 import pandas as pd
 from data_processing.dataframe_validation import DetectorDataframeColumn, get_df_col, EnergyColumn
@@ -16,12 +17,13 @@ from data_processing.types import (
     DictValue,
     GraphData,
     GraphingFunction,
-    Kwargs,
+    GraphingFunction2,
+    StrAnyDict,
     WindowBorders,
+    BorderSettings,
 )
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
-from typing import Any
 
 
 def plot_single(
@@ -30,9 +32,9 @@ def plot_single(
     figsize: tuple[float, float] = (FIG_DIM_X, FIG_DIM_Y),
     supertitle: str | None = None,
     supertitle_font_size: float = SUPTITLE_FONT_SIZE,
-    plot_kwargs: Kwargs | None = None,
+    plot_kwargs: StrAnyDict | None = None,
     **kwargs,
-):
+) -> tuple[Figure, Axes]:
     fig, ax = plt.subplots(figsize=figsize, **kwargs)
 
     if plot_kwargs is None:
@@ -45,6 +47,22 @@ def plot_single(
     return fig, ax
 
 
+def plot_single2(
+    graphing_function: GraphingFunction2,
+    data: GraphData,
+    figsize: tuple[float, float] = (FIG_DIM_X, FIG_DIM_Y),
+    plot_kwargs: StrAnyDict | None = None,
+    **kwargs,
+) -> tuple[Figure, Axes, StrAnyDict]:
+    fig, ax = plt.subplots(figsize=figsize, **kwargs)
+
+    if plot_kwargs is None:
+        plot_kwargs = {}
+    ax, return_data = graphing_function(ax, data, plot_kwargs)
+
+    return fig, ax, return_data
+
+
 def plot_many(
     graphing_function: GraphingFunction,
     data: list[GraphData],
@@ -52,9 +70,9 @@ def plot_many(
     max_cols: int = SUBPLOTS_MAX_COLS,
     supertitle: str | None = None,
     supertitle_font_size: float = SUPTITLE_FONT_SIZE,
-    plot_kwargs: list[Kwargs] | None = None,
+    plot_kwargs: list[StrAnyDict] | None = None,
     **kwargs,
-):
+) -> tuple[Figure, AxesMatrix]:
     n_plots = len(data)
     n_cols = min(max_cols, n_plots)
     n_rows = ceil(n_plots / n_cols)
@@ -65,7 +83,7 @@ def plot_many(
     fig, axs = subplots_result
 
     if plot_kwargs is None:
-        plot_kwargs = [{} for subplot_data in data]
+        plot_kwargs = [{} for _ in data]
     for i, subplot_data in enumerate(data):
         row = i // n_cols
         col = i % n_cols
@@ -81,14 +99,54 @@ def plot_many(
     return fig, axs
 
 
+def plot_many2(
+    graphing_function: GraphingFunction2,
+    data: list[GraphData],
+    figsize: tuple[float, float] = (FIG_DIM_X, FIG_DIM_Y),
+    max_cols: int = SUBPLOTS_MAX_COLS,
+    plot_kwargs: list[StrAnyDict] | None = None,
+    **kwargs,
+) -> tuple[Figure, AxesMatrix, list[StrAnyDict]]:
+    n_plots = len(data)
+    n_cols = min(max_cols, n_plots)
+    n_rows = ceil(n_plots / n_cols)
+
+    subplots_result: tuple[Figure, AxesMatrix] = plt.subplots(
+        figsize=figsize, ncols=n_cols, nrows=n_rows, **kwargs
+    )
+    fig, axs = subplots_result
+
+    return_data_list: list[StrAnyDict] = []
+    if plot_kwargs is None:
+        plot_kwargs = [{} for _ in data]
+    for i, subplot_data in enumerate(data):
+        row = i // n_cols
+        col = i % n_cols
+        ax = axs[row][col]
+        subplot_kwargs = plot_kwargs[i]
+
+        ax, return_data = graphing_function(ax, subplot_data, subplot_kwargs)
+        axs[row][col] = ax
+        return_data_list.append(return_data)
+
+    return fig, axs, return_data_list
+
+
 # Graphing Functions
 def graph_tail_vs_total(
-    fig: Figure, ax: Axes, data: GraphData, graph_kwargs: Kwargs
+    fig: Figure, ax: Axes, data: GraphData, graph_kwargs: StrAnyDict
 ) -> Axes:
+    ax, _ = graph_tail_vs_total2(ax, data, graph_kwargs)
+    return ax
+
+
+def graph_tail_vs_total2(
+    ax: Axes, data: GraphData, graph_kwargs: StrAnyDict
+) -> tuple[Axes, StrAnyDict]:
     x_resolution = graph_kwargs.get("x_resolution", HISTOGRAM_RES)
     y_resolution = graph_kwargs.get("y_resolution", HISTOGRAM_RES)
     max_energy = graph_kwargs.get("max_energy", 5)
-    cmap = graph_kwargs.get("cmap", mpl.colormaps["gnuplot"])  # type: ignore
+    cmap = graph_kwargs.get("cmap", colormaps["gnuplot"])  # type: ignore
     title_font_size = graph_kwargs.get("title_font_size", TITLE_FONT_SIZE)
     axis_font_size = graph_kwargs.get("axis_font_size", AXIS_FONT_SIZE)
     axis_tick_font_size = graph_kwargs.get("axis_tick_font_size", AXIS_TICK_FONT_SIZE)
@@ -97,11 +155,11 @@ def graph_tail_vs_total(
     data_y = data["y"]
     dataset_size = data_x.shape[0]
 
-    ax.hist2d(
+    H, xedges, yedges, image = ax.hist2d(
         data_x,
         data_y,
         bins=(x_resolution, y_resolution),
-        norm=mpl.colors.LogNorm(),
+        norm=LogNorm(),
         range=[[0, max_energy + 0.05], [0, 0.50]],
         cmap=cmap,
     )
@@ -112,16 +170,16 @@ def graph_tail_vs_total(
     ax.tick_params(axis="both", which="major", labelsize=axis_tick_font_size)
     ax.tick_params(axis="both", which="minor", labelsize=axis_tick_font_size)
 
-    return ax
+    return ax, {"H": H, "xedges": xedges, "yedges": yedges, "image": image}
 
 
 def graph_psd_histogram(
-    fig: Figure, ax: Axes, data: GraphData, graph_kwargs: Kwargs
+    fig: Figure, ax: Axes, data: GraphData, graph_kwargs: StrAnyDict
 ) -> Axes:
     x_resolution = graph_kwargs.get("x_resolution", HISTOGRAM_RES)
     y_resolution = graph_kwargs.get("y_resolution", HISTOGRAM_RES)
     energy_start_zero = graph_kwargs.get("energy_start_zero", False)
-    cmap = graph_kwargs.get("cmap", mpl.colormaps["gnuplot"])  # type: ignore
+    cmap = graph_kwargs.get("cmap", colormaps["gnuplot"])  # type: ignore
     colorbar = graph_kwargs.get("colorbar", False)
     axis_font_size = graph_kwargs.get("axis_font_size", AXIS_FONT_SIZE)
     axis_tick_font_size = graph_kwargs.get("axis_tick_font_size", AXIS_TICK_FONT_SIZE)
@@ -163,13 +221,124 @@ def graph_psd_histogram(
     return ax
 
 
+def graph_psd_histogram2(
+    ax: Axes, data: GraphData, graph_kwargs: StrAnyDict
+) -> tuple[Axes, StrAnyDict]:
+    x_resolution = graph_kwargs.get("x_resolution", HISTOGRAM_RES)
+    y_resolution = graph_kwargs.get("y_resolution", HISTOGRAM_RES)
+    energy_start_zero = graph_kwargs.get("energy_start_zero", False)
+    cmap = graph_kwargs.get("cmap", colormaps["gnuplot"])  # type: ignore
+    axis_font_size = graph_kwargs.get("axis_font_size", AXIS_FONT_SIZE)
+    axis_tick_font_size = graph_kwargs.get("axis_tick_font_size", AXIS_TICK_FONT_SIZE)
+    cmin = graph_kwargs.get("cmin")
+    weights = graph_kwargs.get("weights", None)
+    vmin = graph_kwargs.get("vmin")
+    vmax = graph_kwargs.get("vmax")
+
+    data_x = data["x"]
+    data_y = data["y"]
+
+    min_energy, max_energy = _get_range_with_margins((data_x.min(), data_x.max()))
+    if energy_start_zero:
+        min_energy = 0
+    min_psd, max_psd = _get_range_with_margins((data_y.min(), data_y.max()))
+
+    H, xedges, yedges, image = ax.hist2d(
+        data_x,
+        data_y,
+        bins=(x_resolution, y_resolution),
+        range=[[min_energy, max_energy], [min_psd, max_psd]],
+        cmap=cmap,
+        cmin=cmin,
+        weights=weights,
+        vmin=vmin,
+        vmax=vmax,
+    )
+
+    ax.set_ylim(min_psd, max_psd)
+    ax.set_xlim(min_energy, max_energy)
+    ax.set_xlabel("Energy (MeVee)", fontsize=axis_font_size)
+    ax.set_ylabel("PSD", fontsize=axis_font_size)
+    ax.tick_params(axis="both", which="major", labelsize=axis_tick_font_size)
+    ax.tick_params(axis="both", which="minor", labelsize=axis_tick_font_size)
+
+    return ax, {"H": H, "xedges": xedges, "yedges": yedges, "image": image}
+
+
+# Figure/Axes Modification Functions
+def add_supertitle_to_figure(
+    fig: Figure, supertitle: str, font_size: float = SUPTITLE_FONT_SIZE
+) -> Figure:
+    fig.suptitle(supertitle, fontsize=font_size)
+    return fig
+
+
+def add_colorbar_to_axes(
+    fig: Figure, ax: Axes, image: QuadMesh, **kwargs
+) -> Figure:
+    fig.colorbar(image, ax=ax, **kwargs)
+    return fig
+
+
+def add_fit_window_to_plot(
+    axes: Axes,
+    borders: WindowBorders,
+    graph_x_limits: tuple[float, float],
+    graph_y_limits: tuple[float, float],
+    line_color_code = "r",
+    line_style = "--"
+) -> Axes:
+    plot_style = f"{line_color_code}{line_style}"
+    left_border = borders.left
+    right_border = borders.right
+    bottom_border_fn = borders.bottom
+    top_border_fn = borders.top
+
+    min_energy = left_border if left_border is not None else graph_x_limits[0]
+    max_energy = right_border if right_border is not None else graph_x_limits[1]
+
+    energy_space = np.linspace(min_energy, max_energy, 200)
+    if bottom_border_fn is not None:
+        axes.plot(energy_space, bottom_border_fn(energy_space), plot_style)
+    if top_border_fn is not None:
+        axes.plot(energy_space, top_border_fn(energy_space), plot_style)
+    # ax.vlines(all_slice_xs[0],
+    #           neutron_lb_fit(all_slice_xs[0]),
+    #           neutron_ub_fit(all_slice_xs[0]),
+    #           'r', ls='--')
+    if left_border is not None:
+        line_bottom = (
+            bottom_border_fn(left_border)
+            if bottom_border_fn is not None
+            else graph_y_limits[0]
+        )
+        line_top = (
+            top_border_fn(left_border)
+            if top_border_fn is not None
+            else graph_y_limits[1]
+        )
+        axes.vlines(left_border, line_bottom, line_top, line_color_code, ls=line_style)  # type: ignore
+    if right_border is not None:
+        line_bottom = (
+            bottom_border_fn(right_border)
+            if bottom_border_fn is not None
+            else graph_y_limits[0]
+        )
+        line_top = (
+            top_border_fn(right_border)
+            if top_border_fn is not None
+            else graph_y_limits[1]
+        )
+        axes.vlines(right_border, line_bottom, line_top, line_color_code, ls=line_style)  # type: ignore
+    return axes
+
+
 # All In One Plot Functions
 def plot_tail_vs_total(
     df: pd.DataFrame, experiment_display_name: str, **kwargs
 ) -> tuple[Figure, Axes]:
     figsize = _popget(kwargs, "figsize", (FIG_DIM_X, FIG_DIM_Y))
     x_resolution = _popget(kwargs, "x_resolution", HISTOGRAM_RES)
-    # cmap = _popget(kwargs, "cmap", mpl.colormaps["gnuplot"])  # type: ignore
 
     y_resolution = _get_histogram_y_resolution(
         x_resolution=x_resolution, plot_width=figsize[0], plot_height=figsize[1]
@@ -235,57 +404,46 @@ def plot_psd_histogram(
     return fig, ax
 
 
-def add_fit_window_to_plot(
-    axes: Axes,
-    borders: WindowBorders,
-    graph_x_limits: tuple[float, float],
-    graph_y_limits: tuple[float, float],
-    line_color_code = "r",
-    line_style = "--"
-) -> Axes:
-    plot_style = f"{line_color_code}{line_style}"
-    left_border = borders.left
-    right_border = borders.right
-    bottom_border_fn = borders.bottom
-    top_border_fn = borders.top
+def plot_psd_histogram2(
+    df: pd.DataFrame,
+    energy_column: EnergyColumn = DetectorDataframeColumn.CALIB_ENERGY,
+    cmap: str | Colormap = "gnuplot",
+    colorbar: bool = False,
+    energy_start_zero: bool = False,
+    **kwargs,
+) -> tuple[Figure, Axes, StrAnyDict]:
+    figsize = _popget(kwargs, "figsize", (FIG_DIM_X, FIG_DIM_Y))
+    x_resolution = _popget(kwargs, "x_resolution", HISTOGRAM_RES)
+    y_resolution = _get_histogram_y_resolution(
+        x_resolution=x_resolution, plot_width=figsize[0], plot_height=figsize[1]
+    )
+    if isinstance(cmap, str):
+        cmap = colormaps[cmap]
+    plot_kwargs = {
+        "x_resolution": x_resolution,
+        "y_resolution": y_resolution,
+        "energy_start_zero": energy_start_zero,
+        "cmap": cmap,
+        "colorbar": colorbar,
+        **kwargs,
+    }
 
-    min_energy = left_border if left_border is not None else graph_x_limits[0]
-    max_energy = right_border if right_border is not None else graph_x_limits[1]
+    energy_col = get_df_col(df, energy_column)
+    psd_col = get_df_col(df, DetectorDataframeColumn.PSD)
+    data: GraphData = {"x": energy_col, "y": psd_col}
 
-    energy_space = np.linspace(min_energy, max_energy, 200)
-    if bottom_border_fn is not None:
-        axes.plot(energy_space, bottom_border_fn(energy_space), plot_style)
-    if top_border_fn is not None:
-        axes.plot(energy_space, top_border_fn(energy_space), plot_style)
-    # ax.vlines(all_slice_xs[0],
-    #           neutron_lb_fit(all_slice_xs[0]),
-    #           neutron_ub_fit(all_slice_xs[0]),
-    #           'r', ls='--')
-    if left_border is not None:
-        line_bottom = (
-            bottom_border_fn(left_border)
-            if bottom_border_fn is not None
-            else graph_y_limits[0]
-        )
-        line_top = (
-            top_border_fn(left_border)
-            if top_border_fn is not None
-            else graph_y_limits[1]
-        )
-        axes.vlines(left_border, line_bottom, line_top, line_color_code, ls=line_style)  # type: ignore
-    if right_border is not None:
-        line_bottom = (
-            bottom_border_fn(right_border)
-            if bottom_border_fn is not None
-            else graph_y_limits[0]
-        )
-        line_top = (
-            top_border_fn(right_border)
-            if top_border_fn is not None
-            else graph_y_limits[1]
-        )
-        axes.vlines(right_border, line_bottom, line_top, line_color_code, ls=line_style)  # type: ignore
-    return axes
+    fig, ax, return_data = plot_single2(
+        graph_psd_histogram2, data, figsize=figsize, plot_kwargs=plot_kwargs
+    )
+    
+    if colorbar:
+        image = return_data.get("image")
+        if image is not None and isinstance(image, QuadMesh):
+            fig.colorbar(image, ax=ax)
+        else:
+            raise ValueError("No image found for colorbar addition.")
+
+    return fig, ax, return_data
 
 
 def plot_classification(
@@ -300,7 +458,7 @@ def plot_classification(
     titles: bool = True,
     **kwargs,
 ) -> tuple[Figure, Axes]:
-    fit_window_kwargs = {}
+    fit_window_kwargs: StrAnyDict = {}
     kwargs, fit_window_kwargs = _kwarg_transfer(
         kwargs, fit_window_kwargs, "line_color_code"
     )
@@ -318,7 +476,7 @@ def plot_classification(
 
     g_vs_n = class_col.map({True: 1, False: -1})
     if isinstance(cmap, str):
-        cmap = mpl.colormaps[cmap]
+        cmap = colormaps[cmap]
 
     # ax.hist2d(
     #     energy_col,
@@ -370,8 +528,8 @@ def plot_classification(
     # ax.tick_params(axis='both', which='minor', labelsize=AXIS_TICK_FONT_SIZE)
     if legend:
         event_colors = [
-            mpl.patches.Patch(facecolor=cmap(1.0)),  # type: ignore
-            mpl.patches.Patch(facecolor=cmap(0.0)),  # type: ignore
+            Patch(facecolor=cmap(1.0)),  # type: ignore
+            Patch(facecolor=cmap(0.0)),  # type: ignore
         ]  # type: ignore
         ax.legend(event_colors, ["Neutrons", "Gamma"])
 
@@ -629,7 +787,28 @@ def _popget(
     except KeyError:
         return default
     
-def _kwarg_transfer(src_kwargs: dict[str, Any], dest_kwargs: dict[str, Any], key: str):
+def _kwarg_transfer(src_kwargs: StrAnyDict, dest_kwargs: StrAnyDict, key: str):
     if key in src_kwargs:
         dest_kwargs[key] = src_kwargs.pop(key)
     return src_kwargs, dest_kwargs
+
+
+def _get_borders_mask(X: np.ndarray, Y: np.ndarray, borders: WindowBorders, shape: tuple[int, int]) -> np.ndarray:
+    left_border = borders.left
+    right_border = borders.right
+    bottom_border_fn = borders.bottom
+    top_border_fn = borders.top
+
+    mask = np.ones(X.shape, dtype=bool)
+
+    if left_border is not None:
+        mask &= X >= left_border
+    if right_border is not None:
+        mask &= X <= right_border
+    if bottom_border_fn is not None:
+        mask &= Y >= bottom_border_fn(X)
+    if top_border_fn is not None:
+        mask &= Y <= top_border_fn(X)
+        
+    mask = mask.reshape(shape)
+    return mask
