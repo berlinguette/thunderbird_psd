@@ -1,12 +1,17 @@
 import pandas as pd
 from datetime import datetime
+from typing import Final
 from data_processing.dataframe_validation import DetectorDataframeColumn, get_df_col
 
+NS_IN_SEC: Final = 1e12
+SEC_IN_MIN: Final = 60
+MIN_IN_HOUR: Final = 60
+NS_IN_HOUR: Final = NS_IN_SEC*SEC_IN_MIN*MIN_IN_HOUR
 
 def calculate_timetag_hours(df: pd.DataFrame) -> pd.DataFrame:
     if DetectorDataframeColumn.TIMETAG.value not in df:
         return df
-    hours_col = get_df_col(df, DetectorDataframeColumn.TIMETAG) * 1e-12/3600
+    hours_col = get_df_col(df, DetectorDataframeColumn.TIMETAG) / NS_IN_HOUR
     df.loc[:, DetectorDataframeColumn.TIME_HOURS.value] = hours_col
     return df
 
