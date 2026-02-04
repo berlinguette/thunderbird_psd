@@ -252,7 +252,7 @@ def add_fit_window_to_plot(
     min_energy = left_border if left_border is not None else graph_x_limits[0]
     max_energy = right_border if right_border is not None else graph_x_limits[1]
 
-    energy_space = np.linspace(min_energy, max_energy + 0.5, 200)
+    energy_space = np.linspace(min_energy, max_energy, 200)
     if bottom_border_fn is not None:
         axes.plot(energy_space, bottom_border_fn(energy_space), plot_style)
     if top_border_fn is not None:
