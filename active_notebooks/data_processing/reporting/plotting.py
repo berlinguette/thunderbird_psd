@@ -7,11 +7,10 @@ from matplotlib.collections import QuadMesh
 from matplotlib.patches import Patch
 import numpy as np
 import pandas as pd
-from data_processing.dataframe_validation import DetectorDataframeColumn, get_df_col, EnergyColumn
-from data_processing.processing.figure_of_merit import FOM, gaussian
-from data_processing.processing.processing_configs import DEFAULT_LOWER_ENERGY_BOUND
-from data_processing.reporting.plot_configs import *
-from data_processing.types import (
+from active_notebooks.data_processing.dataframe_validation import DetectorDataframeColumn, get_df_col, EnergyColumn
+from active_notebooks.data_processing.processing.figure_of_merit import FOM, gaussian
+from active_notebooks.data_processing.reporting.plot_configs import *
+from active_notebooks.data_processing.types import (
     AxesMatrix,
     DictKey,
     DictValue,
@@ -534,6 +533,132 @@ def plot_classification(
         ax.legend(event_colors, ["Neutrons", "Gamma"])
 
     return fig, ax
+
+
+def plot_multiple_classification(
+    df: pd.DataFrame,
+    border_settings: list[BorderSettings],
+    energy_col_name: EnergyColumn,
+    cmap: str | Colormap = "Greys",
+    normalizer: Normalize | None = None,
+    count_limit: int = 5,
+    legend: bool = True,
+    **kwargs,
+):
+    figsize: tuple[int, int] = _popget(kwargs, "figsize", (FIG_DIM_X, FIG_DIM_Y))
+    x_resolution: int = _popget(kwargs, "x_resolution", HISTOGRAM_RES)
+    energy_start_zero: bool = kwargs.get("energy_start_zero", False)
+    axis_font_size: int = kwargs.get("axis_font_size", AXIS_FONT_SIZE)
+    axis_tick_font_size: int = kwargs.get("axis_tick_font_size", AXIS_TICK_FONT_SIZE)
+    cmin: int = kwargs.get("cmin", 0)
+    vmin: int = kwargs.get("vmin", 0)
+    norm: Normalize = normalizer if normalizer is not None else Normalize(vmin=vmin, vmax=count_limit)
+    random_cmaps: list[str] = [
+        "Purples", "Blues", "Greens", "Oranges", "Reds"
+    ]
+    random_colors: list[str] = [
+        "m", "b", "g", "y", "r"
+    ]
+    
+    if not isinstance(x_resolution, int) or x_resolution <= 0:
+        raise ValueError("x_resolution must be a positive integer")
+    if not isinstance(energy_start_zero, bool):
+        raise ValueError("energy_start_zero must be a boolean value")
+    if not isinstance(axis_font_size, int) or axis_font_size <= 0:
+        raise ValueError("axis_font_size must be a positive integer")
+    if not isinstance(axis_tick_font_size, int) or axis_tick_font_size <= 0:
+        raise ValueError("axis_tick_font_size must be a positive integer")
+    if not isinstance(cmin, int) or cmin < 0:
+        raise ValueError("cmin must be a non-negative integer")
+    if not isinstance(vmin, int) or vmin < 0:
+        raise ValueError("vmin must be a non-negative integer")
+    
+    y_resolution = _get_histogram_y_resolution(
+        x_resolution=x_resolution, plot_width=figsize[0], plot_height=figsize[1]
+    )
+    if isinstance(cmap, str):
+        base_cmap: Colormap = colormaps[cmap]
+    else:
+        base_cmap = cmap
+        
+    x_data = df[energy_col_name.value]
+    y_data = df[DetectorDataframeColumn.PSD.value]
+    
+    x_min, x_max = _get_range_with_margins((x_data.min(), x_data.max()))
+    if energy_start_zero:
+        x_min = 0
+    y_min, y_max = _get_range_with_margins((y_data.min(), y_data.max()))
+    
+    H, xedges, yedges = np.histogram2d(
+        x_data,
+        y_data,
+        bins=(x_resolution, y_resolution),
+        range=[[x_min, x_max], [y_min, y_max]],
+        
+    )
+    
+    h_norm = norm(H)
+    base_colors = base_cmap(h_norm)
+    xc = (xedges[:-1] + xedges[1:]) / 2
+    yc = (yedges[:-1] + yedges[1:]) / 2
+    Xc, Yc = np.meshgrid(xc, yc, indexing="ij")
+    X, Y = np.ravel(Xc), np.ravel(Yc)
+    
+    border_counts: list[int] = []
+    border_color_patches: list[Patch] = []
+    border_labels: list[str] = []
+    for i, bs in enumerate(border_settings):
+        borders, _, border_config = bs
+        _cmap: str | Colormap = border_config.get("cmap", random_cmaps[i % len(random_cmaps)])
+        border_label: str = border_config.get("label", f"Border {i+1}")
+        
+        if isinstance(_cmap, str):
+            border_cmap: Colormap = colormaps[_cmap]
+        elif isinstance(_cmap, Colormap):
+            border_cmap = _cmap
+        else:
+            raise ValueError("Borders cmap must be a string or Colormap instance")
+        if not isinstance(border_label, str):
+            raise ValueError("Borders label must be a string")
+        
+        mask = _get_borders_mask(X, Y, borders, Xc.shape)
+        border_colors = border_cmap(h_norm)
+        base_colors[mask] = border_colors[mask]  # type: ignore
+        
+        mask_counts = H[mask].sum()
+        
+        border_counts.append(int(mask_counts))
+        border_color_patches.append(Patch(facecolor=border_cmap(0.6)))
+        border_labels.append(border_label)
+    
+    fig, ax = plt.subplots(figsize=figsize)
+    ax.pcolormesh(
+        Xc, Yc, base_colors, shading="auto"
+    )
+    
+    for i, bs in enumerate(border_settings):
+        borders, _, border_config = bs
+        line_color_code = border_config.get("line_color_code", random_colors[i % len(random_colors)])
+        line_style = border_config.get("line_style", "-")
+        
+        ax = add_fit_window_to_plot(
+            ax, borders, ax.get_xlim(), ax.get_ylim(),
+            line_color_code=line_color_code,
+            line_style=line_style
+        )
+        
+    ax.set_xlim(x_min, x_max)
+    ax.set_ylim(y_min, y_max)
+    ax.set_xlabel("Energy (MeVee)", fontsize=axis_font_size)
+    ax.set_ylabel("PSD", fontsize=axis_font_size)
+    ax.tick_params(axis="both", which="major", labelsize=axis_tick_font_size)
+    ax.tick_params(axis="both", which="minor", labelsize=axis_tick_font_size)
+        
+    if legend:
+        ax.legend(border_color_patches, border_labels)
+        
+    return fig, ax, border_counts
+                
 
 
 # def plot_neutron_traces(
