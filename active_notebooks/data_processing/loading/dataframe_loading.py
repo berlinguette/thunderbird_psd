@@ -8,6 +8,11 @@ from data_processing.dataframe_validation import (
     STARTING_COL_TYPES,
     WITH_FLAGS_COL_NAMES,
     WITH_FLAGS_COL_TYPES,
+    STARTING_PH_COL_NAMES,
+    STARTING_PH_COL_TYPES,
+    WITH_FLAGS_PH_COL_NAMES,
+    WITH_FLAGS_PH_COL_TYPES,
+    WITH_FLAGS_PH_SCHEMA,
     DetectorDataframeColumn,
     get_df_col,
 )
@@ -19,12 +24,12 @@ SAMPLES_COL_NAME = "SAMPLES"
 DELIMITER = ";"
 
 
-def load_parquet_psd(experiment_name: str, with_flags: bool = False) -> pd.DataFrame:
-    col_names = WITH_FLAGS_COL_NAMES if with_flags else STARTING_COL_NAMES
+    base_col_names = WITH_FLAGS_COL_NAMES if with_flags else STARTING_COL_NAMES
+    ph_col_names = WITH_FLAGS_PH_COL_NAMES if with_flags else STARTING_PH_COL_NAMES
     psd_folder = paths.get_parq_root(experiment_name)
 
-    # Load PSD data to "psd_report" DataFrame
     # TODO retry on PermissionError
+    col_names = ph_col_names if _check_cols_exist(psd_folder, ph_col_names) else base_col_names
     psd_df = (
         pd.read_parquet(psd_folder, columns=col_names)
         .pipe(_process_psd_data, with_flags=with_flags)
@@ -171,7 +176,10 @@ def _get_usecols(
 
 
 def _process_psd_data(full_df: pd.DataFrame, with_flags: bool = False) -> pd.DataFrame:
-    col_types = WITH_FLAGS_COL_TYPES if with_flags else STARTING_COL_TYPES
+    if DetectorDataframeColumn.PULSE_HEIGHT.value in full_df.columns:
+        col_types = WITH_FLAGS_PH_COL_TYPES if with_flags else STARTING_PH_COL_TYPES
+    else:
+        col_types = WITH_FLAGS_COL_TYPES if with_flags else STARTING_COL_TYPES
     return (
         full_df.astype(col_types)
         .pipe(_add_psd_col)
@@ -190,7 +198,19 @@ def _add_psd_col(df: pd.DataFrame) -> pd.DataFrame:
 def _filter_for_valid_psd(df: pd.DataFrame) -> pd.DataFrame:
     psd_col = get_df_col(df, DetectorDataframeColumn.PSD)
     valid_psd = psd_col.between(0, 0.5)
-    return df[valid_psd]
+
+
+def _check_cols_exist(psd_folder: Path, columns: list[str]) -> bool:
+    if not psd_folder.is_dir():
+        raise ValueError("Provided path was not folder:", psd_folder.name)
+    parq_files = sorted(
+        [file for file in psd_folder.iterdir() if file.suffix == ".parquet" and "000"],
+        key=lambda x: x.name
+    )
+    if len(parq_files) == 0:
+        raise ValueError("Provided folder was empty:", psd_folder.name)
+    pq_col_set = set(read_schema(parq_files[0]).names)
+    return pq_col_set.issuperset(set(columns))
 
 flag_values = {
     DetectorDataframeColumn.DEAD_TIME: 0x1,

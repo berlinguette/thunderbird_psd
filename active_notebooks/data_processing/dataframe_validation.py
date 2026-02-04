@@ -54,6 +54,13 @@ col_types = {
     DetectorDataframeColumn.TIMETAG: int64,
 }
 STARTING_COL_TYPES: Final = {k.value: v for k, v in col_types.items()}
+STARTING_PH_COLUMNS: Final = [*STARTING_COLUMNS, DetectorDataframeColumn.PULSE_HEIGHT]
+STARTING_PH_COL_NAMES: Final = [e.value for e in STARTING_PH_COLUMNS]
+ph_col_types = {
+    **col_types,
+    DetectorDataframeColumn.PULSE_HEIGHT: float
+}
+STARTING_PH_COL_TYPES: Final = {k.value: v for k, v in ph_col_types.items()}
 WITH_FLAGS_COLUMNS: Final = [
     DetectorDataframeColumn.CALIB_ENERGY,
     DetectorDataframeColumn.ENERGYSHORT,
@@ -70,6 +77,13 @@ with_flags_col_types = {
     DetectorDataframeColumn.FLAGS: str
 }
 WITH_FLAGS_COL_TYPES: Final = {k.value: v for k, v in with_flags_col_types.items()}
+WITH_FLAGS_PH_COLUMNS: Final = [*WITH_FLAGS_COLUMNS, DetectorDataframeColumn.PULSE_HEIGHT]
+WITH_FLAGS_PH_COL_NAMES: Final = [e.value for e in WITH_FLAGS_PH_COLUMNS]
+with_flags_ph_col_types = {
+    **with_flags_col_types,
+    DetectorDataframeColumn.PULSE_HEIGHT: float
+}
+WITH_FLAGS_PH_COL_TYPES: Final = {k.value: v for k, v in with_flags_ph_col_types.items()}
 INDIVIDUAL_FLAG_COLUMNS: Final = [
     DetectorDataframeColumn.DEAD_TIME,
     DetectorDataframeColumn.TIME_STAMP_ROLLOVER,
