@@ -6,6 +6,7 @@ from pandas import DataFrame, Series
 
 
 class DetectorDataframeColumn(Enum):
+    CHANNEL = "CHANNEL"
     CALIB_ENERGY = "CALIB_ENERGY"
     RECALIBRATED_ENERGY = "RECALIB_ENERGY"
     ENERGYSHORT = "ENERGYSHORT"
@@ -41,6 +42,7 @@ class DetectorDataframeColumn(Enum):
 
 
 STARTING_COLUMNS: Final = [
+    DetectorDataframeColumn.CHANNEL,
     DetectorDataframeColumn.CALIB_ENERGY,
     DetectorDataframeColumn.ENERGYSHORT,
     DetectorDataframeColumn.ENERGY,
@@ -48,6 +50,7 @@ STARTING_COLUMNS: Final = [
 ]
 STARTING_COL_NAMES: Final = [e.value for e in STARTING_COLUMNS]
 col_types = {
+    DetectorDataframeColumn.CHANNEL: int,
     DetectorDataframeColumn.CALIB_ENERGY: float,
     DetectorDataframeColumn.ENERGYSHORT: int,
     DetectorDataframeColumn.ENERGY: int,
@@ -62,6 +65,7 @@ ph_col_types = {
 }
 STARTING_PH_COL_TYPES: Final = {k.value: v for k, v in ph_col_types.items()}
 WITH_FLAGS_COLUMNS: Final = [
+    DetectorDataframeColumn.CHANNEL,
     DetectorDataframeColumn.CALIB_ENERGY,
     DetectorDataframeColumn.ENERGYSHORT,
     DetectorDataframeColumn.ENERGY,
@@ -70,6 +74,7 @@ WITH_FLAGS_COLUMNS: Final = [
 ]
 WITH_FLAGS_COL_NAMES: Final = [e.value for e in WITH_FLAGS_COLUMNS]
 with_flags_col_types = {
+    DetectorDataframeColumn.CHANNEL: int,
     DetectorDataframeColumn.CALIB_ENERGY: float,
     DetectorDataframeColumn.ENERGYSHORT: int,
     DetectorDataframeColumn.ENERGY: int,
