@@ -3,6 +3,7 @@ from math import ceil
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib import colormaps
+from matplotlib.colors import Colormap
 import numpy as np
 import pandas as pd
 from data_processing.dataframe_validation import DetectorDataframeColumn, get_df_col, EnergyColumn
@@ -201,8 +202,7 @@ def plot_tail_vs_total(
 def plot_psd_histogram(
     df: pd.DataFrame,
     energy_column: EnergyColumn = DetectorDataframeColumn.CALIB_ENERGY,
-    colormap_name: str = "gnuplot",
-    colormap: mpl.colors.Colormap | None = None,
+    cmap: str | Colormap = "gnuplot",
     colorbar: bool = False,
     energy_start_zero: bool = False,
     **kwargs,
@@ -212,10 +212,8 @@ def plot_psd_histogram(
     y_resolution = _get_histogram_y_resolution(
         x_resolution=x_resolution, plot_width=figsize[0], plot_height=figsize[1]
     )
-    if colormap is not None:
-        cmap = colormap
-    else:
-        cmap = colormaps[colormap_name]
+    if isinstance(cmap, str):
+        cmap = colormaps[cmap]
     plot_kwargs = {
         "x_resolution": x_resolution,
         "y_resolution": y_resolution,
@@ -292,7 +290,7 @@ def plot_classification(
     experiment_display_name: str,
     class_col_name: DetectorDataframeColumn,
     energy_col_name: EnergyColumn,
-    colormap_name: str = "RdBu_r",
+    cmap: str | Colormap = "RdBu_r",
     count_limit: int = 5,
     **kwargs,
 ) -> tuple[Figure, Axes]:
@@ -306,7 +304,8 @@ def plot_classification(
     # psd_col = get_df_col(df, DataframeColumn.PSD)
 
     g_vs_n = class_col.map({True: 1, False: -1})
-    cmap = mpl.colormaps[colormap_name]  # type: ignore
+    if isinstance(cmap, str):
+        cmap = mpl.colormaps[cmap]
 
     # ax.hist2d(
     #     energy_col,
@@ -322,7 +321,7 @@ def plot_classification(
     fig, ax = plot_psd_histogram(
         df,
         energy_column=energy_col_name,
-        colormap_name=colormap_name,
+        cmap=cmap,
         weights=g_vs_n,
         vmin=-count_limit,
         vmax=count_limit,
