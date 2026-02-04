@@ -296,6 +296,8 @@ def plot_classification(
     energy_col_name: EnergyColumn,
     cmap: str | Colormap = "RdBu_r",
     count_limit: int = 5,
+    legend: bool = True,
+    titles: bool = True,
     **kwargs,
 ) -> tuple[Figure, Axes]:
     fit_window_kwargs = {}
@@ -355,21 +357,23 @@ def plot_classification(
 
     # ax.set_ylim(0, 0.5)
     # ax.set_xlim(0, max_energy + .05)
-    n_neutrons = df[df[class_col_name.value]].shape[0]
-    fig.suptitle(
-        f"Neutron Classification: {experiment_display_name}",
-        fontsize=SUPTITLE_FONT_SIZE,
-    )
-    ax.set_title(f"Neutron count = {n_neutrons}", fontsize=TITLE_FONT_SIZE)
+    if titles:
+        n_neutrons = df[df[class_col_name.value]].shape[0]
+        fig.suptitle(
+            f"Neutron Classification: {experiment_display_name}",
+            fontsize=SUPTITLE_FONT_SIZE,
+        )
+        ax.set_title(f"Neutron count = {n_neutrons}", fontsize=TITLE_FONT_SIZE)
     # ax.set_xlabel("Energy (MeVee)", fontsize=AXIS_FONT_SIZE)
     # ax.set_ylabel("PSD", fontsize=AXIS_FONT_SIZE)
     # ax.tick_params(axis='both', which='major', labelsize=AXIS_TICK_FONT_SIZE)
     # ax.tick_params(axis='both', which='minor', labelsize=AXIS_TICK_FONT_SIZE)
-    event_colors = [
-        mpl.patches.Patch(facecolor=cmap(1.0)),  # type: ignore
-        mpl.patches.Patch(facecolor=cmap(0.0)),  # type: ignore
-    ]  # type: ignore
-    ax.legend(event_colors, ["Neutrons", "Gamma"])
+    if legend:
+        event_colors = [
+            mpl.patches.Patch(facecolor=cmap(1.0)),  # type: ignore
+            mpl.patches.Patch(facecolor=cmap(0.0)),  # type: ignore
+        ]  # type: ignore
+        ax.legend(event_colors, ["Neutrons", "Gamma"])
 
     return fig, ax
 
