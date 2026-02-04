@@ -16,7 +16,9 @@ class NasaGenerationStrategy(AbstractNeutronStrategy):
             window_offset=window_settings.window_offset,
             sigma=window_settings.sigma,
             lower_energy_bound=window_settings.lower_energy_bound,
+            upper_energy_bound=window_settings.upper_energy_bound,
             recalculate_lower_energy_bound=window_settings.recalculate_lower_energy_bound,
+            use_filter=window_settings.use_filter
         )
 
     def _validate_settings(self) -> bool:

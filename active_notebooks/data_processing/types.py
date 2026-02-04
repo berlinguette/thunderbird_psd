@@ -91,7 +91,11 @@ class NasaGenerationSettings(NamedTuple):
     window_offset: float = 0.2
     sigma: float = 5
     lower_energy_bound: float = 0.1966
+    upper_energy_bound: float | None = None
     recalculate_lower_energy_bound: bool = False
+    use_filter: bool = False
+    filter_window: int = 21
+    filter_order: int = 3
 
 
 class NeutronDistributionGenerationSettings(NamedTuple):
