@@ -21,6 +21,7 @@ from data_processing.types import (
 )
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
+from typing import Any
 
 
 def plot_single(
@@ -239,7 +240,10 @@ def add_fit_window_to_plot(
     borders: WindowBorders,
     graph_x_limits: tuple[float, float],
     graph_y_limits: tuple[float, float],
+    line_color_code = "r",
+    line_style = "--"
 ) -> Axes:
+    plot_style = f"{line_color_code}{line_style}"
     left_border = borders.left
     right_border = borders.right
     bottom_border_fn = borders.bottom
@@ -250,9 +254,9 @@ def add_fit_window_to_plot(
 
     energy_space = np.linspace(min_energy, max_energy + 0.5, 200)
     if bottom_border_fn is not None:
-        axes.plot(energy_space, bottom_border_fn(energy_space), "r--")
+        axes.plot(energy_space, bottom_border_fn(energy_space), plot_style)
     if top_border_fn is not None:
-        axes.plot(energy_space, top_border_fn(energy_space), "r--")
+        axes.plot(energy_space, top_border_fn(energy_space), plot_style)
     # ax.vlines(all_slice_xs[0],
     #           neutron_lb_fit(all_slice_xs[0]),
     #           neutron_ub_fit(all_slice_xs[0]),
@@ -268,7 +272,7 @@ def add_fit_window_to_plot(
             if top_border_fn is not None
             else graph_y_limits[1]
         )
-        axes.vlines(left_border, line_bottom, line_top, "r", ls="--")  # type: ignore
+        axes.vlines(left_border, line_bottom, line_top, line_color_code, ls=line_style)  # type: ignore
     if right_border is not None:
         line_bottom = (
             bottom_border_fn(right_border)
@@ -280,7 +284,7 @@ def add_fit_window_to_plot(
             if top_border_fn is not None
             else graph_y_limits[1]
         )
-        axes.vlines(right_border, line_bottom, line_top, "r", ls="--")  # type: ignore
+        axes.vlines(right_border, line_bottom, line_top, line_color_code, ls=line_style)  # type: ignore
     return axes
 
 
@@ -294,6 +298,13 @@ def plot_classification(
     count_limit: int = 5,
     **kwargs,
 ) -> tuple[Figure, Axes]:
+    fit_window_kwargs = {}
+    kwargs, fit_window_kwargs = _kwarg_transfer(
+        kwargs, fit_window_kwargs, "line_color_code"
+    )
+    kwargs, fit_window_kwargs = _kwarg_transfer(
+        kwargs, fit_window_kwargs, "line_style"
+    )
     # y_resolution = _get_histogram_y_resolution()
     # max_energy = get_df_col(df, DataframeColumn.CALIB_ENERGY).max()
 
@@ -340,7 +351,7 @@ def plot_classification(
     #           neutron_lb_fit(lower_energy_bound),
     #           neutron_ub_fit(lower_energy_bound),
     #           'r', ls="--") # type: ignore
-    ax = add_fit_window_to_plot(ax, borders, ax.get_xlim(), ax.get_ylim())
+    ax = add_fit_window_to_plot(ax, borders, ax.get_xlim(), ax.get_ylim(), **fit_window_kwargs)
 
     # ax.set_ylim(0, 0.5)
     # ax.set_xlim(0, max_energy + .05)
@@ -613,3 +624,8 @@ def _popget(
         return dictionary.pop(key)
     except KeyError:
         return default
+    
+def _kwarg_transfer(src_kwargs: dict[str, Any], dest_kwargs: dict[str, Any], key: str):
+    if key in src_kwargs:
+        dest_kwargs[key] = src_kwargs.pop(key)
+    return src_kwargs, dest_kwargs
