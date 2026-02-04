@@ -7,7 +7,7 @@ def calculate_timetag_hours(df: pd.DataFrame) -> pd.DataFrame:
     if DetectorDataframeColumn.TIMETAG.value not in df:
         return df
     hours_col = get_df_col(df, DetectorDataframeColumn.TIMETAG) * 1e-12/3600
-    df[DetectorDataframeColumn.TIME_HOURS.value] = hours_col
+    df.loc[:, DetectorDataframeColumn.TIME_HOURS.value] = hours_col
     return df
 
 def calculate_event_time(df: pd.DataFrame, start_time: datetime) -> pd.DataFrame:
@@ -18,6 +18,6 @@ def calculate_event_time(df: pd.DataFrame, start_time: datetime) -> pd.DataFrame
         timetag_col * 1E-3, 
         unit='ns')
     event_time_col = timetag_deltas + start_time  # type: ignore
-    df[DetectorDataframeColumn.EVENT_TIME.value] = event_time_col
-    df[DetectorDataframeColumn.EVENT_TIME_PS.value] = (timetag_col % 1000).astype(int)
+    df.loc[:, DetectorDataframeColumn.EVENT_TIME.value] = event_time_col
+    df.loc[:, DetectorDataframeColumn.EVENT_TIME_PS.value] = (timetag_col % 1000).astype(int)
     return df

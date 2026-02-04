@@ -191,13 +191,14 @@ def _add_psd_col(df: pd.DataFrame) -> pd.DataFrame:
     energy_col = get_df_col(df, DetectorDataframeColumn.ENERGY)
     short_col = get_df_col(df, DetectorDataframeColumn.ENERGYSHORT)
     psd_col = (energy_col - short_col) / energy_col
-    df[DetectorDataframeColumn.PSD.value] = psd_col
+    df.loc[:, DetectorDataframeColumn.PSD.value] = psd_col
     return df
 
 
 def _filter_for_valid_psd(df: pd.DataFrame) -> pd.DataFrame:
     psd_col = get_df_col(df, DetectorDataframeColumn.PSD)
     valid_psd = psd_col.between(0, 0.5)
+    return df.loc[valid_psd]
 
 
 def _check_cols_exist(psd_folder: Path, columns: list[str]) -> bool:
@@ -248,5 +249,5 @@ def _process_caen_flag_series(flag_series: pd.Series) -> pd.DataFrame:
     int_flags_series = flag_series.apply(_ensure_flags_is_int)
     flags_df = pd.DataFrame()
     for flag_col, flag_bitmask in flag_values.items():
-        flags_df[flag_col.value] = _is_bit_set(int_flags_series, flag_bitmask)
+        flags_df.loc[:, flag_col.value] = _is_bit_set(int_flags_series, flag_bitmask)
     return flags_df

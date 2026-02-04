@@ -165,4 +165,4 @@ class BinningDataframeColumn(Enum):
     GAMMA_RATE_ERROR = "Gamma error (cps)"
 
 def get_df_col(df: DataFrame, col: DetectorDataframeColumn|SliceFitDataframeColumn) -> Series:
-    return df[col.value]
+    return df.loc[:, col.value]
