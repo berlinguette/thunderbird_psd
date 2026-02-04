@@ -7,10 +7,10 @@ from matplotlib.collections import QuadMesh
 from matplotlib.patches import Patch
 import numpy as np
 import pandas as pd
-from active_notebooks.data_processing.dataframe_validation import DetectorDataframeColumn, get_df_col, EnergyColumn
-from active_notebooks.data_processing.processing.figure_of_merit import FOM, gaussian
-from active_notebooks.data_processing.reporting.plot_configs import *
-from active_notebooks.data_processing.types import (
+from data_processing.dataframe_validation import DetectorDataframeColumn, get_df_col, EnergyColumn
+from data_processing.processing.figure_of_merit import FOM, gaussian
+from data_processing.reporting.plot_configs import *
+from data_processing.types import (
     AxesMatrix,
     DictKey,
     DictValue,
@@ -608,9 +608,8 @@ def plot_multiple_classification(
     border_color_patches: list[Patch] = []
     border_labels: list[str] = []
     for i, bs in enumerate(border_settings):
-        borders, _, border_config = bs
+        borders, border_label, border_config = bs
         _cmap: str | Colormap = border_config.get("cmap", random_cmaps[i % len(random_cmaps)])
-        border_label: str = border_config.get("label", f"Border {i+1}")
         
         if isinstance(_cmap, str):
             border_cmap: Colormap = colormaps[_cmap]
@@ -618,8 +617,6 @@ def plot_multiple_classification(
             border_cmap = _cmap
         else:
             raise ValueError("Borders cmap must be a string or Colormap instance")
-        if not isinstance(border_label, str):
-            raise ValueError("Borders label must be a string")
         
         mask = _get_borders_mask(X, Y, borders, Xc.shape)
         border_colors = border_cmap(h_norm)
