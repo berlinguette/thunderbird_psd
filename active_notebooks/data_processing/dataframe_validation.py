@@ -3,6 +3,7 @@ from typing import Final, Literal
 
 from numpy import int64
 from pandas import DataFrame, Series
+import polars as pl
 
 
 class DetectorDataframeColumn(Enum):
@@ -57,6 +58,14 @@ col_types = {
     DetectorDataframeColumn.TIMETAG: int64,
 }
 STARTING_COL_TYPES: Final = {k.value: v for k, v in col_types.items()}
+polars_col_types = {
+    DetectorDataframeColumn.CHANNEL: pl.UInt8,
+    DetectorDataframeColumn.CALIB_ENERGY: pl.Float64,
+    DetectorDataframeColumn.ENERGYSHORT: pl.Int64,
+    DetectorDataframeColumn.ENERGY: pl.Int64,
+    DetectorDataframeColumn.TIMETAG: pl.Int64,
+}
+STARTING_SCHEMA: Final = pl.Schema({k.value: v for k, v in polars_col_types.items()})
 STARTING_PH_COLUMNS: Final = [*STARTING_COLUMNS, DetectorDataframeColumn.PULSE_HEIGHT]
 STARTING_PH_COL_NAMES: Final = [e.value for e in STARTING_PH_COLUMNS]
 ph_col_types = {
@@ -64,6 +73,11 @@ ph_col_types = {
     DetectorDataframeColumn.PULSE_HEIGHT: float
 }
 STARTING_PH_COL_TYPES: Final = {k.value: v for k, v in ph_col_types.items()}
+ph_polars_col_types = {
+    **polars_col_types,
+    DetectorDataframeColumn.PULSE_HEIGHT: pl.Float64
+}
+STARTING_PH_SCHEMA: Final = pl.Schema({k.value: v for k, v in ph_polars_col_types.items()})
 WITH_FLAGS_COLUMNS: Final = [
     DetectorDataframeColumn.CHANNEL,
     DetectorDataframeColumn.CALIB_ENERGY,
@@ -82,6 +96,15 @@ with_flags_col_types = {
     DetectorDataframeColumn.FLAGS: str
 }
 WITH_FLAGS_COL_TYPES: Final = {k.value: v for k, v in with_flags_col_types.items()}
+with_flags_polars_col_types = {
+    DetectorDataframeColumn.CHANNEL: pl.UInt8,
+    DetectorDataframeColumn.CALIB_ENERGY: pl.Float64,
+    DetectorDataframeColumn.ENERGYSHORT: pl.Int64,
+    DetectorDataframeColumn.ENERGY: pl.Int64,
+    DetectorDataframeColumn.TIMETAG: pl.Int64,
+    DetectorDataframeColumn.FLAGS: pl.String
+}
+WITH_FLAGS_SCHEMA: Final = pl.Schema({k.value: v for k, v in with_flags_polars_col_types.items()})
 WITH_FLAGS_PH_COLUMNS: Final = [*WITH_FLAGS_COLUMNS, DetectorDataframeColumn.PULSE_HEIGHT]
 WITH_FLAGS_PH_COL_NAMES: Final = [e.value for e in WITH_FLAGS_PH_COLUMNS]
 with_flags_ph_col_types = {
@@ -89,6 +112,11 @@ with_flags_ph_col_types = {
     DetectorDataframeColumn.PULSE_HEIGHT: float
 }
 WITH_FLAGS_PH_COL_TYPES: Final = {k.value: v for k, v in with_flags_ph_col_types.items()}
+with_flags_ph_polars_col_types = {
+    **with_flags_polars_col_types,
+    DetectorDataframeColumn.PULSE_HEIGHT: pl.Float64
+}
+WITH_FLAGS_PH_SCHEMA: Final = pl.Schema({k.value: v for k, v in with_flags_ph_polars_col_types.items()})
 INDIVIDUAL_FLAG_COLUMNS: Final = [
     DetectorDataframeColumn.DEAD_TIME,
     DetectorDataframeColumn.TIME_STAMP_ROLLOVER,
