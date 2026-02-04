@@ -1,4 +1,5 @@
 import pandas as pd
+import polars as pl
 from datetime import datetime
 from typing import Final
 from data_processing.dataframe_validation import DetectorDataframeColumn, get_df_col
@@ -14,6 +15,14 @@ def calculate_timetag_hours(df: pd.DataFrame) -> pd.DataFrame:
     hours_col = get_df_col(df, DetectorDataframeColumn.TIMETAG) / NS_IN_HOUR
     df.loc[:, DetectorDataframeColumn.TIME_HOURS.value] = hours_col
     return df
+
+def calculate_timetag_hours_polars(lf: pl.LazyFrame) -> pl.LazyFrame:
+    timetag_col = DetectorDataframeColumn.TIMETAG.value
+    schema = lf.collect_schema()
+    if timetag_col not in schema:
+        return lf
+    hours_lf = lf.with_columns((pl.col(timetag_col) / NS_IN_HOUR).alias(DetectorDataframeColumn.TIME_HOURS.value))
+    return hours_lf
 
 def calculate_event_time(df: pd.DataFrame, start_time: datetime) -> pd.DataFrame:
     if DetectorDataframeColumn.TIMETAG.value not in df:
