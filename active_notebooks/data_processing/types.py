@@ -76,12 +76,8 @@ UnpackedFitErrorResult = tuple[
     float,
 ]
 
-VectorLike = float | Series | NDArray
-VectorLikeFunction = Callable[[VectorLike], Any]
-# A VectorLikeFunction will return the same time as passed in, but Python
-# typing can't support this. Explicitly type hint the return value to match the
-# input type if you're certain about what you're handing in, or just use type
-# checks (isinstance) if you're not sure
+VectorLike = TypeVar("VectorLike", float, Series, NDArray)
+VectorLikeFunction = Callable[[VectorLike], VectorLike]
 
 
 class WindowBorders(NamedTuple):
