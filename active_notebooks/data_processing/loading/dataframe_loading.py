@@ -4,6 +4,7 @@ from typing import Callable
 
 import pandas as pd
 import polars as pl
+from polars.functions.col import Col
 from pyarrow.parquet import read_schema
 from data_processing.dataframe_validation import (
     STARTING_COL_NAMES,
@@ -256,20 +257,12 @@ def _add_psd_col(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def _add_psd_col_polars(lf: pl.LazyFrame) -> pl.LazyFrame:
-    def calc_psd(energy: int, energyshort: int) -> float:
-        return (energy - energyshort) / energy
-    
     energy_col_name = DetectorDataframeColumn.ENERGY.value
     energyshort_col_name = DetectorDataframeColumn.ENERGYSHORT.value
-    
-    result = lf.with_columns(
-        pl.struct(
-            [energy_col_name, energyshort_col_name]
-        ).map_elements(
-            lambda s: calc_psd(s[energy_col_name], s[energyshort_col_name]),
-            return_dtype=pl.Float64
-        ).alias("tail / total")
-    )
+    energy_col_expr = pl.col(energy_col_name)
+    energyshort_col_expr = pl.col(energyshort_col_name)
+    calc_psd: pl.Expr = (energy_col_expr - energyshort_col_expr) / energy_col_expr
+    result = lf.with_columns(calc_psd.alias("tail / total"))
     return result
 
 
