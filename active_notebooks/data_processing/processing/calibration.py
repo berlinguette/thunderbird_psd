@@ -2,10 +2,11 @@ import pandas as pd
 from enum import Enum
 from typing import Final
 from data_processing.types import VectorLikeFunction, VectorLike, LinearCalibrationParams, LogCurveCalibrationParams
-from data_processing.dataframe_validation import DetectorDataframeColumn, get_df_col
+from data_processing.dataframe_validation import DetectorDataframeColumn, get_df_col, get_lf_col_expr
 from abc import ABC, abstractmethod
 import numpy as np
 from scipy.optimize import root_scalar
+import polars as pl
 
 
 class Detector(Enum):
@@ -15,7 +16,7 @@ class Detector(Enum):
 class CalibrationType(Enum):
     LINEAR = "LINEAR"
     LOG_CURVE = "LOG_CURVE"
-    
+
 DetectorLinearCalibrationParams: Final = {
     Detector.ZERO: LinearCalibrationParams(p1=2.179, p2=41.67),
     Detector.ONE: LinearCalibrationParams(p1=1.884, p2=26.42)
@@ -38,13 +39,24 @@ class AbstractCalibrator(ABC):
     @abstractmethod
     def _calibration_fn(self) -> VectorLikeFunction:
         ...
-    
+
     def calibrate(self, detector_df: pd.DataFrame) -> pd.DataFrame:
         raw_col = get_df_col(detector_df, self.source_column)
         calib_fn: VectorLikeFunction = self._calibration_fn()
         recalib_col: pd.Series = calib_fn(raw_col)
         detector_df.loc[:, DetectorDataframeColumn.RECALIBRATED_ENERGY.value] = recalib_col
         return detector_df
+
+    def calibrate_polars(self, detector_lf: pl.LazyFrame) -> pl.LazyFrame:
+        raw_col_expr = get_lf_col_expr(self.source_column)
+        calib_fn: VectorLikeFunction = self._calibration_fn()
+        recalibrated_lf = detector_lf.with_columns(
+            raw_col_expr.map_batches(calib_fn, is_elementwise=True).alias(
+                DetectorDataframeColumn.RECALIBRATED_ENERGY.value
+            )
+        )
+        return recalibrated_lf
+
 
 class LinearCalibrator(AbstractCalibrator):
     def __init__(self, detector: Detector):
@@ -63,7 +75,7 @@ class LinearCalibrator(AbstractCalibrator):
             return (x-p2)/(p1*1000)
         
         return _cal_fn
-    
+
 
 class LogCurveCalibrator(AbstractCalibrator):
     def __init__(self, detector: Detector):
@@ -111,3 +123,9 @@ def recalibrate(df: pd.DataFrame, detector: Detector, calibration_type: Calibrat
     calibrator = CalibratorFactory.make_calibrator(detector, calibration_type)
     recalibrated_df = calibrator.calibrate(df)
     return recalibrated_df
+
+
+def recalibrate_polars(lf: pl.LazyFrame, detector: Detector, calibration_type: CalibrationType) -> pl.LazyFrame:
+    calibrator = CalibratorFactory.make_calibrator(detector, calibration_type)
+    recalibrated_lf = calibrator.calibrate_polars(lf)
+    return recalibrated_lf

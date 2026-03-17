@@ -199,3 +199,6 @@ class BinningDataframeColumn(Enum):
 
 def get_df_col(df: DataFrame, col: DetectorDataframeColumn|SliceFitDataframeColumn) -> Series:
     return df.loc[:, col.value]
+
+def get_lf_col_expr(col: DetectorDataframeColumn | SliceFitDataframeColumn) -> pl.Expr:
+    return pl.col(col.value)
