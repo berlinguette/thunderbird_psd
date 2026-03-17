@@ -21,6 +21,7 @@ from .slice_fitting import (
     get_bimodal_fit,
     get_bimodal_fit_guess,
     get_psd_energy_histogram,
+    get_psd_energy_histogram_polars,
     scan_histogram_slices,
     split_params,
     unpack_slice_fit_pool_results,
