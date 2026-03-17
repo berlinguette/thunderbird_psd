@@ -25,3 +25,4 @@ polars[pandas,timezone]~=1.36.1
 jupyterlab-code-formatter~=3.0.2
 tenacity~=9.1.2
 great_tables>=0.21.0
+marimo>=0.21.0
