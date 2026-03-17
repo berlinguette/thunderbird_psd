@@ -1,9 +1,10 @@
-from typing import Any, Callable, Literal, NamedTuple, TypeVar, Sequence
+from typing import Any, Callable, Literal, NamedTuple, TypeVar, Sequence, TypeAlias
 
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 from numpy.typing import NDArray
 from pandas import Series
+from pydantic import BaseModel
 
 
 class BimodalParams(NamedTuple):
@@ -148,11 +149,18 @@ StrAnyDict = dict[str, Any]
 GraphData = dict[Literal["x"] | Literal["y"], Series]
 GraphingFunction = Callable[[Figure, Axes, GraphData, StrAnyDict], Axes]
 GraphingFunction2 = Callable[[Axes, GraphData, StrAnyDict], tuple[Axes, StrAnyDict]]
+ConfigModel = TypeVar("ConfigModel", bound=BaseModel)
+GraphingFunction3 = Callable[[Axes, GraphData, ConfigModel], tuple[Axes, StrAnyDict]]
 AxesMatrix = list[list[Axes]]
 BorderSettings = tuple[WindowBorders, str, StrAnyDict]
+AxesUpdateFunction = Callable[[Axes], Axes]
+FigureUpdateFunction = Callable[[Figure], Figure]
+AxisLimits = tuple[float | None, float | None]
+AxesLimits = tuple[AxisLimits, AxisLimits]
 
 DictKey = TypeVar("DictKey")
 DictValue = TypeVar("DictValue")
+DictKV: TypeAlias = dict[DictKey, DictValue]
 
 
 class LinearCalibrationParams(NamedTuple):

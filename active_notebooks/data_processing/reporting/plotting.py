@@ -1,4 +1,6 @@
+from __future__ import annotations
 from math import ceil
+from warnings import warn
 
 import matplotlib.pyplot as plt
 from matplotlib import colormaps
@@ -20,9 +22,23 @@ from data_processing.types import (
     StrAnyDict,
     WindowBorders,
     BorderSettings,
+    AxesUpdateFunction,
+    FigureUpdateFunction
 )
+from typing import Sequence
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
+
+
+# TODO start deprecating older plot methods
+
+
+def deprecate():
+    warn(
+        "Methods from plotting.py will be removed. " + 
+        "Use the SinglePlot or MultiPlot classes in plotter.py instead",
+        DeprecationWarning
+    )
 
 
 def plot_single(
@@ -34,6 +50,8 @@ def plot_single(
     plot_kwargs: StrAnyDict | None = None,
     **kwargs,
 ) -> tuple[Figure, Axes]:
+    deprecate()
+
     fig, ax = plt.subplots(figsize=figsize, **kwargs)
 
     if plot_kwargs is None:
@@ -46,6 +64,82 @@ def plot_single(
     return fig, ax
 
 
+def make_single_axes(
+    figsize: tuple[float, float] = (FIG_DIM_X, FIG_DIM_Y),
+    **kwargs
+) -> tuple[Figure, Axes]:
+    deprecate()
+    fig, ax = plt.subplots(figsize=figsize, **kwargs)
+    return fig, ax
+
+
+def make_multiple_axes(
+    axes_count: int,
+    figsize: tuple[float, float] = (FIG_DIM_X, FIG_DIM_Y),
+    max_cols: int = SUBPLOTS_MAX_COLS,
+    **kwargs
+) -> tuple[Figure, AxesMatrix]:
+    deprecate()
+
+    n_cols = min(max_cols, axes_count)
+    n_rows = ceil(axes_count / n_cols)
+
+    subplots_result: tuple[Figure, AxesMatrix] = plt.subplots(
+        figsize=figsize, ncols=n_cols, nrows=n_rows, **kwargs
+    )
+    return subplots_result
+
+
+def plot_on_axes(plot_fn: GraphingFunction2, data: GraphData, ax: Axes, **kwargs) -> tuple[Axes, StrAnyDict]:
+    deprecate()
+    ax, return_data = plot_fn(ax, data, kwargs)
+    return ax, return_data
+
+
+def plot_on_multiple_axes(plot_fn: GraphingFunction2, data: Sequence[GraphData], axs: AxesMatrix, axs_kwargs: Sequence[StrAnyDict]
+                          ) -> tuple[AxesMatrix, list[StrAnyDict]]:
+    deprecate()
+
+    if len(data) != len(axs_kwargs):
+        raise ValueError("data and axes_kwargs must be the same length")
+    
+    return_data_list: list[StrAnyDict] = []
+    n_cols = len(axs[0])
+
+    for i, subplot_data in enumerate(data):
+        row = i // n_cols
+        col = i % n_cols
+        ax = axs[row][col]
+        ax_kwargs = axs_kwargs[i]
+
+        ax, return_data = plot_on_axes(plot_fn, subplot_data, ax_kwargs)
+        axs[row][col] = ax
+        return_data_list.append(return_data)
+
+    return axs, return_data_list
+
+
+def configure_multiple_axes(update_fns: list[AxesUpdateFunction], axs: AxesMatrix) -> AxesMatrix:
+    deprecate()
+
+    n_rows = len(axs)
+    n_cols = len(axs[0])
+    
+    for row in axs:
+        if len(row) != n_cols:
+            raise ValueError("All rows in axs must have the same length")
+    if len(update_fns) != n_rows * n_cols:
+        raise ValueError("update_fns must have the same length as the total elements in axs")
+    
+    for i, update_fn in enumerate(update_fn):
+        row = i // n_cols
+        col = i % n_cols
+
+
+        
+
+
+
 def plot_single2(
     graphing_function: GraphingFunction2,
     data: GraphData,
@@ -53,6 +147,8 @@ def plot_single2(
     plot_kwargs: StrAnyDict | None = None,
     **kwargs,
 ) -> tuple[Figure, Axes, StrAnyDict]:
+    deprecate()
+
     fig, ax = plt.subplots(figsize=figsize, **kwargs)
 
     if plot_kwargs is None:
@@ -72,6 +168,8 @@ def plot_many(
     plot_kwargs: list[StrAnyDict] | None = None,
     **kwargs,
 ) -> tuple[Figure, AxesMatrix]:
+    deprecate()
+
     n_plots = len(data)
     n_cols = min(max_cols, n_plots)
     n_rows = ceil(n_plots / n_cols)
@@ -106,6 +204,8 @@ def plot_many2(
     plot_kwargs: list[StrAnyDict] | None = None,
     **kwargs,
 ) -> tuple[Figure, AxesMatrix, list[StrAnyDict]]:
+    deprecate()
+
     n_plots = len(data)
     n_cols = min(max_cols, n_plots)
     n_rows = ceil(n_plots / n_cols)
@@ -135,6 +235,8 @@ def plot_many2(
 def graph_tail_vs_total(
     fig: Figure, ax: Axes, data: GraphData, graph_kwargs: StrAnyDict
 ) -> Axes:
+    deprecate()
+
     ax, _ = graph_tail_vs_total2(ax, data, graph_kwargs)
     return ax
 
@@ -142,6 +244,8 @@ def graph_tail_vs_total(
 def graph_tail_vs_total2(
     ax: Axes, data: GraphData, graph_kwargs: StrAnyDict
 ) -> tuple[Axes, StrAnyDict]:
+    deprecate()
+
     x_resolution = graph_kwargs.get("x_resolution", HISTOGRAM_RES)
     y_resolution = graph_kwargs.get("y_resolution", HISTOGRAM_RES)
     max_energy = graph_kwargs.get("max_energy", 5)
@@ -175,6 +279,8 @@ def graph_tail_vs_total2(
 def graph_psd_histogram(
     fig: Figure, ax: Axes, data: GraphData, graph_kwargs: StrAnyDict
 ) -> Axes:
+    deprecate()
+
     x_resolution = graph_kwargs.get("x_resolution", HISTOGRAM_RES)
     y_resolution = graph_kwargs.get("y_resolution", HISTOGRAM_RES)
     energy_start_zero = graph_kwargs.get("energy_start_zero", False)
@@ -223,6 +329,8 @@ def graph_psd_histogram(
 def graph_psd_histogram2(
     ax: Axes, data: GraphData, graph_kwargs: StrAnyDict
 ) -> tuple[Axes, StrAnyDict]:
+    deprecate()
+
     x_resolution = graph_kwargs.get("x_resolution", HISTOGRAM_RES)
     y_resolution = graph_kwargs.get("y_resolution", HISTOGRAM_RES)
     energy_start_zero = graph_kwargs.get("energy_start_zero", False)
@@ -270,6 +378,13 @@ def add_supertitle_to_figure(
 ) -> Figure:
     fig.suptitle(supertitle, fontsize=font_size)
     return fig
+
+
+def add_title_to_axes(
+        ax: Axes, title: str, font_size: float = TITLE_FONT_SIZE
+) -> Axes:
+    ax.set_title(title, fontsize=font_size)
+    return ax
 
 
 def add_colorbar_to_axes(
