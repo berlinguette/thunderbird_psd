@@ -3,6 +3,7 @@ from typing import Any
 
 class ExperimentDataKey(Enum):
     UNCLASSIFIED = "unclassified"
+    BY_CHANNEL = "by_channel"
     CAEN_CALIBRATION = "caen_calibration"
     NEW_CALIBRATION = "new_calibration"
     PSD_HISTOGRAM = "psd_histogram"

@@ -1,4 +1,4 @@
 from .bimodal_fitting import get_bimodal_fit, get_bimodal_fit_guess
-from .get_histogram import get_psd_energy_histogram
+from .get_histogram import get_psd_energy_histogram, get_psd_energy_histogram_polars
 from .helpers import find_failed_slices, split_params, unpack_slice_fit_pool_results
 from .scan_histogram_slices import scan_histogram_slices

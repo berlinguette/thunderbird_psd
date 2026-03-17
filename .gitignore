@@ -116,6 +116,7 @@ sample_datasets/*/raw_data/mat/
 *.gif
 *.jpg
 *.jpeg
+*.svg
 
 ### Other ###
 active_notebooks/pulse_height_distribution/*
@@ -124,3 +125,4 @@ active_notebooks/response_matrix*/*
 active_notebooks/unfolding_test/*
 blame_reports
 active_notebooks/manuscript_plot_generators/*
+active_notebooks/testdir/*

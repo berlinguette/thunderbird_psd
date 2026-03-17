@@ -12,17 +12,19 @@ def generate_nasa_neutron_window(
     window_offset: float = 0.2,
     sigma: float = 5,
     lower_energy_bound: float = 0.1966,
+    upper_energy_bound: float | None = None,
     recalculate_lower_energy_bound: bool = False,
+    **kwargs
 ) -> WindowBorders:
     energy_bin_midpoints = _get_energy_midpoints(slice_fit_df)
-    bottom_border = _generate_nasa_window_bottom_border(slice_fit_df, sigma)
-    top_border = _generate_nasa_window_top_border(slice_fit_df, sigma, window_offset)
+    bottom_border = _generate_nasa_window_bottom_border(slice_fit_df, sigma, **kwargs)
+    top_border = _generate_nasa_window_top_border(slice_fit_df, sigma, window_offset, **kwargs)
     if recalculate_lower_energy_bound:
         lower_energy_bound = _generate_window_left_border(
             slice_fit_df, energy_bin_midpoints, (0.10, 0.35)
         )
     return WindowBorders(
-        left=lower_energy_bound, bottom=bottom_border, top=top_border, right=None
+        left=lower_energy_bound, bottom=bottom_border, top=top_border, right=upper_energy_bound
     )
 
 
@@ -100,19 +102,26 @@ def _generate_window_left_border(
 
 
 def _generate_nasa_window_bottom_border(
-    slice_fit_df: pd.DataFrame, sigma: float
+    slice_fit_df: pd.DataFrame, sigma: float, **kwargs
 ) -> VectorLikeFunction:
-    return _generate_nasa_gamma_fn(slice_fit_df, sigma)
+    return _generate_nasa_gamma_fn(slice_fit_df, sigma, **kwargs)
 
 
 def _generate_nasa_window_top_border(
-    slice_fit_df: pd.DataFrame, sigma: float, window_offset: float
+    slice_fit_df: pd.DataFrame,
+    sigma: float,
+    window_offset: float,
+    **kwargs
 ) -> VectorLikeFunction:
-    return _generate_nasa_gamma_fn(slice_fit_df, sigma, offset=window_offset)
+    return _generate_nasa_gamma_fn(slice_fit_df, sigma, offset=window_offset, **kwargs)
 
 def _generate_nasa_gamma_fn(
-
-    slice_fit_df: pd.DataFrame, sigma: float, offset: float = 0, use_filter: bool = False
+    slice_fit_df: pd.DataFrame,
+    sigma: float,
+    offset: float = 0,
+    use_filter: bool = False,
+    filter_window: int = 21,
+    filter_order: int = 3
 ) -> VectorLikeFunction:
     gamma_mu_series = get_df_col(slice_fit_df, SliceFitDataframeColumn.GAMMA_MU)
     gamma_sigma_series = get_df_col(slice_fit_df, SliceFitDataframeColumn.GAMMA_SIGMA)

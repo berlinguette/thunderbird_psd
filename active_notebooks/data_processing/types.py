@@ -1,9 +1,10 @@
-from typing import Any, Callable, Literal, NamedTuple, TypeVar, Sequence
+from typing import Any, Callable, Literal, NamedTuple, TypeVar, Sequence, TypeAlias
 
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 from numpy.typing import NDArray
 from pandas import Series
+from pydantic import BaseModel
 
 
 class BimodalParams(NamedTuple):
@@ -76,12 +77,8 @@ UnpackedFitErrorResult = tuple[
     float,
 ]
 
-VectorLike = float | Series | NDArray
-VectorLikeFunction = Callable[[VectorLike], Any]
-# A VectorLikeFunction will return the same time as passed in, but Python
-# typing can't support this. Explicitly type hint the return value to match the
-# input type if you're certain about what you're handing in, or just use type
-# checks (isinstance) if you're not sure
+VectorLike = TypeVar("VectorLike", float, Series, NDArray)
+VectorLikeFunction = Callable[[VectorLike], VectorLike]
 
 
 class WindowBorders(NamedTuple):
@@ -95,14 +92,18 @@ class NasaGenerationSettings(NamedTuple):
     window_offset: float = 0.2
     sigma: float = 5
     lower_energy_bound: float = 0.1966
+    upper_energy_bound: float | None = None
     recalculate_lower_energy_bound: bool = False
+    use_filter: bool = False
+    filter_window: int = 21
+    filter_order: int = 3
 
 
 class NeutronDistributionGenerationSettings(NamedTuple):
     sigma: float = 3
-    lower_energy_bound: float = 0.1966,
-    upper_energy_bound: float = 0.688,
-    recalculate_lower_energy_bound: bool = False,
+    lower_energy_bound: float = 0.1966
+    upper_energy_bound: float = 0.688
+    recalculate_lower_energy_bound: bool = False
     fom_energy_range: tuple[float, float] = (0.10, 0.35)
 
 
@@ -114,9 +115,9 @@ class SquarishGenerationSettings(NamedTuple):
 
 
 class MixedDistributionGenerationSettings(NamedTuple):
-    gamma_sigma: float = 3,
-    neutron_sigma: float = 3,
-    lower_energy_bound: float = 0.1966,
+    gamma_sigma: float = 3
+    neutron_sigma: float = 3
+    lower_energy_bound: float = 0.1966
     upper_energy_bound: float = 0.688
 
 
@@ -144,19 +145,32 @@ SpecificNeutronWindowSettings = TypeVar(
 )
 
 
-Kwargs = dict[str, Any]
+StrAnyDict = dict[str, Any]
 GraphData = dict[Literal["x"] | Literal["y"], Series]
-GraphingFunction = Callable[[Figure, Axes, GraphData, Kwargs], Axes]
+GraphingFunction = Callable[[Figure, Axes, GraphData, StrAnyDict], Axes]
+GraphingFunction2 = Callable[[Axes, GraphData, StrAnyDict], tuple[Axes, StrAnyDict]]
+ConfigModel = TypeVar("ConfigModel", bound=BaseModel)
+GraphingFunction3 = Callable[[Axes, GraphData, ConfigModel], tuple[Axes, StrAnyDict]]
 AxesMatrix = list[list[Axes]]
+BorderSettings = tuple[WindowBorders, str, StrAnyDict]
+AxesUpdateFunction = Callable[[Axes], Axes]
+FigureUpdateFunction = Callable[[Figure], Figure]
+AxisLimits = tuple[float | None, float | None]
+AxesLimits = tuple[AxisLimits, AxisLimits]
 
 DictKey = TypeVar("DictKey")
 DictValue = TypeVar("DictValue")
+DictKV: TypeAlias = dict[DictKey, DictValue]
 
 
-class CalibrationParams(NamedTuple):
+class LinearCalibrationParams(NamedTuple):
     p1: float
     p2: float
 
+class LogCurveCalibrationParams(NamedTuple):
+    a: float
+    b: float
+    c: float
 
 WindowType = Literal["nasa", "n_distro", "mixed_distro", "squarish", "basic_cut"]
 SliceFitStyle = Literal["bounds", "peak_finder"]
